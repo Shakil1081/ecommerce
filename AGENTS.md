@@ -55,7 +55,7 @@ Welcome to the **E-Commerce** project. This file (`AGENTS.md`) defines the domai
   - Responsive breakpoint conversions: `thumb_300` (300x300), `card_600` (600x600), `gallery_1200` (1200x1200), and `zoom_2000` (2000x2000).
   - Blurhash / LQIP (Low-Quality Image Placeholder) generation stored in database to eliminate layout shift (guaranteeing `CLS = 0.0`).
   - Automated watermark overlay option to protect proprietary import photography.
-  - Storage driver support: Local disk, Amazon S3, MinIO, or **Cloudflare R2** (zero egress bandwidth costs).
+  - **Dynamic Multi-Cloud Storage Engine**: Configurable from admin back-office—**Local Server Storage**, **Google Cloud Storage (GCS)**, **Amazon AWS S3**, **Cloudflare R2** (zero egress fees), **DigitalOcean Spaces**, or **MinIO** with pre-flight connection testing.
 - **Role-Based Access Control (RBAC) & Permissions**: Standardize on **Spatie Laravel Permission (`spatie/laravel-permission:^6.0`)**. Enforces granular roles and module permissions across all API actions and Inertia controllers, fully manageable via back-office admin UI. Super Admin role bypasses checks via `Gate::before`.
 
 ### Frontend: Vue.js 3 + TypeScript + Sass (SCSS) + Inertia SSR
@@ -637,11 +637,26 @@ To guarantee enterprise scalability, maintainability, and clean execution, the p
 
 ---
 
-## 16. Enterprise Software Security, Bot Defense & Hardening
+## 16. Enterprise Software Security, Bot Defense & Cloud Infrastructure
 
-Security and anti-bot protections are treated as first-class engineering priorities:
+Security, anti-bot protections, and flexible cloud infrastructure are treated as first-class engineering priorities:
 
-### A. Admin-Configurable Google reCAPTCHA & Bot Defense (`security_settings` Schema)
+### A. Admin-Configurable Dynamic Media & Cloud Storage Management (`media_storage_settings` Schema)
+Store owners can configure their media storage location dynamically from the back-office UI without modifying `.env` or deploying new code:
+1. **Supported Storage Drivers**:
+   - **Local Server Storage** (`local` / `public` disk): Files stored on server filesystem under `storage/app/public/media/` with automated symlink.
+   - **Google Cloud Storage (GCS)**: Driver `google-cloud-storage` using `spatie/flysystem-google-cloud-storage`. Credentials: `project_id`, `bucket_name`, and Service Account JSON key (encrypted at rest).
+   - **Amazon AWS S3**: Driver `s3` using `league/flysystem-aws-s3-v3`. Credentials: `access_key_id`, `secret_access_key`, `region`, `bucket_name`, and optional CloudFront CDN URL.
+   - **Cloudflare R2**: S3-compatible API with **zero egress bandwidth fees** (eliminates expensive cloud bandwidth bills for high-res e-commerce images). Credentials: `account_id`, `access_key_id`, `secret_access_key`, `bucket_name`, and public custom domain.
+   - **DigitalOcean Spaces / MinIO / Wasabi**: S3-compatible self-hosted or alternative cloud storage with custom endpoint and region.
+2. **Pre-Flight "Test Storage Connection" Action (`TestStorageConnectionAction`)**:
+   - Before saving credentials, an automated pre-flight handshake uploads a test file (`storage_test_[ulid].txt`), verifies read access, checks public CDN delivery, deletes the test file, and returns measured latency in milliseconds.
+3. **Runtime Dynamic Disk Injection**:
+   - The system dynamically updates Laravel's `media` filesystem disk on boot from `media_storage_settings`, allowing Spatie MediaLibrary to seamlessly write to the merchant's chosen storage provider.
+4. **Media Disk Migration Utility**:
+   - Background Artisan command (`php artisan media:migrate-disk --from=local --to=s3`) and back-office button to copy all existing catalog assets when migrating from local storage to cloud storage without broken image URLs.
+
+### B. Admin-Configurable Google reCAPTCHA & Bot Defense (`security_settings` Schema)
 - Non-technical administrators can configure and toggle bot defenses from the back-office UI:
   - **Provider Selector**: Google reCAPTCHA v2 (Checkbox), Google reCAPTCHA v3 (Score-based invisible), or Cloudflare Turnstile.
   - **Credentials**: `site_key` and `secret_key` (encrypted at rest `'secret_key' => 'encrypted'`).
@@ -653,7 +668,7 @@ Security and anti-bot protections are treated as first-class engineering priorit
     - Customer Product Reviews
   - **Verification Middleware**: Server-side verification via `VerifyRecaptchaMiddleware` using Guzzle HTTP POST before allowing controller execution.
 
-### B. Role-Based Access Control (RBAC) & Back-Office Permission Management (`spatie/laravel-permission`)
+### C. Role-Based Access Control (RBAC) & Back-Office Permission Management (`spatie/laravel-permission`)
 
 Internal staff authorization and access control are standardized on **Spatie Laravel Permission (`spatie/laravel-permission:^6.0`)**, fully configurable via a dedicated back-office administrative UI:
 
@@ -681,7 +696,7 @@ Internal staff authorization and access control are standardized on **Spatie Lar
    - **Staff User Assignment**: Assign single or multiple roles to staff users, with optional direct permission overrides.
    - **Gate & Policy Enforcement**: Enforced uniformly across backend Form Requests, Controllers, Inertia page props (`$page.props.auth.permissions`), and navigation sidebar items.
 
-### C. Authorization, OWASP & Anti-Abuse Controls
+### D. Authorization, OWASP & Anti-Abuse Controls
 - **Role-Based Access Control (RBAC)**: Enforced via dedicated Model Policies (`$this->authorize(...)`) and Spatie permission middleware (`permission:...`).
 - **OWASP Top 10 Defenses**: Eloquent parameter binding only, Vue template auto-escaping, DOMPurify for HTML descriptions, strict CSRF validation, guarded models.
 - **Financial & Webhook Integrity**: Idempotency keys (`X-Idempotency-Key`), cryptographic signature verification, immutable audit trail logging.
