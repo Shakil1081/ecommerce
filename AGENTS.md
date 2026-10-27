@@ -56,6 +56,7 @@ Welcome to the **E-Commerce** project. This file (`AGENTS.md`) defines the domai
   - Blurhash / LQIP (Low-Quality Image Placeholder) generation stored in database to eliminate layout shift (guaranteeing `CLS = 0.0`).
   - Automated watermark overlay option to protect proprietary import photography.
   - Storage driver support: Local disk, Amazon S3, MinIO, or **Cloudflare R2** (zero egress bandwidth costs).
+- **Role-Based Access Control (RBAC) & Permissions**: Standardize on **Spatie Laravel Permission (`spatie/laravel-permission:^6.0`)**. Enforces granular roles and module permissions across all API actions and Inertia controllers, fully manageable via back-office admin UI. Super Admin role bypasses checks via `Gate::before`.
 
 ### Frontend: Vue.js 3 + TypeScript + Sass (SCSS) + Inertia SSR
 - **Framework Integration**: **Inertia.js v2** with **Vue 3** (`<script setup lang="ts">`), **Inertia SSR (Server-Side Rendering)** for public pages, and Vite.
@@ -652,8 +653,36 @@ Security and anti-bot protections are treated as first-class engineering priorit
     - Customer Product Reviews
   - **Verification Middleware**: Server-side verification via `VerifyRecaptchaMiddleware` using Guzzle HTTP POST before allowing controller execution.
 
-### B. Authorization, OWASP & Anti-Abuse Controls
-- **Role-Based Access Control (RBAC)**: Enforced via dedicated Model Policies (`$this->authorize(...)`).
+### B. Role-Based Access Control (RBAC) & Back-Office Permission Management (`spatie/laravel-permission`)
+
+Internal staff authorization and access control are standardized on **Spatie Laravel Permission (`spatie/laravel-permission:^6.0`)**, fully configurable via a dedicated back-office administrative UI:
+
+1. **Pre-Configured Enterprise Roles**:
+   - `Super Admin`: Full system access; bypasses all permission checks via `Gate::before`. Protected from deletion or demotion.
+   - `Store Operations Manager`: Manages catalog, orders, shipping, and marketing without access to system security or credentials.
+   - `Procurement & Import Officer`: Manages international suppliers, LC/TT, Bill of Entry (BOE), local purchase orders (PO), and Landed Cost allocation.
+   - `Warehouse & Inventory Keeper`: Access to multi-hub stock management, GRN inward receiving, barcode scans, and Mushak 6.5 transfer challans.
+   - `Accounts & NBR Tax Officer`: Manages Mushak 6.3 invoices, Mushak 6.7 Credit Notes, Mushak 6.6 VDS certificates, VAT 9.1 returns, and financial ledgers.
+   - `Logistics & Fulfillment Dispatcher`: 1-click courier consignment booking, thermal shipping label printing, and COD cash reconciliation.
+   - `Customer Care & Fraud Agent`: Order verification, customer communications, OTP triggers, AI voice calling review, and customer blacklist management.
+
+2. **Back-Office Roles & Permission Management UI (`app/Modules/Admin/`)**:
+   - **Custom Role Creator & Editor**: Administrators can create unlimited custom roles, clone existing roles, and adjust permissions at any time.
+   - **Granular Domain Permission Matrix**: Interactive Vue 3 matrix grouping permissions by functional modules with quick **"Select All in Module"** toggles:
+     - **Catalog**: `catalog.view`, `catalog.create`, `catalog.edit`, `catalog.delete`, `catalog.publish`, `catalog.bulk_pricing`
+     - **Procurement**: `procurement.view`, `procurement.po.create`, `procurement.boe.manage`, `procurement.landed_cost.calculate`
+     - **Inventory**: `inventory.view`, `inventory.grn.receive`, `inventory.transfer.mushak6_5`, `inventory.adjust_stock`
+     - **Orders & Anti-Fraud**: `order.view`, `order.confirm`, `order.dispatch`, `order.cancel`, `order.fraud.review`, `order.fraud.blacklist`
+     - **Logistics**: `logistics.view`, `logistics.book_consignment`, `logistics.print_label`, `logistics.reconcile_cod`
+     - **Payments**: `payment.view`, `payment.refund.issue`, `payment.settings.manage`
+     - **NBR VAT**: `tax.mushak6_3.issue`, `tax.mushak6_7.credit_note`, `tax.mushak9_1.view`, `tax.registers.export`
+     - **AI & Omnichannel**: `ai.settings.manage`, `voice.call.trigger`, `communication.smtp.manage`
+     - **Staff & Security**: `admin.staff.manage`, `admin.roles.manage`, `security.settings.manage`, `admin.audit_logs.view`
+   - **Staff User Assignment**: Assign single or multiple roles to staff users, with optional direct permission overrides.
+   - **Gate & Policy Enforcement**: Enforced uniformly across backend Form Requests, Controllers, Inertia page props (`$page.props.auth.permissions`), and navigation sidebar items.
+
+### C. Authorization, OWASP & Anti-Abuse Controls
+- **Role-Based Access Control (RBAC)**: Enforced via dedicated Model Policies (`$this->authorize(...)`) and Spatie permission middleware (`permission:...`).
 - **OWASP Top 10 Defenses**: Eloquent parameter binding only, Vue template auto-escaping, DOMPurify for HTML descriptions, strict CSRF validation, guarded models.
 - **Financial & Webhook Integrity**: Idempotency keys (`X-Idempotency-Key`), cryptographic signature verification, immutable audit trail logging.
 - **Rate Limiting & Anti-Abuse**: Throttling on auth, checkout, AI calls, coupons, and public catalog endpoints.

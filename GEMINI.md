@@ -11,6 +11,7 @@ Refer to [AGENTS.md](file:///c:/working/ts/ecommerce/AGENTS.md) for full instruc
   - **Local Online Shop**: Selling locally to Bangladesh consumers (B2C) and wholesale trade buyers (B2B) in BDT (৳).
 - **Tech Stack**: Laravel 13.x (PHP 8.3+) + Inertia.js v2 with SSR + Vue.js 3 (TypeScript, Pinia, Vite).
 - **Media & Image Management**: **Spatie Laravel MediaLibrary** (`spatie/laravel-medialibrary`) + **Intervention Image v3** (`intervention/image`) with automated WebP/AVIF conversions, responsive breakpoints (`thumb_300`, `card_600`, `gallery_1200`, `zoom_2000`), blurhash placeholders for zero layout shift (CLS = 0.0), and Cloudflare R2 / S3 storage.
+- **Role-Based Access Control (RBAC)**: **Spatie Laravel Permission** (`spatie/laravel-permission`) with complete back-office admin UI for creating custom roles, assigning grouped domain permissions, and staff user access control.
 - **Styling Standard**: **Sass / SCSS (`lang="scss"`) exclusively** with modular design tokens, mixins, and Vite auto-injection.
 - **Architecture**: Domain-Driven Modular Monolith (`app/Modules/`) via PSR-4 autoloading with decoupled module boundaries, Actions, DTOs, and Domain Events.
 - **Four Pillars of World-Class E-Commerce**:
