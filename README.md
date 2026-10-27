@@ -162,3 +162,15 @@ npm run build:ssr
 For full domain rules, compliance formulas, anti-fraud algorithms, and coding standards, refer to:
 - [AGENTS.md](file:///c:/working/ts/ecommerce/AGENTS.md)
 - [GEMINI.md](file:///c:/working/ts/ecommerce/GEMINI.md)
+- [PHASE_PLAN.md](file:///c:/working/ts/ecommerce/PHASE_PLAN.md)
+
+---
+
+## 6. Developer & Maintainer Information
+
+- **Lead Architect & Developer**: **Md. Shakil Hossain** (`shakil-brl`)
+- **GitHub Profile**: [@Shakil1081](https://github.com/Shakil1081)
+- **Email Contact**: [shakilaust83@gmail.com](mailto:shakilaust83@gmail.com)
+- **Project Repository**: [https://github.com/Shakil1081/ecommerce](https://github.com/Shakil1081/ecommerce)
+- **Specialization**: Enterprise Full-Stack Architecture, Laravel, Vue 3, High-Throughput E-Commerce, Fintech & Tax Compliance Engineering
+- **License**: Proprietary / Commercial License
