@@ -49,6 +49,13 @@ Welcome to the **E-Commerce** project. This file (`AGENTS.md`) defines the domai
 - **Validation**: Always use dedicated **Form Request** classes (`App\Modules\{Module}\Http\Requests\...`); never perform validation directly inside controllers.
 - **Data Transformation**: Use **API Resources** or Inertia props with typed, immutable **Data Transfer Objects (DTOs)**.
 - **Monetary & Tax Precision**: Never use floating-point types for currency or tax math. Store monetary values and tax breakdowns in integer minor units (poisha/cents) or `DECIMAL(14, 4)` to eliminate rounding discrepancies.
+- **Enterprise Media & Image Management**: Standardize on **Spatie Laravel MediaLibrary (`spatie/laravel-medialibrary:^11.0`)** combined with **Intervention Image v3 (`intervention/image:^3.0`)**.
+  - All product images, category banners, brand logos, and commercial import/tax documents are stored via typed Media Collections.
+  - Automated queued generation of **WebP** and **AVIF** formats.
+  - Responsive breakpoint conversions: `thumb_300` (300x300), `card_600` (600x600), `gallery_1200` (1200x1200), and `zoom_2000` (2000x2000).
+  - Blurhash / LQIP (Low-Quality Image Placeholder) generation stored in database to eliminate layout shift (guaranteeing `CLS = 0.0`).
+  - Automated watermark overlay option to protect proprietary import photography.
+  - Storage driver support: Local disk, Amazon S3, MinIO, or **Cloudflare R2** (zero egress bandwidth costs).
 
 ### Frontend: Vue.js 3 + TypeScript + Sass (SCSS) + Inertia SSR
 - **Framework Integration**: **Inertia.js v2** with **Vue 3** (`<script setup lang="ts">`), **Inertia SSR (Server-Side Rendering)** for public pages, and Vite.
@@ -278,7 +285,27 @@ Administrators configure email delivery directly from the back-office UI without
 - **Automated Triggers**: Order confirmation, courier tracking updates, delivery completion with digital Mushak 6.3 invoice link, and return approvals.
 - **WhatsApp Commerce Integration**: Direct chat, support, and order updates via WhatsApp Business API.
 
-### C. Social Commerce Feeds
+### C. AI Automated Outbound Voice Calling Verification Agent (`voice_calling_settings` Schema)
+To completely automate the confirmation of Cash on Delivery (COD) orders without requiring manual call-center staff, the system provides an AI-powered interactive voice calling agent:
+- **Interactive Voice Operations**:
+  - Automatically dials the customer's phone number within 60 seconds of order placement.
+  - Native bilingual conversational capability (**Bangla বাংলা** & **English**).
+  - Dynamic TTS message interpolation: *"হ্যালো {{customer_name}}, {{store_name}} থেকে আপনার {{order_id}} নম্বর অর্ডারের মোট মূল্য ৳{{total_amount}}। অর্ডারটি কনফার্ম করতে ১ চাপুন, বাতিল করতে ২ চাপুন।"*
+- **Dual Verification Modes**:
+  1. **DTMF Keypress (Touch-Tone)**: Customer presses `1` on phone keypad to confirm, `2` to cancel.
+  2. **Conversational Speech Recognition (AI Voice)**: Uses speech-to-intent understanding to capture verbal replies (*"হ্যাঁ, কনফার্ম করেন"* or *"না, দরকার নেই"*).
+- **Automated Lifecycle Webhooks**:
+  - Keypress `1` (Confirmed): Order state immediately transitions to `confirmed` and routes to picking.
+  - Keypress `2` (Cancelled): Order state transitions to `cancelled_by_customer`; reserved stock is returned to inventory.
+  - No Answer / Busy: Retries up to 3 times (15m, 1h, 3h); if still unanswered, automatically queues in Admin **"Pending Phone Verification Queue"**.
+- **Admin Configuration & Controls (`voice_calling_settings`)**:
+  - **One-Click Active/Inactive Toggle**: Store owner can toggle the automated calling service on/off from the back-office with zero downtime.
+  - **Provider Drivers**: Supports **Twilio Voice**, **Retell AI**, **Vapi.ai**, and local Bangladesh telecom OBD (Outbound Dialing) gateways.
+  - **Encrypted Credentials**: Stored securely in database (`'credentials' => 'encrypted:array'`).
+  - **"Make Test Call" Action (`TestVoiceCallAction`)**: Pre-flight test button in the admin interface allows the merchant to input their own phone number and receive an immediate live AI test call before activating the service.
+  - **Call Logs & Recording Player**: Back-office audio player and transcript viewer for each verification call.
+
+### D. Social Commerce Feeds
 - **Google Merchant Center XML Feed**: Real-time product feed formatted to Google Shopping specs.
 - **Facebook Catalog & Instagram Shop Sync**: Auto-updating CSV/XML catalog feed for dynamic retargeting ads.
 - **TikTok Shop Catalog Sync**: Product catalog feed for social video commerce.
@@ -516,9 +543,10 @@ Persisted in the database with strict field encryption:
 1. **Catalog & SEO Enrichment**: Generates compelling product descriptions, bullet points, meta titles, SEO tags, and attribute extraction from imported manufacturer specs with a single click.
 2. **Smart Restocking & Demand Insights**: Analyzes sales velocity, seasonal trends, and international/domestic supplier lead times to suggest optimal Purchase Order (PO) quantities.
 3. **Customer Support & Dispute Assistant**: Drafts responses for return inquiries, RMA disputes, and tickets.
-4. **Statutory Tax & Return Anomaly Detection**: Alerts management if abnormal frequencies of Mushak 6.7 Credit Notes are detected.
-5. **Pre-Flight "Test AI Connection" Action (`TestAiConnectionAction`)**: Validates credentials and measures latency.
-6. **Token & Cost Tracking**: Logs prompt and completion tokens per request with cost estimates.
+4. **AI Outbound Voice Calling Verification Engine**: Connects conversational voice models (Vapi, Retell, ElevenLabs, OpenAI Realtime) to conduct natural Bangla/English phone verification calls to confirm Cash on Delivery orders.
+5. **Statutory Tax & Return Anomaly Detection**: Alerts management if abnormal frequencies of Mushak 6.7 Credit Notes are detected.
+6. **Pre-Flight "Test AI Connection" Action (`TestAiConnectionAction`)**: Validates credentials and measures latency.
+7. **Token & Cost Tracking**: Logs prompt and completion tokens per request with cost estimates.
 
 ---
 

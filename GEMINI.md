@@ -10,6 +10,7 @@ Refer to [AGENTS.md](file:///c:/working/ts/ecommerce/AGENTS.md) for full instruc
   - **Unified Landed Cost & COGS**: Foreign currency purchases (USD, RMB, EUR) converted at bank settlement exchange rates; allocating freight, insurance, port C&F fees, and customs duties alongside local procurement costs to compute true domestic COGS in BDT (৳).
   - **Local Online Shop**: Selling locally to Bangladesh consumers (B2C) and wholesale trade buyers (B2B) in BDT (৳).
 - **Tech Stack**: Laravel 13.x (PHP 8.3+) + Inertia.js v2 with SSR + Vue.js 3 (TypeScript, Pinia, Vite).
+- **Media & Image Management**: **Spatie Laravel MediaLibrary** (`spatie/laravel-medialibrary`) + **Intervention Image v3** (`intervention/image`) with automated WebP/AVIF conversions, responsive breakpoints (`thumb_300`, `card_600`, `gallery_1200`, `zoom_2000`), blurhash placeholders for zero layout shift (CLS = 0.0), and Cloudflare R2 / S3 storage.
 - **Styling Standard**: **Sass / SCSS (`lang="scss"`) exclusively** with modular design tokens, mixins, and Vite auto-injection.
 - **Architecture**: Domain-Driven Modular Monolith (`app/Modules/`) via PSR-4 autoloading with decoupled module boundaries, Actions, DTOs, and Domain Events.
 - **Four Pillars of World-Class E-Commerce**:
@@ -29,6 +30,11 @@ Refer to [AGENTS.md](file:///c:/working/ts/ecommerce/AGENTS.md) for full instruc
     - Admin toggle to enable Google reCAPTCHA (v2 Checkbox or v3 Invisible) or Cloudflare Turnstile with encrypted secret keys.
     - Granular page assignment toggles (Login, Register, Checkout, Inquiries, Reviews) with backend verification middleware.
   - **Omnichannel Messaging & Social Commerce**: Automated SMS & WhatsApp order alerts, Google Merchant Center XML feed, Facebook Catalog / Instagram Shop sync, and TikTok catalog exports.
+  - **AI Automated Outbound Voice Calling Verification Agent (`app/Modules/Communication/` & `voice_calling_settings`)**:
+    - AI Voice Agent dials customer within 60s of placing a COD order with natural bilingual Bangla (বাংলা) & English prompts.
+    - Dual confirmation: DTMF Touch-Tone (Press 1 to confirm, 2 to cancel) or Conversational Speech-to-Intent AI.
+    - Automated lifecycle webhooks: 1 = `confirmed` (direct to picking), 2 = `cancelled_by_customer` (stock released).
+    - **Admin Back-Office UI**: Instant Active/Inactive toggle, encrypted API keys (Twilio Voice, Retell AI, Vapi.ai, Local Telco OBD), call script customizer, call logs with audio playback, and **"Make Test Call"** pre-flight verification button.
   - **Comprehensive Anti-Fraud, Fake Order & Fake Customer Defense Shield (`app/Modules/Order/` & `app/Modules/Customer/`)**:
     - **7-Layer Anti-Fraud Shield**:
       1. Invisible Honeypot fields (`user_company_fax`) & client submission timing guards (< 3.5s = bot flag).
