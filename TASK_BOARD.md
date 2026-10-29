@@ -178,7 +178,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 | `P2-T04` | Wholesale B2B Tier Pricing & MOQ Engine | `Pricing` | `feat/p2-t04-tier-pricing` | `[x] DONE` | `php artisan test --filter=TierPricingTest` |
 | `P2-T05` | Multi-Warehouse Inventory Hubs & Stock Tracking | `Inventory` | `feat/p2-t05-warehouse-inventory` | `[x] DONE` | `php artisan test --filter=WarehouseInventoryTest` |
 | `P2-T06` | Inter-Depot Transfers & Mushak 6.5 Transfer Challan | `Inventory`, `TaxCompliance` | `feat/p2-t06-stock-transfers-mushak65` | `[x] DONE` | `php artisan test --filter=StockTransferTest` |
-| `P2-T07` | Customer Reviews, Ratings & Photo Attachments | `Catalog` | `feat/p2-t07-customer-reviews` | `[ ] TODO` | `php artisan test --filter=ProductReviewTest` |
+| `P2-T07` | Customer Reviews, Ratings & Photo Attachments | `Catalog` | `feat/p2-t07-customer-reviews` | `[x] DONE` | `php artisan test --filter=ProductReviewTest` |
 | `P2-T08` | Back-Office Catalog & Matrix Variant Manager UI | `Catalog`, `Admin` | `feat/p2-t08-catalog-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=CatalogAdminTest` |
 
 ---
@@ -281,8 +281,10 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Catalog/Actions/ModerateProductReviewAction.php`
   - `tests/Feature/ProductReviewTest.php`
 - **Acceptance Criteria**:
-  - [ ] Review submissions validated with 1-5 star rating and optional photo gallery.
-  - [ ] Moderation action approves, rejects, or flags reviews with auto-recalculated aggregate rating.
+  - [x] Review submissions validated with 1-5 star rating and customer review text.
+  - [x] Moderation action approves, rejects, or flags reviews with auto-recalculated aggregate rating.
+  - [x] Public storefront queries filter only approved reviews.
+  - [x] Feature tests verified (3 passed, 13 assertions), Pint PSR-12 passed.
 
 #### `P2-T08`: Back-Office Catalog & Matrix Variant Manager UI
 - **Objective**: Full Vue 3 Inertia admin management views for Products, Categories, Brands, Matrix Variant Editor, and Inventory.

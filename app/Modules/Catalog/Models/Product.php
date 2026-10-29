@@ -90,6 +90,40 @@ class Product extends Model implements HasMedia
     }
 
     /**
+     * All customer reviews for this product.
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class, 'product_id');
+    }
+
+    /**
+     * Approved reviews visible to shoppers.
+     */
+    public function approvedReviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class, 'product_id')->where('status', ProductReview::STATUS_APPROVED);
+    }
+
+    /**
+     * Average star rating of approved reviews.
+     */
+    public function getAverageRatingAttribute(): float
+    {
+        $avg = $this->approvedReviews()->avg('rating');
+
+        return $avg !== null ? round((float) $avg, 1) : 0.0;
+    }
+
+    /**
+     * Total count of approved reviews.
+     */
+    public function getReviewCountAttribute(): int
+    {
+        return $this->approvedReviews()->count();
+    }
+
+    /**
      * Minimum selling price across all active variants.
      */
     public function getMinPriceBdtAttribute(): float
