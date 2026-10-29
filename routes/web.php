@@ -7,6 +7,7 @@ use App\Modules\Admin\Http\Controllers\CatalogController;
 use App\Modules\Admin\Http\Controllers\FraudDirectoryAdminController;
 use App\Modules\Admin\Http\Controllers\MediaStorageController;
 use App\Modules\Admin\Http\Controllers\OrderAdminController;
+use App\Modules\Admin\Http\Controllers\PaymentAdminController;
 use App\Modules\Admin\Http\Controllers\ProcurementController;
 use App\Modules\Admin\Http\Controllers\RoleController;
 use App\Modules\Admin\Http\Controllers\StaffUserController;
@@ -14,6 +15,7 @@ use App\Modules\Admin\Http\Controllers\SystemInfoController;
 use App\Modules\Cart\Http\Controllers\CartController;
 use App\Modules\Payment\Http\Controllers\BkashCallbackController;
 use App\Modules\Payment\Http\Controllers\NagadCallbackController;
+use App\Modules\Payment\Http\Controllers\ProcessAdvanceDeliveryPaymentController;
 use App\Modules\Payment\Http\Controllers\SslcommerzCallbackController;
 use App\Modules\Seo\Http\Controllers\SitemapController;
 use Illuminate\Foundation\Application;
@@ -48,6 +50,8 @@ Route::get('/checkout', function () {
 Route::get('/orders/confirmed/{order}', function (string $order) {
     return Inertia::render('Storefront/OrderConfirmed', ['orderNumber' => $order]);
 })->name('storefront.order-confirmed');
+
+Route::post('/orders/{order}/pay-advance', ProcessAdvanceDeliveryPaymentController::class)->name('orders.pay-advance');
 
 // Payment Callbacks & Webhooks
 Route::prefix('payment')->name('payment.')->group(function () {
@@ -103,6 +107,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/bot-security', [BotSecuritySettingsController::class, 'index'])->name('bot-security.index');
         Route::post('/bot-security', [BotSecuritySettingsController::class, 'save'])->name('bot-security.save');
         Route::post('/bot-security/test', [BotSecuritySettingsController::class, 'testConnection'])->name('bot-security.test');
+
+        // Dynamic Payment Gateway Settings
+        Route::get('/payment-gateways', [PaymentAdminController::class, 'index'])->name('payment-gateways.index');
+        Route::post('/payment-gateways', [PaymentAdminController::class, 'save'])->name('payment-gateways.save');
+        Route::post('/payment-gateways/test', [PaymentAdminController::class, 'testConnection'])->name('payment-gateways.test');
 
         Route::get('/system', [SystemInfoController::class, 'index'])->name('system');
     });

@@ -639,11 +639,11 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 ---
 
-## 6. Active Sprint: Sprint 6 (Phase 6 — Dynamic Payment Gateway Module & Advance COD Delivery Engine)
+## 6. Sprint 6 (Phase 6 — Dynamic Payment Gateway Module & Advance COD Delivery Engine — COMPLETED)
 
 - **Target Phase**: **Phase 6: Dynamic Payment Gateway Module & Advance COD Delivery Engine**
 - **Sprint Goal**: Implement an enterprise pluggable payment architecture with encrypted dynamic gateway configuration (bKash, Nagad, SSLCommerz, Stripe, COD, Bank Transfer), pre-flight "Test API Connection" validation, tokenized/hosted checkout flows, callback webhooks, transaction auditing, and advance partial delivery fee checkout engine for high-risk COD orders.
-- **Sprint Status**: `[ 🟡 IN PROGRESS ] (4 of 5 Tickets Passed)`
+- **Sprint Status**: `[ ✅ COMPLETED ] (5 of 5 Tickets Passed & 100% Green)`
 
 ### Sprint 6 Ticket Breakdown
 
@@ -653,11 +653,11 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 | `P6-T02` | bKash Tokenized Checkout Adapter & Webhook Engine | `Payment` | `feat/p6-t02-bkash-gateway-adapter` | `[x] DONE` | `php artisan test --filter=BkashPaymentAdapterTest` |
 | `P6-T03` | Nagad Checkout Adapter & Cryptographic Verification | `Payment` | `feat/p6-t03-nagad-gateway-adapter` | `[x] DONE` | `php artisan test --filter=NagadPaymentAdapterTest` |
 | `P6-T04` | SSLCommerz Hosted Checkout & IPN Webhook Engine | `Payment` | `feat/p6-t04-sslcommerz-gateway-adapter` | `[x] DONE` | `php artisan test --filter=SslcommerzPaymentAdapterTest` |
-| `P6-T05` | Advance Partial COD Delivery Fee Payment Engine & Back-Office UI | `Payment`, `Admin`, `Order` | `feat/p6-t05-payment-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=PaymentAdminTest` |
+| `P6-T05` | Advance Partial COD Delivery Fee Payment Engine & Back-Office UI | `Payment`, `Admin`, `Order` | `feat/p6-t05-payment-admin-ui` | `[x] DONE` | `npm run build && php artisan test --filter=PaymentAdminTest` |
 
 ---
 
-### Detailed Ticket Specifications (Sprint 6 — ACTIVE)
+### Detailed Ticket Specifications (Sprint 6 — COMPLETED)
 
 #### `P6-T01`: Dynamic Payment Gateway Settings & Encrypted Credential Engine
 - **Objective**: Dynamic payment gateway configuration schema with encrypted credentials (`encrypted:array`), active toggles, sandbox flags, gateway codes (`bkash`, `nagad`, `sslcommerz`, `stripe`, `cod`, `bank_transfer`), surcharge rules, transaction records schema, and pre-flight "Test API Connection" action.
@@ -725,10 +725,10 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `routes/web.php`
   - `tests/Feature/PaymentAdminTest.php`
 - **Acceptance Criteria**:
-  - [ ] When fraud engine disables full COD, customer can pay partial advance delivery charge via bKash/Nagad/SSLCommerz to confirm order.
-  - [ ] Order status updates to `confirmed` with `payment_status = 'partial_advance'` and remaining balance marked as `payable_cod_amount_bdt`.
-  - [ ] Admin UI lists all payment gateways with status toggle, credentials form, test connection button, and IPN webhook URLs.
-  - [ ] Vue components compile cleanly, TypeScript passes, feature tests pass.
+  - [x] When fraud engine disables full COD, customer can pay partial advance delivery charge via bKash/Nagad/SSLCommerz to confirm order.
+  - [x] Order status updates to `confirmed` with `payment_status = 'partial_advance'` and remaining balance marked as `payable_cod_amount_bdt`.
+  - [x] Admin UI lists all payment gateways with status toggle, credentials form, test connection button, and IPN webhook URLs.
+  - [x] Vue components compile cleanly, TypeScript passes, feature tests pass (7 passed, 35 assertions).
 
 ---
 
