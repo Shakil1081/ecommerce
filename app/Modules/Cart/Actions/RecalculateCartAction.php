@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Cart\Actions;
 
 use App\Modules\Cart\Models\Cart;
+use App\Modules\Marketing\Models\Coupon;
 use App\Modules\Pricing\Actions\CalculateApplicablePriceAction;
 use App\Modules\Pricing\Models\PricingTier;
 use Illuminate\Support\Carbon;
@@ -49,13 +50,41 @@ final class RecalculateCartAction
             }
         }
 
-        $discount = (string) $cart->discount_amount_bdt;
+        $discount = '0.0000';
+        $couponCode = $cart->coupon_code;
+
+        if ($couponCode !== null) {
+            /** @var Coupon|null $coupon */
+            $coupon = Coupon::query()->where('code', $couponCode)->first();
+            if ($coupon && $coupon->isUsable() && bccomp($subtotal, (string) $coupon->min_order_amount_bdt, 4) >= 0) {
+                if ($coupon->discount_type === Coupon::TYPE_PERCENTAGE) {
+                    $calculated = bcdiv(bcmul($subtotal, (string) $coupon->discount_value, 6), '100', 4);
+                    if ($coupon->max_discount_amount_bdt !== null && bccomp($calculated, (string) $coupon->max_discount_amount_bdt, 4) > 0) {
+                        $discount = (string) $coupon->max_discount_amount_bdt;
+                    } else {
+                        $discount = $calculated;
+                    }
+                } elseif ($coupon->discount_type === Coupon::TYPE_FIXED) {
+                    if (bccomp((string) $coupon->discount_value, $subtotal, 4) > 0) {
+                        $discount = $subtotal;
+                    } else {
+                        $discount = (string) $coupon->discount_value;
+                    }
+                }
+            } else {
+                $couponCode = null;
+                $discount = '0.0000';
+            }
+        }
+
         $total = bcsub($subtotal, $discount, 4);
         if (bccomp($total, '0.0000', 4) < 0) {
             $total = '0.0000';
         }
 
         $cart->update([
+            'coupon_code' => $couponCode,
+            'discount_amount_bdt' => $discount,
             'subtotal_bdt' => $subtotal,
             'total_bdt' => $total,
             'total_items_count' => $totalItems,

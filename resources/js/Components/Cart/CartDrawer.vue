@@ -1,13 +1,34 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { useCartStore } from '@/Stores/cartStore';
 
 const cartStore = useCartStore();
+const couponInput = ref('');
+const couponError = ref<string | null>(null);
+const isApplyingCoupon = ref(false);
 
 onMounted(() => {
   cartStore.fetchCart();
 });
+
+const handleApplyCoupon = async () => {
+  if (!couponInput.value.trim()) return;
+  couponError.value = null;
+  isApplyingCoupon.value = true;
+  const result = await cartStore.applyCoupon(couponInput.value.trim());
+  isApplyingCoupon.value = false;
+  if (result.success) {
+    couponInput.value = '';
+  } else {
+    couponError.value = result.message || 'Failed to apply coupon.';
+  }
+};
+
+const handleRemoveCoupon = async () => {
+  couponError.value = null;
+  await cartStore.removeCoupon();
+};
 </script>
 
 <template>
@@ -132,10 +153,36 @@ onMounted(() => {
 
       <!-- Footer: Totals & Checkout Actions -->
       <div v-if="cartStore.items.length > 0" class="drawer-footer">
+        <!-- Coupon / Promo Code Section -->
+        <div class="coupon-section">
+          <div v-if="cartStore.cart?.coupon_code" class="applied-coupon-pill">
+            <span class="coupon-tag">🏷️ {{ cartStore.cart.coupon_code }}</span>
+            <span class="coupon-discount">-৳{{ Number(cartStore.cart.discount_amount_bdt).toLocaleString() }}</span>
+            <button class="remove-coupon-btn" title="Remove coupon" @click="handleRemoveCoupon">✕</button>
+          </div>
+          <form v-else class="coupon-form" @submit.prevent="handleApplyCoupon">
+            <input
+              v-model="couponInput"
+              type="text"
+              placeholder="Promo code (e.g. EID2026)"
+              class="coupon-input"
+              :disabled="isApplyingCoupon"
+            />
+            <button type="submit" class="btn-apply-coupon" :disabled="isApplyingCoupon || !couponInput.trim()">
+              {{ isApplyingCoupon ? '...' : 'Apply' }}
+            </button>
+          </form>
+          <p v-if="couponError" class="coupon-error-text">{{ couponError }}</p>
+        </div>
+
         <div class="totals-breakdown">
           <div class="totals-row">
             <span class="totals-label">Subtotal</span>
             <span class="totals-value">৳{{ Number(cartStore.subtotal).toLocaleString() }}</span>
+          </div>
+          <div v-if="Number(cartStore.cart?.discount_amount_bdt || 0) > 0" class="totals-row discount-row">
+            <span class="totals-label">Promotional Discount</span>
+            <span class="totals-value discount-val">-৳{{ Number(cartStore.cart?.discount_amount_bdt).toLocaleString() }}</span>
           </div>
           <div class="totals-row">
             <span class="totals-label">Estimated Delivery</span>
@@ -467,6 +514,95 @@ onMounted(() => {
   padding: $space-4 $space-6;
   border-top: 1px solid $color-border;
   background: $color-surface;
+
+  .coupon-section {
+    margin-bottom: $space-4;
+    padding-bottom: $space-3;
+    border-bottom: 1px dashed $color-border;
+
+    .applied-coupon-pill {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba($color-success, 0.08);
+      border: 1px solid rgba($color-success, 0.25);
+      border-radius: $radius-md;
+      padding: $space-2 $space-3;
+      font-size: $fs-xs;
+
+      .coupon-tag {
+        font-weight: 700;
+        color: $color-success;
+        letter-spacing: 0.05em;
+      }
+
+      .coupon-discount {
+        font-weight: 700;
+        color: $color-success;
+      }
+
+      .remove-coupon-btn {
+        background: transparent;
+        border: none;
+        color: $color-text-muted;
+        cursor: pointer;
+        font-size: $fs-sm;
+        line-height: 1;
+        padding: 0 4px;
+
+        &:hover {
+          color: $color-danger;
+        }
+      }
+    }
+
+    .coupon-form {
+      display: flex;
+      gap: $space-2;
+
+      .coupon-input {
+        flex: 1;
+        padding: $space-2 $space-3;
+        font-size: $fs-xs;
+        border: 1px solid $color-border;
+        border-radius: $radius-md;
+        outline: none;
+        text-transform: uppercase;
+
+        &:focus {
+          border-color: $color-primary;
+        }
+      }
+
+      .btn-apply-coupon {
+        padding: $space-2 $space-4;
+        font-size: $fs-xs;
+        font-weight: 700;
+        background: $color-primary;
+        color: white;
+        border: none;
+        border-radius: $radius-md;
+        cursor: pointer;
+        transition: opacity 0.15s;
+
+        &:hover:not(:disabled) {
+          opacity: 0.9;
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+    }
+
+    .coupon-error-text {
+      margin-top: $space-1;
+      font-size: 11px;
+      color: $color-danger;
+      font-weight: 500;
+    }
+  }
 
   .totals-breakdown {
     display: flex;

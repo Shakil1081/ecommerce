@@ -11,6 +11,8 @@ use App\Modules\Cart\Actions\RemoveFromCartAction;
 use App\Modules\Cart\Actions\UpdateCartItemQuantityAction;
 use App\Modules\Cart\Http\Resources\CartResource;
 use App\Modules\Catalog\Models\ProductVariant;
+use App\Modules\Marketing\Actions\ApplyCouponToCartAction;
+use App\Modules\Marketing\Actions\RemoveCouponFromCartAction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -108,6 +110,53 @@ final class CartController extends Controller
         $cart = $getCart($request->user(), is_string($token) ? $token : null);
 
         $updatedCart = $removeAction($cart, $variantId);
+        $updatedCart->loadMissing('items.variant.product.media');
+
+        return (new CartResource($updatedCart))
+            ->response()
+            ->setStatusCode(200);
+    }
+
+    /**
+     * Apply a promotional coupon code to the active cart.
+     */
+    public function applyCoupon(
+        Request $request,
+        GetActiveCartAction $getCart,
+        ApplyCouponToCartAction $applyCouponAction
+    ): JsonResponse {
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:50'],
+        ]);
+
+        $token = $request->cookie('ecommerce_guest_token') ?: $request->header('X-Guest-Token');
+        $cart = $getCart($request->user(), is_string($token) ? $token : null);
+
+        $updatedCart = $applyCouponAction(
+            cart: $cart,
+            code: $validated['code'],
+            user: $request->user(),
+            guestToken: is_string($token) ? $token : null
+        );
+        $updatedCart->loadMissing('items.variant.product.media');
+
+        return (new CartResource($updatedCart))
+            ->response()
+            ->setStatusCode(200);
+    }
+
+    /**
+     * Remove applied promotional coupon from the active cart.
+     */
+    public function removeCoupon(
+        Request $request,
+        GetActiveCartAction $getCart,
+        RemoveCouponFromCartAction $removeCouponAction
+    ): JsonResponse {
+        $token = $request->cookie('ecommerce_guest_token') ?: $request->header('X-Guest-Token');
+        $cart = $getCart($request->user(), is_string($token) ? $token : null);
+
+        $updatedCart = $removeCouponAction($cart);
         $updatedCart->loadMissing('items.variant.product.media');
 
         return (new CartResource($updatedCart))

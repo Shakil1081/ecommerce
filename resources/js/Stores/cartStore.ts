@@ -129,5 +129,35 @@ export const useCartStore = defineStore('cart', {
         this.isLoading = false;
       }
     },
+
+    async applyCoupon(code: string): Promise<{ success: boolean; message?: string }> {
+      this.isLoading = true;
+      try {
+        const response = await axios.post<{ data: CartData }>('/cart/coupon', { code });
+        this.cart = response.data.data;
+        return { success: true };
+      } catch (err: unknown) {
+        let message = 'Invalid promotional coupon code.';
+        if (axios.isAxiosError(err) && err.response?.data) {
+          const data = err.response.data as { message?: string; errors?: Record<string, string[]> };
+          message = data.errors?.code?.[0] || data.message || message;
+        }
+        return { success: false, message };
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async removeCoupon(): Promise<void> {
+      this.isLoading = true;
+      try {
+        const response = await axios.delete<{ data: CartData }>('/cart/coupon');
+        this.cart = response.data.data;
+      } catch (err) {
+        console.error('Failed to remove coupon', err);
+      } finally {
+        this.isLoading = false;
+      }
+    },
   },
 });

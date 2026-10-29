@@ -27,6 +27,8 @@ Route::get('/cart/drawer', [CartController::class, 'index'])->name('cart.drawer'
 Route::post('/cart/items', [CartController::class, 'addItem'])->name('cart.items.add');
 Route::patch('/cart/items/{variantId}', [CartController::class, 'updateQuantity'])->name('cart.items.update');
 Route::delete('/cart/items/{variantId}', [CartController::class, 'removeItem'])->name('cart.items.remove');
+Route::post('/cart/coupon', [CartController::class, 'applyCoupon'])->name('cart.coupon.apply');
+Route::delete('/cart/coupon', [CartController::class, 'removeCoupon'])->name('cart.coupon.remove');
 
 // Dynamic SEO Endpoints
 Route::get('/sitemap.xml', [SitemapController::class, 'sitemap'])->name('seo.sitemap');
