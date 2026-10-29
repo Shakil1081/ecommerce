@@ -17,6 +17,7 @@ use App\Modules\Cart\Http\Controllers\CartController;
 use App\Modules\Communication\Http\Controllers\SocialCommerceFeedController;
 use App\Modules\Communication\Http\Controllers\VoiceCallWebhookController;
 use App\Modules\Communication\Http\Controllers\WhatsAppWebhookController;
+use App\Modules\Customer\Http\Controllers\OrderTrackingController;
 use App\Modules\Logistics\Http\Controllers\PathaoWebhookController;
 use App\Modules\Logistics\Http\Controllers\ShippingLabelController;
 use App\Modules\Logistics\Http\Controllers\SteadfastWebhookController;
@@ -55,6 +56,10 @@ Route::prefix('feeds')->name('feeds.')->group(function () {
     Route::get('/facebook-catalog.csv', [SocialCommerceFeedController::class, 'facebookCatalog'])->name('facebook-catalog');
     Route::get('/tiktok-shop.csv', [SocialCommerceFeedController::class, 'tiktokCatalog'])->name('tiktok-shop');
 });
+
+// Storefront Self-Service Order Tracking Portal
+Route::get('/track-order', [OrderTrackingController::class, 'index'])->name('storefront.order-tracking');
+Route::post('/track-order', [OrderTrackingController::class, 'search'])->name('storefront.order-tracking.search');
 
 // Storefront Checkout & Order Confirmation
 Route::get('/checkout', function () {
