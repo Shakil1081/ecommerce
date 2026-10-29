@@ -32,4 +32,19 @@ class InfrastructureTest extends TestCase
 
         $response->assertStatus(200);
     }
+
+    /**
+     * Test welcome route returns successful Inertia response with required props.
+     */
+    public function test_welcome_route_renders_via_inertia(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) => $page
+            ->component('Welcome')
+            ->has('laravelVersion')
+            ->has('phpVersion')
+        );
+    }
 }

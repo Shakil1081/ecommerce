@@ -30,7 +30,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 |---|---|---|---|---|---|
 | `P1-T01` | Laravel 13 Core & Modular Autoloading Setup | `Common` | `feat/p1-t01-laravel-skeleton` | `[x] DONE` | `php artisan test --filter=InfrastructureTest` |
 | `P1-T02` | SCSS Design Token Architecture (`resources/scss/`) | `Common` | `feat/p1-t02-scss-tokens` | `[x] DONE` | `npm run build` |
-| `P1-T03` | Inertia.js v2 with Vue 3 TypeScript & SSR Shell | `Common`, `Seo` | `feat/p1-t03-inertia-ssr-shell` | `[ ] TODO` | `npm run build:ssr` |
+| `P1-T03` | Inertia.js v2 with Vue 3 TypeScript & SSR Shell | `Common`, `Seo` | `feat/p1-t03-inertia-ssr-shell` | `[x] DONE` | `npm run build:ssr && php artisan test --filter=InfrastructureTest` |
 | `P1-T04` | Dynamic Multi-Cloud Storage Engine (`media_storage_settings`) | `Common`, `Admin` | `feat/p1-t04-storage-engine` | `[ ] TODO` | `php artisan test --filter=StorageEngineTest` |
 | `P1-T05` | Spatie Laravel MediaLibrary & Responsive Breakpoints | `Common` | `feat/p1-t05-media-conversions` | `[ ] TODO` | `php artisan test --filter=MediaServiceTest` |
 | `P1-T06` | Spatie RBAC System & Back-Office Admin Management UI | `Admin` | `feat/p1-t06-rbac-admin-ui` | `[ ] TODO` | `php artisan test --filter=RoleAndStaffTest` |
@@ -79,8 +79,10 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `resources/js/Layouts/AdminLayout.vue`
   - `resources/js/Layouts/CheckoutLayout.vue`
 - **Acceptance Criteria**:
-  - [ ] `npm run build:ssr` outputs valid `bootstrap/ssr/ssr.js`.
-  - [ ] `npx vue-tsc --noEmit` reports 0 TypeScript errors.
+  - [x] `npm run build:ssr` outputs valid `bootstrap/ssr/ssr.js`.
+  - [x] `npx vue-tsc --noEmit` reports 0 TypeScript errors.
+  - [x] Inertia route `/` verified via automated feature test (`InfrastructureTest`).
+  - [x] Base layouts created (`StorefrontLayout.vue`, `AdminLayout.vue`, `CheckoutLayout.vue`).
 
 #### `P1-T04`: Dynamic Multi-Cloud Storage Engine (`media_storage_settings`)
 - **Objective**: Allow administrators to configure storage disks (Local, S3, Cloudflare R2 [zero egress fees], Google Cloud Storage, MinIO) directly in the back-office with pre-flight connection testing.
