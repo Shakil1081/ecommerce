@@ -417,7 +417,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 ---
 
-## 5. Active Sprint: Sprint 5 (Phase 5 — 7-Layer Anti-Fraud, Fake Order Defense & Dynamic Bot Security Settings)
+## 5. Sprint 5 (Phase 5 — 7-Layer Anti-Fraud, Fake Order Defense & Dynamic Bot Security Settings — COMPLETED)
 
 - **Target Phase**: **Phase 5: 7-Layer Anti-Fraud, Fake Order Defense & Dynamic Bot Security Settings**
 - **Sprint Goal**: Implement an enterprise 7-layer defense shield against fake orders, bot submissions, and high-return COD customers: invisible honeypots, client timing guards, Bangladesh telco regex, Shannon entropy gibberish detection, order velocity throttling, cross-courier delivery intelligence APIs, merchant blacklist/whitelist directory, and back-office Google reCAPTCHA / Cloudflare Turnstile toggles.
@@ -436,7 +436,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 ---
 
-### Detailed Ticket Specifications (Sprint 5 — ACTIVE)
+### Detailed Ticket Specifications (Sprint 5 — COMPLETED)
 
 #### `P5-T01`: Invisible Bot Honeypots & Submission Timing Guard
 - **Objective**: Anti-bot honeypot trap with encrypted timing token generation, minimum submission timing guard (< 3.5s = bot flag), and `ensure.human` middleware.
@@ -639,7 +639,100 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 ---
 
-## 6. Product Backlog (Upcoming Sprints)
+## 6. Active Sprint: Sprint 6 (Phase 6 — Dynamic Payment Gateway Module & Advance COD Delivery Engine)
+
+- **Target Phase**: **Phase 6: Dynamic Payment Gateway Module & Advance COD Delivery Engine**
+- **Sprint Goal**: Implement an enterprise pluggable payment architecture with encrypted dynamic gateway configuration (bKash, Nagad, SSLCommerz, Stripe, COD, Bank Transfer), pre-flight "Test API Connection" validation, tokenized/hosted checkout flows, callback webhooks, transaction auditing, and advance partial delivery fee checkout engine for high-risk COD orders.
+- **Sprint Status**: `[ 🟡 IN PROGRESS ] (0 of 5 Tickets Passed)`
+
+### Sprint 6 Ticket Breakdown
+
+| Ticket ID | Task Name / User Story | Module | Git Branch | Status | Verification Command |
+|---|---|---|---|---|---|
+| `P6-T01` | Dynamic Payment Gateway Settings & Encrypted Credential Engine | `Payment`, `Common` | `feat/p6-t01-payment-gateway-settings` | `[ ] TODO` | `php artisan test --filter=PaymentGatewaySettingsTest` |
+| `P6-T02` | bKash Tokenized Checkout Adapter & Webhook Engine | `Payment` | `feat/p6-t02-bkash-gateway-adapter` | `[ ] TODO` | `php artisan test --filter=BkashPaymentAdapterTest` |
+| `P6-T03` | Nagad Checkout Adapter & Cryptographic Verification | `Payment` | `feat/p6-t03-nagad-gateway-adapter` | `[ ] TODO` | `php artisan test --filter=NagadPaymentAdapterTest` |
+| `P6-T04` | SSLCommerz Hosted Checkout & IPN Webhook Engine | `Payment` | `feat/p6-t04-sslcommerz-gateway-adapter` | `[ ] TODO` | `php artisan test --filter=SslcommerzPaymentAdapterTest` |
+| `P6-T05` | Advance Partial COD Delivery Fee Payment Engine & Back-Office UI | `Payment`, `Admin`, `Order` | `feat/p6-t05-payment-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=PaymentAdminTest` |
+
+---
+
+### Detailed Ticket Specifications (Sprint 6 — ACTIVE)
+
+#### `P6-T01`: Dynamic Payment Gateway Settings & Encrypted Credential Engine
+- **Objective**: Dynamic payment gateway configuration schema with encrypted credentials (`encrypted:array`), active toggles, sandbox flags, gateway codes (`bkash`, `nagad`, `sslcommerz`, `stripe`, `cod`, `bank_transfer`), surcharge rules, transaction records schema, and pre-flight "Test API Connection" action.
+- **Files**:
+  - `database/migrations/2026_10_29_600101_create_payment_gateway_settings_table.php`
+  - `database/migrations/2026_10_29_600102_create_payment_transactions_table.php`
+  - `app/Modules/Payment/Models/PaymentGatewaySetting.php`
+  - `app/Modules/Payment/Models/PaymentTransaction.php`
+  - `app/Modules/Payment/Contracts/PaymentGatewayContract.php`
+  - `app/Modules/Payment/Services/PaymentGatewayManager.php`
+  - `app/Modules/Payment/Actions/TestGatewayConnectionAction.php`
+  - `tests/Feature/PaymentGatewaySettingsTest.php`
+- **Acceptance Criteria**:
+  - [ ] Gateway settings table stores credentials encrypted at rest (`encrypted:array`).
+  - [ ] Supports masking sensitive credentials for UI output (`••••••••b7a1`).
+  - [ ] Payment transactions table records ULID, order_id, gateway code, transaction_id, amount_bdt, fee_bdt, status (`pending`, `successful`, `failed`, `refunded`), and raw response payload.
+  - [ ] Test gateway connection action performs mock/live pre-flight handshake before activation.
+  - [ ] Feature tests pass, Pint PSR-12 clean.
+
+#### `P6-T02`: bKash Tokenized Checkout Adapter & Webhook Engine
+- **Objective**: Full bKash Tokenized Checkout driver implementing `PaymentGatewayContract`: grant token, create payment, execute payment, query payment, refund, and webhook callback handling.
+- **Files**:
+  - `app/Modules/Payment/Adapters/BkashPaymentAdapter.php`
+  - `app/Modules/Payment/DTOs/PaymentInitiationResultDto.php`
+  - `app/Modules/Payment/DTOs/PaymentVerificationResultDto.php`
+  - `app/Modules/Payment/Http/Controllers/BkashCallbackController.php`
+  - `tests/Feature/BkashPaymentAdapterTest.php`
+- **Acceptance Criteria**:
+  - [ ] Handles grant token caching and refresh.
+  - [ ] Initiates payment with bKash API and returns payment URL / payment ID.
+  - [ ] Executes and verifies payment on callback URL with transaction logging and order status update.
+  - [ ] Feature tests pass, Pint PSR-12 clean.
+
+#### `P6-T03`: Nagad Checkout Adapter & Cryptographic Verification
+- **Objective**: Nagad digital payment gateway driver with RSA public/private key cryptographic signature generation, merchant authentication, payment initialization, and callback verification.
+- **Files**:
+  - `app/Modules/Payment/Adapters/NagadPaymentAdapter.php`
+  - `app/Modules/Payment/Services/NagadCryptographicService.php`
+  - `app/Modules/Payment/Http/Controllers/NagadCallbackController.php`
+  - `tests/Feature/NagadPaymentAdapterTest.php`
+- **Acceptance Criteria**:
+  - [ ] Signs sensitive payload using merchant private key and verifies Nagad public key signature.
+  - [ ] Initializes payment and returns Nagad redirect checkout URL.
+  - [ ] Handles callback confirmation and updates order payment status.
+  - [ ] Feature tests pass, Pint PSR-12 clean.
+
+#### `P6-T04`: SSLCommerz Hosted Checkout & IPN Webhook Engine
+- **Objective**: SSLCommerz hosted session gateway adapter, transaction initiation, IPN (Instant Payment Notification) callback listener, and MD5/validation hash verification.
+- **Files**:
+  - `app/Modules/Payment/Adapters/SslcommerzPaymentAdapter.php`
+  - `app/Modules/Payment/Http/Controllers/SslcommerzCallbackController.php`
+  - `tests/Feature/SslcommerzPaymentAdapterTest.php`
+- **Acceptance Criteria**:
+  - [ ] Initiates session with store_id/store_passwd and returns gateway redirect URL.
+  - [ ] Verifies IPN / return callback payload with SSLCommerz transaction validation API.
+  - [ ] Marks payment transaction as successful and updates order.
+  - [ ] Feature tests pass, Pint PSR-12 clean.
+
+#### `P6-T05`: Advance Partial COD Delivery Fee Payment Engine & Back-Office UI
+- **Objective**: Integration of dynamic payment options into checkout, advance partial delivery fee collection (৳100/৳150) for high-risk COD orders, and full back-office Vue 3 Inertia management UI for payment gateways.
+- **Files**:
+  - `app/Modules/Payment/Actions/ProcessAdvanceDeliveryPaymentAction.php`
+  - `app/Modules/Admin/Http/Controllers/PaymentAdminController.php`
+  - `resources/js/Pages/Admin/Settings/PaymentGatewaySettings.vue`
+  - `routes/web.php`
+  - `tests/Feature/PaymentAdminTest.php`
+- **Acceptance Criteria**:
+  - [ ] When fraud engine disables full COD, customer can pay partial advance delivery charge via bKash/Nagad/SSLCommerz to confirm order.
+  - [ ] Order status updates to `confirmed` with `payment_status = 'partial_advance'` and remaining balance marked as `payable_cod_amount_bdt`.
+  - [ ] Admin UI lists all payment gateways with status toggle, credentials form, test connection button, and IPN webhook URLs.
+  - [ ] Vue components compile cleanly, TypeScript passes, feature tests pass.
+
+---
+
+## 7. Product Backlog (Upcoming Sprints)
 
 | Sprint / Phase | Phase Name | Primary Domain Modules | Estimated Tickets |
 |---|---|---|---|
