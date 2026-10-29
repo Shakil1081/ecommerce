@@ -736,7 +736,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 - **Target Phase**: **Phase 7: Automated Courier Logistics, Dynamic Delivery Pricing & Payout Reconciliation** (`app/Modules/Logistics/`)
 - **Sprint Goal**: Scaffold multi-courier gateway adapters with encrypted database credentials for **Steadfast**, **Pathao**, **RedX**, **Paperfly**, and **Sundarban**, 1-click consignment booking, printable 4x6 thermal barcode shipping labels, live tracking webhooks, dynamic zone-based delivery pricing calculation, and automated Cash on Delivery (COD) payout reconciliation.
-- **Sprint Status**: `[ ⏳ IN PROGRESS ] (4 of 6 Tickets Completed)`
+- **Sprint Status**: `[ ⏳ IN PROGRESS ] (5 of 6 Tickets Completed)`
 
 ### Sprint 7 Ticket Breakdown
 
@@ -746,7 +746,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 | `P7-T02` | Steadfast Courier Driver & Tracking Webhook Listener | `Logistics` | `feat/p7-t02-steadfast-courier-driver` | `[x] DONE` | `php artisan test --filter=SteadfastCourierAdapterTest` |
 | `P7-T03` | Pathao Courier Driver & Tracking Webhook Listener | `Logistics` | `feat/p7-t03-pathao-courier-driver` | `[x] DONE` | `php artisan test --filter=PathaoCourierAdapterTest` |
 | `P7-T04` | Dynamic Zone-Based Delivery Pricing Engine | `Logistics`, `Order`, `Cart` | `feat/p7-t04-delivery-pricing-engine` | `[x] DONE` | `php artisan test --filter=DeliveryPricingEngineTest` |
-| `P7-T05` | Printable 4x6 Thermal Barcode Shipping Labels & Consignment Booking | `Logistics`, `Order` | `feat/p7-t05-shipping-label-printer` | `[ ] TODO` | `php artisan test --filter=ShippingLabelTest` |
+| `P7-T05` | Printable 4x6 Thermal Barcode Shipping Labels & Consignment Booking | `Logistics`, `Order` | `feat/p7-t05-shipping-label-printer` | `[x] DONE` | `php artisan test --filter=ShippingLabelTest` |
 | `P7-T06` | Back-Office Courier Gateway Management & COD Cash Reconciliation UI | `Logistics`, `Admin` | `feat/p7-t06-courier-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=CourierAdminTest` |
 
 ---
@@ -825,10 +825,10 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Logistics/Http/Controllers/ShippingLabelController.php`
   - `tests/Feature/ShippingLabelTest.php`
 - **Acceptance Criteria**:
-  - [ ] Dispatches order to active courier driver, records `CourierConsignment`, updates order status to `dispatched`.
-  - [ ] Bulk booking dispatches multiple confirmed orders in a single request.
-  - [ ] Generates clean, printer-ready 4x6 thermal barcode shipping label view with barcode, COD collection box, recipient address, and merchant branding.
-  - [ ] Feature tests pass, Pint PSR-12 clean.
+  - [x] Dispatches order to active courier driver, records `CourierConsignment`, updates order status to `dispatched`.
+  - [x] Bulk booking dispatches multiple confirmed orders in a single request.
+  - [x] Generates clean, printer-ready 4x6 thermal barcode shipping label view with barcode, COD collection box, recipient address, and merchant branding.
+  - [x] Feature tests pass, Pint PSR-12 clean.
 
 #### `P7-T06`: Back-Office Courier Gateway Management & COD Cash Reconciliation UI
 - **Objective**: Comprehensive back-office courier management portal: gateway settings editor, pre-flight test connection button, zone rate editor, courier consignment status list, and automated COD cash disbursement reconciliation tracking (`courier_disbursements` and `courier_disbursement_items`).
