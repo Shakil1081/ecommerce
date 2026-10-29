@@ -1,0 +1,111 @@
+name: 🚀 Feature / Phase Micro-Task
+description: Propose a specific feature or sub-milestone task from PHASE_PLAN.md.
+title: "[TASK]: "
+labels: ["feature", "phase-execution"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### Enterprise E-Commerce Feature Task
+        Please ensure all fields are filled according to the standards defined in `AGENTS.md` and `PHASE_PLAN.md`.
+
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Target Phase
+      description: Select which phase of the master plan this task belongs to.
+      options:
+        - "Phase 1: Foundation, Infrastructure, Storage & RBAC"
+        - "Phase 2: Core Catalog, Variants, Inventory & Reviews"
+        - "Phase 3: Dual Sourcing Procurement & Landed Cost"
+        - "Phase 4: Cart Engine, Coupons & Order State Machine"
+        - "Phase 5: 7-Layer Anti-Fraud & Bot Defense"
+        - "Phase 6: Dynamic Payment Gateway Module"
+        - "Phase 7: Automated Courier Logistics & Pricing"
+        - "Phase 8: Omnichannel, Voice AI & Customer Portal"
+        - "Phase 9: Bangladesh NBR VAT & RMA Return Engine"
+        - "Phase 10: AI Intelligence, Trading P&L & QA"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: Target Domain Module
+      description: Select the primary domain module under `app/Modules/`.
+      options:
+        - Common / Infrastructure
+        - Catalog
+        - Procurement
+        - Inventory
+        - Pricing
+        - Cart
+        - Order
+        - Payment
+        - Logistics
+        - Communication
+        - Marketing
+        - AI
+        - Seo
+        - TaxCompliance
+        - Customer
+        - Admin
+    validations:
+      required: true
+
+  - type: input
+    id: milestone_ref
+    attributes:
+      label: PHASE_PLAN Milestone Reference
+      description: E.g., Milestone 1.4 (Dynamic Multi-Cloud Storage) or Milestone 2.3 (Pricing Engine).
+      placeholder: "Milestone X.Y: ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: user_story
+    attributes:
+      label: User Story & Business Objective
+      description: Describe what this task accomplishes and its business/commercial value.
+      placeholder: "As a [role], I want to [action] so that [business outcome]..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: files
+    attributes:
+      label: Target Files to Create / Modify
+      description: List specific PHP actions, migrations, models, or Vue components.
+      placeholder: |
+        - `database/migrations/xxxx_create_example_table.php`
+        - `app/Modules/Domain/Actions/ExampleAction.php`
+        - `resources/js/Pages/Admin/Domain/ExampleView.vue`
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria Checklist
+      description: Define clear, testable checkboxes for task completion.
+      value: |
+        - [ ] Strict types declared (`declare(strict_types=1);`)
+        - [ ] Business logic isolated in single-responsibility Action class (`__invoke`)
+        - [ ] Dedicated Form Request used for incoming request validation
+        - [ ] Monetary/Tax calculations use integer minor units or `DECIMAL(14, 4)`
+        - [ ] Database transactions and concurrency locks (`lockForUpdate()`) applied where required
+        - [ ] Feature/Unit test written and passing
+        - [ ] `./vendor/bin/pint --test` passes with zero PSR-12 issues
+        - [ ] `npx vue-tsc --noEmit` reports 0 TypeScript errors
+    validations:
+      required: true
+
+  - type: input
+    id: verification_command
+    attributes:
+      label: Verification Command
+      description: The exact command to verify this ticket.
+      placeholder: "php artisan test --filter=ExampleTest"
+    validations:
+      required: true
+

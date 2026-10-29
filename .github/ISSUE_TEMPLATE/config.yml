@@ -1,0 +1,9 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Architecture & Phase Plan Reference
+    url: https://github.com/Shakil1081/ecommerce/blob/main/PHASE_PLAN.md
+    about: Review the Master 10-Phase Development Plan before opening new tasks.
+  - name: Domain Rules & Architectural Guidelines
+    url: https://github.com/Shakil1081/ecommerce/blob/main/AGENTS.md
+    about: Review domain rules, tax compliance, anti-fraud algorithms, and coding standards.
+
