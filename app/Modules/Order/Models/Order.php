@@ -10,6 +10,7 @@ use App\Modules\Common\Models\BangladeshDivision;
 use App\Modules\Common\Models\BangladeshThana;
 use App\Modules\Logistics\Models\CourierConsignment;
 use App\Modules\Payment\Models\PaymentTransaction;
+use App\Modules\TaxCompliance\Models\Mushak63Invoice;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -224,6 +225,11 @@ class Order extends Model
     public function latestConsignment(): HasOne
     {
         return $this->hasOne(CourierConsignment::class, 'order_id')->latestOfMany();
+    }
+
+    public function mushak63Invoice(): HasOne
+    {
+        return $this->hasOne(Mushak63Invoice::class, 'order_id');
     }
 
     public function division(): BelongsTo
