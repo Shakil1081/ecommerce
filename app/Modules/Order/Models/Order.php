@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Modules\Common\Models\BangladeshDistrict;
 use App\Modules\Common\Models\BangladeshDivision;
 use App\Modules\Common\Models\BangladeshThana;
+use App\Modules\Logistics\Models\CourierConsignment;
 use App\Modules\Payment\Models\PaymentTransaction;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
 /**
@@ -212,6 +214,16 @@ class Order extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(PaymentTransaction::class, 'order_id')->orderBy('created_at', 'desc');
+    }
+
+    public function consignments(): HasMany
+    {
+        return $this->hasMany(CourierConsignment::class, 'order_id')->orderBy('created_at', 'desc');
+    }
+
+    public function latestConsignment(): HasOne
+    {
+        return $this->hasOne(CourierConsignment::class, 'order_id')->latestOfMany();
     }
 
     public function division(): BelongsTo

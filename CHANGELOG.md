@@ -10,8 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Automated Courier Logistics & Payout Reconciliation (`App\Modules\Logistics`)**:
-  - Upcoming multi-courier booking and reconciliation engine.
+- **Dynamic Courier Gateway Settings & Consignment Ledger (`App\Modules\Logistics`)**:
+  - Dynamic courier gateway configuration schema with encrypted credentials (`encrypted:array`), active toggles, sandbox flags, live base URLs, supported features JSON array, and pre-flight "Test Courier API Connection" action (`CourierGatewaySetting`, `TestCourierConnectionAction`).
+  - Unified `CourierGatewayManager` and `CourierAdapterContract` interface for decoupled multi-carrier logistics (Steadfast, Pathao, RedX, Paperfly, Sundarban).
+  - Courier consignments tracking ledger (`CourierConsignment`) tracking ULIDs, order IDs, courier codes, consignment IDs, tracking numbers, delivery zones, fees, COD amounts, and webhook payloads with relationships on `Order` (`$order->consignments`, `$order->latestConsignment`).
+  - Standardized DTO contracts: `CourierBookingResultDto`, `CourierTrackingResultDto`, and `CourierConnectionTestResultDto`.
+  - Database seeder (`CourierGatewaySeeder`) initializing default courier settings for Bangladesh providers.
 
 ---
 
