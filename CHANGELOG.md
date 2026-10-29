@@ -9,26 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.3.0] - 2026-10-29
+
 ### Added
-- Comprehensive 10-Phase master execution plan (`PHASE_PLAN.md`) incorporating:
-  - Dynamic Multi-Cloud Storage Engine (Local, AWS S3, Cloudflare R2, GCS, MinIO).
-  - Promotional SMS Campaign Manager with live Bangla Unicode character counter, audience segmentation, BTRC regulatory sending window enforcement (9:00 AM – 8:00 PM), and delivery promotion ROI tracking.
-  - Customer Support & Helpdesk Ticket System with category filters, damaged goods photo viewer, and AI Smart Reply Assistant.
-  - In-App Release Log Viewer (`SystemUpdates.vue`) and automated GitHub Release workflow (`.github/workflows/release.yml`).
-  - Role-Based Access Control (RBAC) with Spatie Permission and Back-Office Admin Management UI.
-  - Customer Reviews, Ratings, and photo uploads with Spatie MediaLibrary.
-  - Coupons and promotional discount engine.
-  - Dynamic bot defense settings (reCAPTCHA v2/v3, Turnstile) with granular page toggles.
-  - Automated Courier Logistics with COD Remittance Batch Reconciliation.
-  - Customer Portal with saved address book and B2B Trade Account verification.
-  - Marketing engine with multi-step abandoned cart WhatsApp/SMS sequences.
-  - NBR-compliant RMA and Sales Return lifecycle with warehouse inspection.
-  - Immutable audit logging for price changes, stock adjustments, and refunds.
-- GitHub Actions automated CI workflow (`.github/workflows/ci.yml`) for Laravel Pint, Pest/PHPUnit, and Vue 3 / TypeScript compilation.
-- GitHub Issue Form templates (`.github/ISSUE_TEMPLATE/feature_task.yml`, `bug_report.yml`, `config.yml`).
-- GitHub Pull Request template (`.github/PULL_REQUEST_TEMPLATE.md`) with domain verification checklist.
-- Git-tracked living sprint task board (`TASK_BOARD.md`) breaking down Phase 1 into 7 execution tickets (`P1-T01` to `P1-T07`).
-- Architecture Decision Records framework (`docs/adr/`).
+- **Dual Sourcing Procurement Module (`App\Modules\Procurement`)**:
+  - Global Commercial Importation tracking with Proforma Invoices (PI), Commercial Invoices (CI), Letter of Credit (LC), and Telegraphic Transfer (TT).
+  - FX Currency conversion at bank settlement exchange rates in Bangladeshi Taka (BDT ৳).
+  - Bangladesh Customs Bill of Entry (BOE / বিল অফ এন্ট্রি) with statutory tariffs at Chattogram / Dhaka ICD ports: Customs Duty (CD), Regulatory Duty (RD), Supplementary Duty (SD), Advance Tax (AT - 5%), and Advance Income Tax (AIT - 5%).
+  - Domestic Bangladesh Procurement in BDT (৳) with supplier NBR Mushak 6.3 Tax Invoices.
+  - VDS (VAT Deducted at Source) calculation and automated issuance of statutory NBR **Mushak 6.6 Certificates (উৎসে মূসক কর্তন সনদপত্র)**.
+  - TDS (Tax Deducted at Source) withholding under the Income Tax Act 2023.
+  - Unified Landed Cost Allocation Engine (`CalculateImportLandedCostAction`, `CalculateLocalLandedCostAction`) absorbing ocean/air freight, marine insurance, C&F port charges, customs tariffs, and local transport into true BDT unit COGS.
+  - Inward Goods Received Notes (GRN) with barcode scanner logging, discrepancy notes, and atomic multi-depot physical inventory intake.
+  - Back-office Vue 3 Inertia management UI for Suppliers Directory (`SupplierIndex.vue`), Import Orders (`ImportOrderIndex.vue`), Local Purchase Orders (`LocalPoIndex.vue`), and GRN Intake (`GrnReceiving.vue`).
+
+---
+
+## [0.2.0] - 2026-10-29
+
+### Added
+- **Catalog, Matrix Variants, Multi-Warehouse Inventory & Reviews (`App\Modules\Catalog`, `Inventory`, `Pricing`)**:
+  - Bangladesh Geographic Administrative Boundaries (8 Divisions, 64 Districts, Thanas) with courier delivery zone tagging (`inside_dhaka`, `dhaka_suburbs`, `outside_dhaka`) and bilingual seeder.
+  - Category hierarchy tree with SEO slugs and brand profiles with country of origin.
+  - Matrix product engine with Cartesian variant generator (SKUs, Barcodes/EAN-13, and statutory customs HS codes).
+  - B2B Wholesale Tier Pricing & MOQ volume discount engine (`CalculateApplicablePriceAction`).
+  - Multi-Warehouse Inventory Hubs (Central & Regional) with atomic stock tracking.
+  - Inter-Depot Stock Transfers with statutory NBR **Mushak 6.5 Transfer Challan (চুক্তিবদ্ধ বা আন্তঃডিপো স্থানান্তর চালানপত্র)**.
+  - Customer 1-5 star reviews with verified buyer badges and Spatie MediaLibrary customer photo attachments.
+  - Admin Catalog Management & Matrix Variant Editor UI (`ProductIndex.vue`, `ProductForm.vue`, `ProductMatrixEditor.vue`).
 
 ---
 
