@@ -71,3 +71,4 @@ class Warehouse extends Model
         return $query->where('is_primary', true);
     }
 }
+

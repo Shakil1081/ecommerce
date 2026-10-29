@@ -36,3 +36,4 @@ class ModerateProductReviewAction
         return $review->refresh();
     }
 }
+

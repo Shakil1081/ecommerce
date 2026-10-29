@@ -100,3 +100,4 @@ class ProductReview extends Model implements HasMedia
             ->useDisk((string) config('media-library.disk_name', 'media'));
     }
 }
+

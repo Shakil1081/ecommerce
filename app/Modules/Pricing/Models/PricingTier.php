@@ -71,3 +71,4 @@ class PricingTier extends Model
         return $query->where('customer_group', self::GROUP_WHOLESALE);
     }
 }
+

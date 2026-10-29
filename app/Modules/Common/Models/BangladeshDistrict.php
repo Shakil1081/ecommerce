@@ -85,3 +85,4 @@ class BangladeshDistrict extends Model
         return $query->where('zone_type', self::ZONE_OUTSIDE_DHAKA);
     }
 }
+

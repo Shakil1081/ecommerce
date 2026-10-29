@@ -103,3 +103,4 @@ class GenerateProductVariantsAction
         return $result;
     }
 }
+

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Admin\Http\Controllers\CatalogController;
 use App\Modules\Admin\Http\Controllers\MediaStorageController;
 use App\Modules\Admin\Http\Controllers\RoleController;
 use App\Modules\Admin\Http\Controllers\StaffUserController;
@@ -25,6 +26,11 @@ Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('seo.robot
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::resource('roles', RoleController::class);
     Route::resource('staff', StaffUserController::class);
+
+    // Catalog & Matrix Variant Management
+    Route::resource('products', CatalogController::class);
+    Route::get('products/{product}/matrix', [CatalogController::class, 'matrix'])->name('products.matrix');
+    Route::post('products/{product}/generate-variants', [CatalogController::class, 'generateVariants'])->name('products.generate-variants');
 
     Route::prefix('settings')->name('settings.')->group(function () {
         Route::get('/media-storage', [MediaStorageController::class, 'index'])->name('media-storage.index');
