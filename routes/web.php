@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Admin\Http\Controllers\BotSecuritySettingsController;
 use App\Modules\Admin\Http\Controllers\CatalogController;
 use App\Modules\Admin\Http\Controllers\FraudDirectoryAdminController;
 use App\Modules\Admin\Http\Controllers\MediaStorageController;
@@ -73,6 +74,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/media-storage', [MediaStorageController::class, 'store'])->name('media-storage.store');
         Route::post('/media-storage/test', [MediaStorageController::class, 'test'])->name('media-storage.test');
         Route::delete('/media-storage/{setting}', [MediaStorageController::class, 'destroy'])->name('media-storage.destroy');
+
+        // Bot Protection & CAPTCHA Settings
+        Route::get('/bot-security', [BotSecuritySettingsController::class, 'index'])->name('bot-security.index');
+        Route::post('/bot-security', [BotSecuritySettingsController::class, 'save'])->name('bot-security.save');
+        Route::post('/bot-security/test', [BotSecuritySettingsController::class, 'testConnection'])->name('bot-security.test');
 
         Route::get('/system', [SystemInfoController::class, 'index'])->name('system');
     });
