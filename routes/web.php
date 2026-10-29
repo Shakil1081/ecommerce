@@ -14,6 +14,7 @@ use App\Modules\Admin\Http\Controllers\RoleController;
 use App\Modules\Admin\Http\Controllers\StaffUserController;
 use App\Modules\Admin\Http\Controllers\SystemInfoController;
 use App\Modules\Cart\Http\Controllers\CartController;
+use App\Modules\Communication\Http\Controllers\VoiceCallWebhookController;
 use App\Modules\Communication\Http\Controllers\WhatsAppWebhookController;
 use App\Modules\Logistics\Http\Controllers\PathaoWebhookController;
 use App\Modules\Logistics\Http\Controllers\ShippingLabelController;
@@ -79,6 +80,13 @@ Route::prefix('webhooks/courier')->name('webhooks.courier.')->group(function () 
 // Omnichannel WhatsApp Webhook
 Route::get('/webhooks/whatsapp', [WhatsAppWebhookController::class, 'verify'])->name('webhooks.whatsapp.verify');
 Route::post('/webhooks/whatsapp', [WhatsAppWebhookController::class, 'handle'])->name('webhooks.whatsapp.handle');
+
+// AI Automated Voice Calling Webhooks
+Route::prefix('webhooks/voice')->name('webhooks.voice.')->group(function () {
+    Route::match(['GET', 'POST'], '/twiml', [VoiceCallWebhookController::class, 'twiml'])->name('twiml');
+    Route::post('/gather', [VoiceCallWebhookController::class, 'gather'])->name('gather');
+    Route::post('/status', [VoiceCallWebhookController::class, 'status'])->name('status');
+});
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::resource('roles', RoleController::class);

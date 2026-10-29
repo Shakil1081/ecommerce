@@ -854,7 +854,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 - **Target Phase**: **Phase 8: Omnichannel Messaging, Voice AI Verification, Social Commerce & Customer Portal** (`app/Modules/Communication/`, `app/Modules/Marketing/`, `app/Modules/Customer/`)
 - **Sprint Goal**: Implement an enterprise omnichannel communication infrastructure: database-configured dynamic SMTP settings with pre-flight handshake, Bangladesh SMS gateway adapters (Greenweb, Reve SMS, Twilio) with medium-risk order OTP verification, WhatsApp Business API order alert triggers with digital invoice delivery, AI Automated Outbound Voice Calling Verification Agent with DTMF touch-tone (1=confirm, 2=cancel) and speech intent detection, multi-step abandoned cart recovery sequencers, social commerce product feeds (Google Merchant Center XML, Facebook Catalog CSV/XML, TikTok Shop), public self-service order tracking portal with milestone timeline, and a full back-office communication administration dashboard.
-- **Sprint Status**: `[ ⏳ IN PROGRESS ] (3 of 8 Tickets Completed)`
+- **Sprint Status**: `[ ⏳ IN PROGRESS ] (4 of 8 Tickets Completed)`
 
 ### Sprint 8 Ticket Breakdown
 
@@ -863,7 +863,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 | `P8-T01` | Dynamic SMTP Mail Settings Engine & Pre-Flight Handshake | `Communication`, `Admin` | `feat/p8-t01-smtp-mail-settings` | `[x] DONE` | `php artisan test --filter=MailSettingsTest` |
 | `P8-T02` | Dynamic SMS Gateway Engine (Greenweb, Reve, Twilio) & OTP Verification | `Communication`, `Order` | `feat/p8-t02-sms-gateway-otp` | `[x] DONE` | `php artisan test --filter=SmsGatewayTest` |
 | `P8-T03` | WhatsApp Business API Integration & Order Lifecycle Alerts | `Communication`, `Order` | `feat/p8-t03-whatsapp-integration` | `[x] DONE` | `php artisan test --filter=WhatsAppNotificationTest` |
-| `P8-T04` | AI Automated Outbound Voice Calling Verification Agent | `Communication`, `Order` | `feat/p8-t04-voice-calling-verification` | `[ ] TODO` | `php artisan test --filter=VoiceCallingVerificationTest` |
+| `P8-T04` | AI Automated Outbound Voice Calling Verification Agent | `Communication`, `Order` | `feat/p8-t04-voice-calling-verification` | `[x] DONE` | `php artisan test --filter=VoiceCallingVerificationTest` |
 | `P8-T05` | Abandoned Cart Multi-Step Recovery Engine & SMS/WhatsApp Sequencer | `Marketing`, `Cart` | `feat/p8-t05-cart-recovery-sequencer` | `[ ] TODO` | `php artisan test --filter=AbandonedCartRecoveryTest` |
 | `P8-T06` | Social Commerce Feeds (Google Merchant Center, Facebook, TikTok) | `Communication`, `Catalog` | `feat/p8-t06-social-commerce-feeds` | `[ ] TODO` | `php artisan test --filter=SocialCommerceFeedsTest` |
 | `P8-T07` | Customer Self-Service Order Tracking Portal & Storefront UX | `Customer`, `Order` | `feat/p8-t07-order-tracking-portal` | `[ ] TODO` | `php artisan test --filter=OrderTrackingPortalTest` |
@@ -935,6 +935,32 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - [x] Automated action formats dynamic payloads for Confirmed, Dispatched, and Delivered orders with tracking and invoice links.
   - [x] Webhook controller handles Meta verification GET handshake and POST status updates.
   - [x] Feature tests pass (7 passed, 26 assertions), Pint PSR-12 clean.
+
+#### `P8-T04`: AI Automated Outbound Voice Calling Verification Agent
+- **Objective**: Outbound AI voice calling verification engine connecting Twilio Voice to dial customer phone numbers for Cash on Delivery (COD) orders, dual-mode DTMF touch-tone (1=confirm, 2=cancel) and speech intent detection, automated order transitions, call audit logs, and pre-flight "Make Test Call" action.
+- **Files**:
+  - `database/migrations/2026_10_29_800401_create_voice_calling_settings_table.php`
+  - `database/migrations/2026_10_29_800402_create_voice_call_logs_table.php`
+  - `app/Modules/Communication/Models/VoiceCallingSetting.php`
+  - `app/Modules/Communication/Models/VoiceCallLog.php`
+  - `app/Modules/Communication/Contracts/VoiceCallingContract.php`
+  - `app/Modules/Communication/DTOs/VoiceCallInitiationResultDto.php`
+  - `app/Modules/Communication/DTOs/VoiceCallTestResultDto.php`
+  - `app/Modules/Communication/Services/TwilioVoiceAdapter.php`
+  - `app/Modules/Communication/Services/VoiceCallingManager.php`
+  - `app/Modules/Communication/Actions/TriggerVoiceVerificationCallAction.php`
+  - `app/Modules/Communication/Actions/TestVoiceCallAction.php`
+  - `app/Modules/Communication/Http/Controllers/VoiceCallWebhookController.php`
+  - `routes/web.php`
+  - `bootstrap/app.php`
+  - `tests/Feature/VoiceCallingVerificationTest.php`
+- **Acceptance Criteria**:
+  - [x] Database schema for voice settings with encrypted credentials and call logs table.
+  - [x] Twilio Voice adapter initiates outbound calls with TwiML webhook URL and status callbacks.
+  - [x] Pre-flight "Make Test Call" action tests live outbound connectivity.
+  - [x] Webhook renders dynamic bilingual Bangla prompt with `<Gather numDigits="1">`.
+  - [x] DTMF 1 immediately transitions order to confirmed; DTMF 2 cancels order and logs reason.
+  - [x] Feature tests pass (8 passed, 43 assertions), Pint PSR-12 clean.
 
 ---
 

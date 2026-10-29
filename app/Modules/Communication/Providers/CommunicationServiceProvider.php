@@ -7,6 +7,7 @@ namespace App\Modules\Communication\Providers;
 use App\Modules\Communication\Actions\ConfigureDynamicMailerAction;
 use App\Modules\Communication\Models\MailSetting;
 use App\Modules\Communication\Services\SmsGatewayManager;
+use App\Modules\Communication\Services\VoiceCallingManager;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Throwable;
@@ -17,6 +18,7 @@ class CommunicationServiceProvider extends ServiceProvider
     {
         $this->app->singleton(ConfigureDynamicMailerAction::class);
         $this->app->singleton(SmsGatewayManager::class);
+        $this->app->singleton(VoiceCallingManager::class);
     }
 
     public function boot(): void

@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'payment/sslcommerz/*',
             'webhooks/courier/*',
             'webhooks/whatsapp',
+            'webhooks/voice/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
