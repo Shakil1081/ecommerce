@@ -20,7 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Order velocity throttling enforcing max 1 active unfulfilled COD order per phone, and max 2 orders/day burst limits per IP and device fingerprint (`CheckOrderVelocityAction`).
   - Added indexed `ip_address`, `device_fingerprint`, and `user_agent` metadata tracking on Orders table.
   - Invisible bot honeypot traps and checkout submission timing guards with encrypted tokens (`HoneypotTimingGuardService`).
-  - Merchant blacklist and whitelist directory (`customer_fraud_lists`).
+  - Merchant blacklist and whitelist directory (`customer_fraud_lists`) with Vue 3 Inertia management UI (`FraudDirectory.vue`, `FraudDirectoryAdminController`).
+  - Automated directory matching action (`CheckCustomerFraudListAction`) enabling VIP zero-friction checkout for whitelisted customers and instant blocks for blacklisted actors.
   - Google reCAPTCHA / Cloudflare Turnstile dynamic bot protection settings.
 
 ---
