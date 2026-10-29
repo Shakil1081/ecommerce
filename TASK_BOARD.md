@@ -643,7 +643,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 - **Target Phase**: **Phase 6: Dynamic Payment Gateway Module & Advance COD Delivery Engine**
 - **Sprint Goal**: Implement an enterprise pluggable payment architecture with encrypted dynamic gateway configuration (bKash, Nagad, SSLCommerz, Stripe, COD, Bank Transfer), pre-flight "Test API Connection" validation, tokenized/hosted checkout flows, callback webhooks, transaction auditing, and advance partial delivery fee checkout engine for high-risk COD orders.
-- **Sprint Status**: `[ 🟡 IN PROGRESS ] (2 of 5 Tickets Passed)`
+- **Sprint Status**: `[ 🟡 IN PROGRESS ] (3 of 5 Tickets Passed)`
 
 ### Sprint 6 Ticket Breakdown
 
@@ -651,7 +651,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 |---|---|---|---|---|---|
 | `P6-T01` | Dynamic Payment Gateway Settings & Encrypted Credential Engine | `Payment`, `Common` | `feat/p6-t01-payment-gateway-settings` | `[x] DONE` | `php artisan test --filter=PaymentGatewaySettingsTest` |
 | `P6-T02` | bKash Tokenized Checkout Adapter & Webhook Engine | `Payment` | `feat/p6-t02-bkash-gateway-adapter` | `[x] DONE` | `php artisan test --filter=BkashPaymentAdapterTest` |
-| `P6-T03` | Nagad Checkout Adapter & Cryptographic Verification | `Payment` | `feat/p6-t03-nagad-gateway-adapter` | `[ ] TODO` | `php artisan test --filter=NagadPaymentAdapterTest` |
+| `P6-T03` | Nagad Checkout Adapter & Cryptographic Verification | `Payment` | `feat/p6-t03-nagad-gateway-adapter` | `[x] DONE` | `php artisan test --filter=NagadPaymentAdapterTest` |
 | `P6-T04` | SSLCommerz Hosted Checkout & IPN Webhook Engine | `Payment` | `feat/p6-t04-sslcommerz-gateway-adapter` | `[ ] TODO` | `php artisan test --filter=SslcommerzPaymentAdapterTest` |
 | `P6-T05` | Advance Partial COD Delivery Fee Payment Engine & Back-Office UI | `Payment`, `Admin`, `Order` | `feat/p6-t05-payment-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=PaymentAdminTest` |
 
@@ -699,10 +699,10 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Payment/Http/Controllers/NagadCallbackController.php`
   - `tests/Feature/NagadPaymentAdapterTest.php`
 - **Acceptance Criteria**:
-  - [ ] Signs sensitive payload using merchant private key and verifies Nagad public key signature.
-  - [ ] Initializes payment and returns Nagad redirect checkout URL.
-  - [ ] Handles callback confirmation and updates order payment status.
-  - [ ] Feature tests pass, Pint PSR-12 clean.
+  - [x] Signs sensitive payload using merchant private key and verifies Nagad public key signature.
+  - [x] Initializes payment and returns Nagad redirect checkout URL.
+  - [x] Handles callback confirmation and updates order payment status.
+  - [x] Feature tests pass (8 passed, 36 assertions), Pint PSR-12 clean.
 
 #### `P6-T04`: SSLCommerz Hosted Checkout & IPN Webhook Engine
 - **Objective**: SSLCommerz hosted session gateway adapter, transaction initiation, IPN (Instant Payment Notification) callback listener, and MD5/validation hash verification.
