@@ -854,7 +854,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 - **Target Phase**: **Phase 8: Omnichannel Messaging, Voice AI Verification, Social Commerce & Customer Portal** (`app/Modules/Communication/`, `app/Modules/Marketing/`, `app/Modules/Customer/`)
 - **Sprint Goal**: Implement an enterprise omnichannel communication infrastructure: database-configured dynamic SMTP settings with pre-flight handshake, Bangladesh SMS gateway adapters (Greenweb, Reve SMS, Twilio) with medium-risk order OTP verification, WhatsApp Business API order alert triggers with digital invoice delivery, AI Automated Outbound Voice Calling Verification Agent with DTMF touch-tone (1=confirm, 2=cancel) and speech intent detection, multi-step abandoned cart recovery sequencers, social commerce product feeds (Google Merchant Center XML, Facebook Catalog CSV/XML, TikTok Shop), public self-service order tracking portal with milestone timeline, and a full back-office communication administration dashboard.
-- **Sprint Status**: `[ ⏳ IN PROGRESS ] (4 of 8 Tickets Completed)`
+- **Sprint Status**: `[ ⏳ IN PROGRESS ] (5 of 8 Tickets Completed)`
 
 ### Sprint 8 Ticket Breakdown
 
@@ -864,7 +864,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 | `P8-T02` | Dynamic SMS Gateway Engine (Greenweb, Reve, Twilio) & OTP Verification | `Communication`, `Order` | `feat/p8-t02-sms-gateway-otp` | `[x] DONE` | `php artisan test --filter=SmsGatewayTest` |
 | `P8-T03` | WhatsApp Business API Integration & Order Lifecycle Alerts | `Communication`, `Order` | `feat/p8-t03-whatsapp-integration` | `[x] DONE` | `php artisan test --filter=WhatsAppNotificationTest` |
 | `P8-T04` | AI Automated Outbound Voice Calling Verification Agent | `Communication`, `Order` | `feat/p8-t04-voice-calling-verification` | `[x] DONE` | `php artisan test --filter=VoiceCallingVerificationTest` |
-| `P8-T05` | Abandoned Cart Multi-Step Recovery Engine & SMS/WhatsApp Sequencer | `Marketing`, `Cart` | `feat/p8-t05-cart-recovery-sequencer` | `[ ] TODO` | `php artisan test --filter=AbandonedCartRecoveryTest` |
+| `P8-T05` | Abandoned Cart Multi-Step Recovery Engine & SMS/WhatsApp Sequencer | `Marketing`, `Cart` | `feat/p8-t05-cart-recovery-sequencer` | `[x] DONE` | `php artisan test --filter=AbandonedCartRecoveryTest` |
 | `P8-T06` | Social Commerce Feeds (Google Merchant Center, Facebook, TikTok) | `Communication`, `Catalog` | `feat/p8-t06-social-commerce-feeds` | `[ ] TODO` | `php artisan test --filter=SocialCommerceFeedsTest` |
 | `P8-T07` | Customer Self-Service Order Tracking Portal & Storefront UX | `Customer`, `Order` | `feat/p8-t07-order-tracking-portal` | `[ ] TODO` | `php artisan test --filter=OrderTrackingPortalTest` |
 | `P8-T08` | Back-Office Omnichannel & Communication Management UI | `Admin`, `Communication` | `feat/p8-t08-communication-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=CommunicationAdminTest` |
@@ -961,6 +961,25 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - [x] Webhook renders dynamic bilingual Bangla prompt with `<Gather numDigits="1">`.
   - [x] DTMF 1 immediately transitions order to confirmed; DTMF 2 cancels order and logs reason.
   - [x] Feature tests pass (8 passed, 43 assertions), Pint PSR-12 clean.
+
+#### `P8-T05`: Abandoned Cart Multi-Step Recovery Engine & SMS/WhatsApp Sequencer
+- **Objective**: Automated multi-step cart recovery sequencer scanning abandoned carts and triggering reminders at 1 hour (Gentle Reminder), 6 hours (Urgency trigger), and 24 hours (Incentive coupon COMEBACK5) via WhatsApp/SMS, with conversion tracking and Artisan scheduler command.
+- **Files**:
+  - `database/migrations/2026_10_29_800501_create_cart_recovery_logs_table.php`
+  - `app/Modules/Marketing/Models/CartRecoveryLog.php`
+  - `app/Modules/Cart/Models/Cart.php`
+  - `app/Modules/Marketing/Actions/ProcessCartRecoverySequencesAction.php`
+  - `app/Modules/Marketing/Actions/MarkCartAsRecoveredAction.php`
+  - `app/Modules/Marketing/Commands/ProcessCartRecoveryCommand.php`
+  - `app/Modules/Marketing/Providers/MarketingServiceProvider.php`
+  - `app/Modules/Order/Actions/CreateOrderFromCartAction.php`
+  - `tests/Feature/AbandonedCartRecoveryTest.php`
+- **Acceptance Criteria**:
+  - [x] Schema records cart recovery steps (1, 2, 3), channels (SMS, WhatsApp), incentive coupons, and conversion timestamps.
+  - [x] Sequencer evaluates elapsed cart idle time and dispatches progressive recovery messages.
+  - [x] Converting cart to order automatically marks recovery log as recovered with order reference.
+  - [x] Artisan command `cart:process-recovery` outputs detailed dispatch summary.
+  - [x] Feature tests pass (6 passed, 27 assertions), Pint PSR-12 clean.
 
 ---
 

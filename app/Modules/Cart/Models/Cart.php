@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Cart\Models;
 
 use App\Models\User;
+use App\Modules\Marketing\Models\CartRecoveryLog;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -38,6 +39,9 @@ class Cart extends Model
         'ulid',
         'user_id',
         'guest_token',
+        'customer_name',
+        'customer_phone',
+        'customer_email',
         'status',
         'coupon_code',
         'subtotal_bdt',
@@ -86,6 +90,11 @@ class Cart extends Model
     public function items(): HasMany
     {
         return $this->hasMany(CartItem::class, 'cart_id');
+    }
+
+    public function recoveryLogs(): HasMany
+    {
+        return $this->hasMany(CartRecoveryLog::class, 'cart_id');
     }
 
     public function touchActivity(): void
