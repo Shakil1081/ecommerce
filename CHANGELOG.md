@@ -10,7 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **7-Layer Anti-Fraud & Fake Order Defense Shield (`App\Modules\Order`, `App\Modules\Customer`)**:
+- **7-Layer Anti-Fraud & Fake Order Defense Shield (`App\Modules\Order`, `App\Modules\Customer`, `App\Modules\Logistics`)**:
+  - Cross-courier delivery intelligence adapters querying customer delivery history and return rates for **Steadfast** (`SteadfastDeliveryIntelligenceService`) and **Pathao** (`PathaoDeliveryIntelligenceService`).
+  - Aggregated multi-courier delivery performance intelligence with 24-hour cache layer and risk tier calculation (`AggregatedCourierIntelligenceService`, `CourierDeliveryProfileDto`).
   - Bangladesh mobile operator validation rule with operator detection (GP, Banglalink, Robi/Airtel, Teletalk), E.164 normalization, and dummy/sequential repeating digit rejection (`BangladeshPhoneNumberRule`).
   - Multi-lingual Shannon text entropy and gibberish scoring engine (0-100) supporting English and Bengali (বাংলা) UTF-8 (`TextEntropyService`).
   - Order velocity throttling enforcing max 1 active unfulfilled COD order per phone, and max 2 orders/day burst limits per IP and device fingerprint (`CheckOrderVelocityAction`).
