@@ -14,6 +14,7 @@ use App\Modules\Admin\Http\Controllers\SystemInfoController;
 use App\Modules\Cart\Http\Controllers\CartController;
 use App\Modules\Payment\Http\Controllers\BkashCallbackController;
 use App\Modules\Payment\Http\Controllers\NagadCallbackController;
+use App\Modules\Payment\Http\Controllers\SslcommerzCallbackController;
 use App\Modules\Seo\Http\Controllers\SitemapController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -52,6 +53,12 @@ Route::get('/orders/confirmed/{order}', function (string $order) {
 Route::prefix('payment')->name('payment.')->group(function () {
     Route::get('/bkash/callback', BkashCallbackController::class)->name('bkash.callback');
     Route::get('/nagad/callback', NagadCallbackController::class)->name('nagad.callback');
+
+    // SSLCommerz Return & IPN Routes
+    Route::match(['GET', 'POST'], '/sslcommerz/success', [SslcommerzCallbackController::class, 'success'])->name('sslcommerz.success');
+    Route::match(['GET', 'POST'], '/sslcommerz/fail', [SslcommerzCallbackController::class, 'fail'])->name('sslcommerz.fail');
+    Route::match(['GET', 'POST'], '/sslcommerz/cancel', [SslcommerzCallbackController::class, 'cancel'])->name('sslcommerz.cancel');
+    Route::post('/sslcommerz/ipn', [SslcommerzCallbackController::class, 'ipn'])->name('sslcommerz.ipn');
 });
 
 Route::prefix('admin')->name('admin.')->group(function () {
