@@ -421,7 +421,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 - **Target Phase**: **Phase 5: 7-Layer Anti-Fraud, Fake Order Defense & Dynamic Bot Security Settings**
 - **Sprint Goal**: Implement an enterprise 7-layer defense shield against fake orders, bot submissions, and high-return COD customers: invisible honeypots, client timing guards, Bangladesh telco regex, Shannon entropy gibberish detection, order velocity throttling, cross-courier delivery intelligence APIs, merchant blacklist/whitelist directory, and back-office Google reCAPTCHA / Cloudflare Turnstile toggles.
-- **Sprint Status**: `[ 🟡 IN PROGRESS ] (2 of 6 Tickets Passed & 100% Green)`
+- **Sprint Status**: `[ 🟡 IN PROGRESS ] (3 of 6 Tickets Passed & 100% Green)`
 
 ### Sprint 5 Ticket Breakdown
 
@@ -429,10 +429,59 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 |---|---|---|---|---|---|
 | `P5-T01` | Invisible Bot Honeypots & Submission Timing Guard | `Order`, `Common` | `feat/p5-t01-honeypot-timing` | `[x] DONE` | `php artisan test --filter=HoneypotAndTimingTest` |
 | `P5-T02` | BD Phone Operator Integrity, Gibberish Entropy & Velocity Guard | `Order`, `Customer` | `feat/p5-t02-phone-velocity-guard` | `[x] DONE` | `php artisan test --filter=CustomerIntegrityTest` |
-| `P5-T03` | Cross-Courier Delivery Intelligence Adapters (Steadfast & Pathao) | `Logistics`, `Order` | `feat/p5-t03-courier-intelligence` | `[ ] TODO` | `php artisan test --filter=CourierIntelligenceTest` |
+| `P5-T03` | Cross-Courier Delivery Intelligence Adapters (Steadfast & Pathao) | `Logistics`, `Order` | `feat/p5-t03-courier-intelligence` | `[x] DONE` | `php artisan test --filter=CourierIntelligenceTest` |
 | `P5-T04` | Multi-Signal Order Fraud Risk Scoring Engine (0-100) | `Order` | `feat/p5-t04-fraud-risk-score` | `[ ] TODO` | `php artisan test --filter=FraudRiskScoreTest` |
 | `P5-T05` | Merchant Fraud Directory: Blacklist & Whitelist UI | `Customer`, `Admin` | `feat/p5-t05-fraud-directory` | `[ ] TODO` | `npm run build && php artisan test --filter=FraudDirectoryAdminTest` |
 | `P5-T06` | Back-Office Google reCAPTCHA & Cloudflare Turnstile Settings | `Admin`, `Common` | `feat/p5-t06-bot-security-settings` | `[ ] TODO` | `npm run build && php artisan test --filter=SecuritySettingsAdminTest` |
+
+---
+
+### Detailed Ticket Specifications (Sprint 5 — ACTIVE)
+
+#### `P5-T01`: Invisible Bot Honeypots & Submission Timing Guard
+- **Objective**: Anti-bot honeypot trap with encrypted timing token generation, minimum submission timing guard (< 3.5s = bot flag), and `ensure.human` middleware.
+- **Files**:
+  - `app/Modules/Common/Security/HoneypotTimingGuardService.php`
+  - `app/Modules/Common/Exceptions/BotSubmissionDetectedException.php`
+  - `app/Modules/Common/Http/Middleware/EnsureHumanSubmission.php`
+  - `tests/Feature/HoneypotAndTimingTest.php`
+- **Acceptance Criteria**:
+  - [x] Generates cryptographically encrypted timing tokens.
+  - [x] Rejects submissions completed in under 3.5 seconds.
+  - [x] Detects filled honeypot fields (`user_company_fax`) and aborts with 422 BotSubmissionDetectedException.
+  - [x] Feature tests verified (10 passed, 27 assertions), Pint PSR-12 passed.
+
+#### `P5-T02`: BD Phone Operator Integrity, Gibberish Entropy & Velocity Guard
+- **Objective**: Bangladesh mobile phone validation rule with operator detection (GP, Banglalink, Robi/Airtel, Teletalk), dummy/repeating digit rejection, Shannon entropy gibberish detection for customer names/addresses, and order velocity throttling (max 1 active unfulfilled COD per phone, max 2 orders/day per IP/device).
+- **Files**:
+  - `database/migrations/2026_10_29_500201_add_fraud_metadata_to_orders_table.php`
+  - `app/Modules/Customer/Rules/BangladeshPhoneNumberRule.php`
+  - `app/Modules/Customer/Services/TextEntropyService.php`
+  - `app/Modules/Order/DTOs/OrderVelocityResultDto.php`
+  - `app/Modules/Order/Actions/CheckOrderVelocityAction.php`
+  - `tests/Feature/CustomerIntegrityTest.php`
+- **Acceptance Criteria**:
+  - [x] Bangladesh mobile phone rule validates all operators, normalizes to local `01XXXXXXXXX` and E.164 `+8801XXXXXXXXX`, and rejects repeating/sequential dummy numbers.
+  - [x] Text entropy service computes Shannon entropy in bits/char and scores gibberish (0-100) with support for English and Bengali (বাংলা) UTF-8.
+  - [x] Order velocity action enforces max 1 active unfulfilled COD order per phone, and throttles burst orders to max 2/day per IP and device fingerprint.
+  - [x] Feature tests verified (10 passed, 97 assertions), Pint PSR-12 passed.
+
+#### `P5-T03`: Cross-Courier Delivery Intelligence Adapters (Steadfast & Pathao)
+- **Objective**: Courier delivery intelligence adapters querying cross-courier delivery success rate and return history (Steadfast Return Rate API and Pathao Delivery Success API) with 24-hour cache layer and aggregated multi-courier risk scoring.
+- **Files**:
+  - `app/Modules/Logistics/Contracts/CourierDeliveryIntelligenceContract.php`
+  - `app/Modules/Logistics/DTOs/CourierDeliveryProfileDto.php`
+  - `app/Modules/Logistics/Services/SteadfastDeliveryIntelligenceService.php`
+  - `app/Modules/Logistics/Services/PathaoDeliveryIntelligenceService.php`
+  - `app/Modules/Logistics/Services/AggregatedCourierIntelligenceService.php`
+  - `config/services.php`
+  - `tests/Feature/CourierIntelligenceTest.php`
+- **Acceptance Criteria**:
+  - [x] Steadfast adapter checks return rate and delivered/cancelled counts with resilient HTTP error handling.
+  - [x] Pathao adapter checks order success rate and returns profile DTO.
+  - [x] Aggregated courier intelligence service combines metrics across couriers and caches profile for 24 hours.
+  - [x] Returns risk tiers (`low`, `medium`, `high`, `unknown`) and flags high return rate (> 40%).
+  - [x] Feature tests verified (9 passed, 50 assertions), Pint PSR-12 passed.
 
 ---
 

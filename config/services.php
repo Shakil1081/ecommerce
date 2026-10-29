@@ -31,4 +31,20 @@ return [
         ],
     ],
 
+    'steadfast' => [
+        'base_url' => env('STEADFAST_BASE_URL', 'https://ssl.steadfast.com.bd'),
+        'api_key' => env('STEADFAST_API_KEY'),
+        'secret_key' => env('STEADFAST_SECRET_KEY'),
+    ],
+
+    'pathao' => [
+        'base_url' => env('PATHAO_BASE_URL', 'https://courier.pathao.com'),
+        'client_id' => env('PATHAO_CLIENT_ID'),
+        'client_secret' => env('PATHAO_CLIENT_SECRET'),
+        'username' => env('PATHAO_USERNAME'),
+        'password' => env('PATHAO_PASSWORD'),
+        'store_id' => env('PATHAO_STORE_ID'),
+        'token' => env('PATHAO_TOKEN'),
+    ],
+
 ];
