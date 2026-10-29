@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Database seeder (`CourierGatewaySeeder`) initializing default courier settings for Bangladesh providers.
   - Steadfast Courier driver (`SteadfastCourierAdapter`) with consignment booking (`/create_order`), tracking status inquiry (`/status_by_cid/{id}`), balance check (`/get_balance`), and delivery status mapping.
   - Inbound status webhook listener (`SteadfastWebhookController`) at `/webhooks/courier/steadfast` with optional secret verification, consignment ledger updates, and automated order state transitions to delivered/returned with audit histories.
+  - Pathao Courier driver (`PathaoCourierAdapter`) with automated OAuth token management and caching (`/aladdin/api/v1/issue-token`), store resolution (`/aladdin/api/v1/stores`), parcel consignment creation (`/aladdin/api/v1/orders/issue-order`), and parcel status inquiry (`/aladdin/api/v1/orders/{id}/info`).
+  - Inbound Pathao status webhook listener (`PathaoWebhookController`) at `/webhooks/courier/pathao` supporting signature validation, consignment status synchronization, and order lifecycle transitions.
 
 ---
 

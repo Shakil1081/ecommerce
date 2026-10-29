@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Logistics\Services;
 
+use App\Modules\Logistics\Adapters\PathaoCourierAdapter;
 use App\Modules\Logistics\Adapters\SteadfastCourierAdapter;
 use App\Modules\Logistics\Contracts\CourierAdapterContract;
 use App\Modules\Logistics\Models\CourierGatewaySetting;
@@ -21,6 +22,7 @@ class CourierGatewayManager
     public function __construct()
     {
         $this->registerDriver(CourierGatewaySetting::CODE_STEADFAST, fn () => app(SteadfastCourierAdapter::class));
+        $this->registerDriver(CourierGatewaySetting::CODE_PATHAO, fn () => app(PathaoCourierAdapter::class));
     }
 
     /**
