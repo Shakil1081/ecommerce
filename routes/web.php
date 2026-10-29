@@ -13,6 +13,7 @@ use App\Modules\Admin\Http\Controllers\RoleController;
 use App\Modules\Admin\Http\Controllers\StaffUserController;
 use App\Modules\Admin\Http\Controllers\SystemInfoController;
 use App\Modules\Cart\Http\Controllers\CartController;
+use App\Modules\Logistics\Http\Controllers\PathaoWebhookController;
 use App\Modules\Logistics\Http\Controllers\SteadfastWebhookController;
 use App\Modules\Payment\Http\Controllers\BkashCallbackController;
 use App\Modules\Payment\Http\Controllers\NagadCallbackController;
@@ -69,6 +70,7 @@ Route::prefix('payment')->name('payment.')->group(function () {
 // Logistics Courier Webhooks
 Route::prefix('webhooks/courier')->name('webhooks.courier.')->group(function () {
     Route::post('/steadfast', SteadfastWebhookController::class)->name('steadfast');
+    Route::post('/pathao', PathaoWebhookController::class)->name('pathao');
 });
 
 Route::prefix('admin')->name('admin.')->group(function () {

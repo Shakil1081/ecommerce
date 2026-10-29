@@ -736,7 +736,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 - **Target Phase**: **Phase 7: Automated Courier Logistics, Dynamic Delivery Pricing & Payout Reconciliation** (`app/Modules/Logistics/`)
 - **Sprint Goal**: Scaffold multi-courier gateway adapters with encrypted database credentials for **Steadfast**, **Pathao**, **RedX**, **Paperfly**, and **Sundarban**, 1-click consignment booking, printable 4x6 thermal barcode shipping labels, live tracking webhooks, dynamic zone-based delivery pricing calculation, and automated Cash on Delivery (COD) payout reconciliation.
-- **Sprint Status**: `[ ⏳ IN PROGRESS ] (2 of 6 Tickets Completed)`
+- **Sprint Status**: `[ ⏳ IN PROGRESS ] (3 of 6 Tickets Completed)`
 
 ### Sprint 7 Ticket Breakdown
 
@@ -744,7 +744,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 |---|---|---|---|---|---|
 | `P7-T01` | Dynamic Courier Gateway Settings & Encrypted Credential Engine | `Logistics`, `Common` | `feat/p7-t01-courier-gateway-settings` | `[x] DONE` | `php artisan test --filter=CourierGatewaySettingsTest` |
 | `P7-T02` | Steadfast Courier Driver & Tracking Webhook Listener | `Logistics` | `feat/p7-t02-steadfast-courier-driver` | `[x] DONE` | `php artisan test --filter=SteadfastCourierAdapterTest` |
-| `P7-T03` | Pathao Courier Driver & Tracking Webhook Listener | `Logistics` | `feat/p7-t03-pathao-courier-driver` | `[ ] TODO` | `php artisan test --filter=PathaoCourierAdapterTest` |
+| `P7-T03` | Pathao Courier Driver & Tracking Webhook Listener | `Logistics` | `feat/p7-t03-pathao-courier-driver` | `[x] DONE` | `php artisan test --filter=PathaoCourierAdapterTest` |
 | `P7-T04` | Dynamic Zone-Based Delivery Pricing Engine | `Logistics`, `Order`, `Cart` | `feat/p7-t04-delivery-pricing-engine` | `[ ] TODO` | `php artisan test --filter=DeliveryPricingEngineTest` |
 | `P7-T05` | Printable 4x6 Thermal Barcode Shipping Labels & Consignment Booking | `Logistics`, `Order` | `feat/p7-t05-shipping-label-printer` | `[ ] TODO` | `php artisan test --filter=ShippingLabelTest` |
 | `P7-T06` | Back-Office Courier Gateway Management & COD Cash Reconciliation UI | `Logistics`, `Admin` | `feat/p7-t06-courier-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=CourierAdminTest` |
@@ -795,11 +795,11 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Logistics/Http/Controllers/PathaoWebhookController.php`
   - `tests/Feature/PathaoCourierAdapterTest.php`
 - **Acceptance Criteria**:
-  - [ ] Obtains OAuth Bearer token from Pathao `/aladdin/api/v1/issue-token` with caching.
-  - [ ] Issues order parcel with store ID, recipient address, city, zone, area, and amount to collect.
-  - [ ] Queries parcel tracking information.
-  - [ ] Inbound webhook listener validates signature, maps Pathao event types (`Pickup_Requested`, `In_Transit`, `Delivered`, `Returned`) to order lifecycle.
-  - [ ] Feature tests pass, Pint PSR-12 clean.
+  - [x] Obtains OAuth Bearer token from Pathao `/aladdin/api/v1/issue-token` with caching.
+  - [x] Issues order parcel with store ID, recipient address, city, zone, area, and amount to collect.
+  - [x] Queries parcel tracking information.
+  - [x] Inbound webhook listener validates signature, maps Pathao event types (`Pickup_Requested`, `In_Transit`, `Delivered`, `Returned`) to order lifecycle.
+  - [x] Feature tests pass, Pint PSR-12 clean.
 
 #### `P7-T04`: Dynamic Zone-Based Delivery Pricing Engine
 - **Objective**: Dynamic Bangladesh shipping zone engine: schema for `shipping_zones` & `shipping_rates`, mapping Bangladesh districts/thanas to zones (`inside_dhaka`, `dhaka_suburbs`, `outside_dhaka`), weight brackets, extra weight per kg pricing, and free shipping threshold.
