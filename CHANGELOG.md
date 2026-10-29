@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Courier consignments tracking ledger (`CourierConsignment`) tracking ULIDs, order IDs, courier codes, consignment IDs, tracking numbers, delivery zones, fees, COD amounts, and webhook payloads with relationships on `Order` (`$order->consignments`, `$order->latestConsignment`).
   - Standardized DTO contracts: `CourierBookingResultDto`, `CourierTrackingResultDto`, and `CourierConnectionTestResultDto`.
   - Database seeder (`CourierGatewaySeeder`) initializing default courier settings for Bangladesh providers.
+  - Steadfast Courier driver (`SteadfastCourierAdapter`) with consignment booking (`/create_order`), tracking status inquiry (`/status_by_cid/{id}`), balance check (`/get_balance`), and delivery status mapping.
+  - Inbound status webhook listener (`SteadfastWebhookController`) at `/webhooks/courier/steadfast` with optional secret verification, consignment ledger updates, and automated order state transitions to delivered/returned with audit histories.
 
 ---
 
