@@ -10,6 +10,7 @@ use App\Modules\Cart\Models\Cart;
 use App\Modules\Common\Models\BangladeshDistrict;
 use App\Modules\Marketing\Actions\RecordCouponUsageAction;
 use App\Modules\Marketing\Models\Coupon;
+use App\Modules\Order\DTOs\OrderFraudRiskAssessmentDto;
 use App\Modules\Order\Models\Order;
 use App\Modules\Order\Models\OrderItem;
 use App\Modules\Order\Models\OrderStatusHistory;
@@ -21,7 +22,8 @@ use Illuminate\Validation\ValidationException;
 final class CreateOrderFromCartAction
 {
     public function __construct(
-        private readonly RecordCouponUsageAction $recordCouponUsage
+        private readonly RecordCouponUsageAction $recordCouponUsage,
+        private readonly CalculateOrderFraudRiskScoreAction $calculateFraudScore
     ) {}
 
     /**
@@ -89,6 +91,36 @@ final class CreateOrderFromCartAction
             $now = Carbon::now();
             $orderNumber = 'ORD-'.$now->format('Ymd').'-'.strtoupper(Str::random(6));
 
+            $ipAddress = $customerData['ip_address'] ?? (request()->hasHeader('X-Forwarded-For') ? request()->header('X-Forwarded-For') : request()->ip());
+            $deviceFingerprint = $customerData['device_fingerprint'] ?? (request()->header('X-Device-Fingerprint') ?: null);
+            $userAgent = $customerData['user_agent'] ?? request()->userAgent();
+
+            // Perform multi-signal anti-fraud risk assessment
+            $fraudAssessment = ($this->calculateFraudScore)([
+                'customer_name' => $customerData['customer_name'],
+                'customer_phone' => $customerData['customer_phone'],
+                'customer_email' => $customerData['customer_email'] ?? null,
+                'delivery_address' => $customerData['delivery_address'],
+                'payment_method' => $paymentMethod,
+                'ip_address' => $ipAddress,
+                'device_fingerprint' => $deviceFingerprint,
+                'honeypot_value' => $customerData['honeypot_value'] ?? $customerData['user_company_fax'] ?? null,
+                'timing_token' => $customerData['timing_token'] ?? $customerData['_form_timing_token'] ?? null,
+                'skip_courier_lookup' => $customerData['skip_courier_lookup'] ?? false,
+            ]);
+
+            if ($fraudAssessment->riskLevel === OrderFraudRiskAssessmentDto::LEVEL_BLACKLISTED) {
+                throw ValidationException::withMessages([
+                    'fraud' => ['Your order submission could not be processed. Please contact customer support.'],
+                ]);
+            }
+
+            if ($paymentMethod === 'cash_on_delivery' && ! $fraudAssessment->isCodAllowed) {
+                throw ValidationException::withMessages([
+                    'payment_method' => ['Cash on Delivery is unavailable for this order due to elevated delivery risk. Please choose an online payment method or prepay the advance delivery fee.'],
+                ]);
+            }
+
             /** @var Order $order */
             $order = Order::create([
                 'order_number' => $orderNumber,
@@ -100,9 +132,9 @@ final class CreateOrderFromCartAction
                 'customer_name' => $customerData['customer_name'],
                 'customer_phone' => $customerData['customer_phone'],
                 'customer_email' => $customerData['customer_email'] ?? null,
-                'ip_address' => $customerData['ip_address'] ?? (request()->hasHeader('X-Forwarded-For') ? request()->header('X-Forwarded-For') : request()->ip()),
-                'device_fingerprint' => $customerData['device_fingerprint'] ?? (request()->header('X-Device-Fingerprint') ?: null),
-                'user_agent' => $customerData['user_agent'] ?? request()->userAgent(),
+                'ip_address' => $ipAddress,
+                'device_fingerprint' => $deviceFingerprint,
+                'user_agent' => $userAgent,
                 'division_id' => $customerData['division_id'],
                 'district_id' => $customerData['district_id'],
                 'thana_id' => $customerData['thana_id'] ?? null,
@@ -116,6 +148,8 @@ final class CreateOrderFromCartAction
                 'advance_paid_bdt' => '0.0000',
                 'payable_cod_amount_bdt' => $total,
                 'coupon_code' => $cart->coupon_code,
+                'fraud_risk_score' => $fraudAssessment->score,
+                'fraud_risk_level' => $fraudAssessment->riskLevel,
             ]);
 
             // Create Order Items
@@ -160,8 +194,11 @@ final class CreateOrderFromCartAction
                 'changed_by_user_id' => $user?->id,
                 'reason' => 'Order created from checkout cart',
                 'metadata' => [
-                    'ip' => request()->ip(),
-                    'user_agent' => request()->userAgent(),
+                    'ip' => $ipAddress,
+                    'user_agent' => $userAgent,
+                    'fraud_score' => $fraudAssessment->score,
+                    'fraud_risk_level' => $fraudAssessment->riskLevel,
+                    'fraud_signals' => $fraudAssessment->signals,
                 ],
                 'created_at' => $now,
             ]);

@@ -29,5 +29,8 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="STEADFAST_API_KEY" value="test_sf_api_key"/>
+        <env name="STEADFAST_SECRET_KEY" value="test_sf_secret_key"/>
+        <env name="PATHAO_TOKEN" value="test_pathao_token"/>
     </php>
 </phpunit>
