@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Dynamic Payment Gateway Module & Advance COD Delivery Engine (`App\Modules\Payment`)**:
+  - Dynamic payment gateway configuration schema with encrypted credentials (`encrypted:array`), active toggles, sandbox flags, gateway codes (`bkash`, `nagad`, `sslcommerz`, `stripe`, `cod`, `bank_transfer`), and pre-flight "Test API Connection" verification (`PaymentGatewaySetting`, `TestGatewayConnectionAction`).
+  - Unified `PaymentGatewayManager` and `PaymentGatewayContract` interface for decoupled multi-provider digital payments.
+  - Payment transactions ledger (`PaymentTransaction`) tracking ULIDs, order IDs, gateway codes, transaction references, fees, and lifecycle statuses.
+
 ---
 
 ## [0.5.0] - 2026-10-29

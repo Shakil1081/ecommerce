@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Modules\Common\Models\BangladeshDistrict;
 use App\Modules\Common\Models\BangladeshDivision;
 use App\Modules\Common\Models\BangladeshThana;
+use App\Modules\Payment\Models\PaymentTransaction;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -206,6 +207,11 @@ class Order extends Model
     public function statusHistories(): HasMany
     {
         return $this->hasMany(OrderStatusHistory::class, 'order_id')->orderBy('created_at', 'desc');
+    }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(PaymentTransaction::class, 'order_id')->orderBy('created_at', 'desc');
     }
 
     public function division(): BelongsTo

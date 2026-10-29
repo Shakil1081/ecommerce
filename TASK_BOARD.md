@@ -643,13 +643,13 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 - **Target Phase**: **Phase 6: Dynamic Payment Gateway Module & Advance COD Delivery Engine**
 - **Sprint Goal**: Implement an enterprise pluggable payment architecture with encrypted dynamic gateway configuration (bKash, Nagad, SSLCommerz, Stripe, COD, Bank Transfer), pre-flight "Test API Connection" validation, tokenized/hosted checkout flows, callback webhooks, transaction auditing, and advance partial delivery fee checkout engine for high-risk COD orders.
-- **Sprint Status**: `[ 🟡 IN PROGRESS ] (0 of 5 Tickets Passed)`
+- **Sprint Status**: `[ 🟡 IN PROGRESS ] (1 of 5 Tickets Passed)`
 
 ### Sprint 6 Ticket Breakdown
 
 | Ticket ID | Task Name / User Story | Module | Git Branch | Status | Verification Command |
 |---|---|---|---|---|---|
-| `P6-T01` | Dynamic Payment Gateway Settings & Encrypted Credential Engine | `Payment`, `Common` | `feat/p6-t01-payment-gateway-settings` | `[ ] TODO` | `php artisan test --filter=PaymentGatewaySettingsTest` |
+| `P6-T01` | Dynamic Payment Gateway Settings & Encrypted Credential Engine | `Payment`, `Common` | `feat/p6-t01-payment-gateway-settings` | `[x] DONE` | `php artisan test --filter=PaymentGatewaySettingsTest` |
 | `P6-T02` | bKash Tokenized Checkout Adapter & Webhook Engine | `Payment` | `feat/p6-t02-bkash-gateway-adapter` | `[ ] TODO` | `php artisan test --filter=BkashPaymentAdapterTest` |
 | `P6-T03` | Nagad Checkout Adapter & Cryptographic Verification | `Payment` | `feat/p6-t03-nagad-gateway-adapter` | `[ ] TODO` | `php artisan test --filter=NagadPaymentAdapterTest` |
 | `P6-T04` | SSLCommerz Hosted Checkout & IPN Webhook Engine | `Payment` | `feat/p6-t04-sslcommerz-gateway-adapter` | `[ ] TODO` | `php artisan test --filter=SslcommerzPaymentAdapterTest` |
@@ -671,11 +671,11 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Payment/Actions/TestGatewayConnectionAction.php`
   - `tests/Feature/PaymentGatewaySettingsTest.php`
 - **Acceptance Criteria**:
-  - [ ] Gateway settings table stores credentials encrypted at rest (`encrypted:array`).
-  - [ ] Supports masking sensitive credentials for UI output (`••••••••b7a1`).
-  - [ ] Payment transactions table records ULID, order_id, gateway code, transaction_id, amount_bdt, fee_bdt, status (`pending`, `successful`, `failed`, `refunded`), and raw response payload.
-  - [ ] Test gateway connection action performs mock/live pre-flight handshake before activation.
-  - [ ] Feature tests pass, Pint PSR-12 clean.
+  - [x] Gateway settings table stores credentials encrypted at rest (`encrypted:array`).
+  - [x] Supports masking sensitive credentials for UI output (`••••••••b7a1`).
+  - [x] Payment transactions table records ULID, order_id, gateway code, transaction_id, amount_bdt, fee_bdt, status (`pending`, `successful`, `failed`, `refunded`), and raw response payload.
+  - [x] Test gateway connection action performs mock/live pre-flight handshake before activation.
+  - [x] Feature tests pass (8 passed, 43 assertions), Pint PSR-12 clean.
 
 #### `P6-T02`: bKash Tokenized Checkout Adapter & Webhook Engine
 - **Objective**: Full bKash Tokenized Checkout driver implementing `PaymentGatewayContract`: grant token, create payment, execute payment, query payment, refund, and webhook callback handling.
