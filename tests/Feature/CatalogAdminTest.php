@@ -122,4 +122,3 @@ class CatalogAdminTest extends TestCase
         $this->assertDatabaseMissing('product_variants', ['sku' => 'OBSOLETE-001']);
     }
 }
-

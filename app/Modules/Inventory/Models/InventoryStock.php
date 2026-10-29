@@ -74,4 +74,3 @@ class InventoryStock extends Model
         return $query->whereRaw('physical_quantity > reserved_quantity');
     }
 }
-

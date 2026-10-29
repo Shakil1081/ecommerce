@@ -53,4 +53,3 @@ class BangladeshDivision extends Model
         return $query->where('is_active', true);
     }
 }
-

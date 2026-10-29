@@ -326,4 +326,3 @@ class BangladeshGeoLocationsSeeder extends Seeder
         }
     }
 }
-

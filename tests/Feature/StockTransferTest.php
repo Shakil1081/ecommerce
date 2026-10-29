@@ -152,4 +152,3 @@ class StockTransferTest extends TestCase
         );
     }
 }
-

@@ -308,7 +308,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 | Ticket ID | Task Name / User Story | Module | Git Branch | Status | Verification Command |
 |---|---|---|---|---|---|
-| `P3-T01` | Supplier Directory (International & Local) with BIN/TIN | `Procurement` | `feat/p3-t01-supplier-directory` | `[ ] TODO` | `php artisan test --filter=SupplierTest` |
+| `P3-T01` | Supplier Directory (International & Local) with BIN/TIN | `Procurement` | `feat/p3-t01-supplier-directory` | `[x] DONE` | `php artisan test --filter=SupplierTest` |
 | `P3-T02` | Global Import Purchase Orders & Commercial Invoices | `Procurement` | `feat/p3-t02-import-orders` | `[ ] TODO` | `php artisan test --filter=ImportOrderTest` |
 | `P3-T03` | Bill of Entry (BOE / বিল অফ এন্ট্রি) & Customs Tariffs | `Procurement`, `TaxCompliance` | `feat/p3-t03-bill-of-entry` | `[ ] TODO` | `php artisan test --filter=BillOfEntryTest` |
 | `P3-T04` | Local Purchase Orders (BDT ৳) & Supplier Mushak 6.3 | `Procurement`, `TaxCompliance` | `feat/p3-t04-local-purchase-orders` | `[ ] TODO` | `php artisan test --filter=LocalPoTest` |
@@ -328,9 +328,9 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Procurement/Actions/VerifySupplierBinAction.php`
   - `tests/Feature/SupplierTest.php`
 - **Acceptance Criteria**:
-  - [ ] Supports international suppliers (with FX currency and overseas wire details) and domestic vendors.
-  - [ ] Validates Bangladesh 9-digit and 13-digit Business Identification Number (BIN) formats.
-  - [ ] Feature tests verified.
+  - [x] Supports international suppliers (with FX currency and overseas wire details) and domestic vendors.
+  - [x] Validates Bangladesh 9-digit and 13-digit Business Identification Number (BIN) formats.
+  - [x] Feature tests verified (4 passed, 26 assertions), Pint PSR-12 passed.
 
 #### `P3-T02`: Global Import Purchase Orders & Commercial Invoices
 - **Objective**: Track global commercial imports with Proforma Invoices (PI), Commercial Invoices (CI), Letter of Credit (LC) / TT, foreign currency (USD, RMB, EUR), and bank settlement exchange rates.
