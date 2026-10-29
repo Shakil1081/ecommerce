@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Logistics\Services;
 
+use App\Modules\Logistics\Adapters\SteadfastCourierAdapter;
 use App\Modules\Logistics\Contracts\CourierAdapterContract;
 use App\Modules\Logistics\Models\CourierGatewaySetting;
 use Illuminate\Database\Eloquent\Collection;
@@ -16,6 +17,11 @@ class CourierGatewayManager
      * @var array<string, CourierAdapterContract|callable>
      */
     protected array $drivers = [];
+
+    public function __construct()
+    {
+        $this->registerDriver(CourierGatewaySetting::CODE_STEADFAST, fn () => app(SteadfastCourierAdapter::class));
+    }
 
     /**
      * Register or override a courier gateway driver.

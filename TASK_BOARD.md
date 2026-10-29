@@ -736,14 +736,14 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 - **Target Phase**: **Phase 7: Automated Courier Logistics, Dynamic Delivery Pricing & Payout Reconciliation** (`app/Modules/Logistics/`)
 - **Sprint Goal**: Scaffold multi-courier gateway adapters with encrypted database credentials for **Steadfast**, **Pathao**, **RedX**, **Paperfly**, and **Sundarban**, 1-click consignment booking, printable 4x6 thermal barcode shipping labels, live tracking webhooks, dynamic zone-based delivery pricing calculation, and automated Cash on Delivery (COD) payout reconciliation.
-- **Sprint Status**: `[ ⏳ IN PROGRESS ] (1 of 6 Tickets Completed)`
+- **Sprint Status**: `[ ⏳ IN PROGRESS ] (2 of 6 Tickets Completed)`
 
 ### Sprint 7 Ticket Breakdown
 
 | Ticket ID | Task Name / User Story | Module | Git Branch | Status | Verification Command |
 |---|---|---|---|---|---|
 | `P7-T01` | Dynamic Courier Gateway Settings & Encrypted Credential Engine | `Logistics`, `Common` | `feat/p7-t01-courier-gateway-settings` | `[x] DONE` | `php artisan test --filter=CourierGatewaySettingsTest` |
-| `P7-T02` | Steadfast Courier Driver & Tracking Webhook Listener | `Logistics` | `feat/p7-t02-steadfast-courier-driver` | `[ ] TODO` | `php artisan test --filter=SteadfastCourierAdapterTest` |
+| `P7-T02` | Steadfast Courier Driver & Tracking Webhook Listener | `Logistics` | `feat/p7-t02-steadfast-courier-driver` | `[x] DONE` | `php artisan test --filter=SteadfastCourierAdapterTest` |
 | `P7-T03` | Pathao Courier Driver & Tracking Webhook Listener | `Logistics` | `feat/p7-t03-pathao-courier-driver` | `[ ] TODO` | `php artisan test --filter=PathaoCourierAdapterTest` |
 | `P7-T04` | Dynamic Zone-Based Delivery Pricing Engine | `Logistics`, `Order`, `Cart` | `feat/p7-t04-delivery-pricing-engine` | `[ ] TODO` | `php artisan test --filter=DeliveryPricingEngineTest` |
 | `P7-T05` | Printable 4x6 Thermal Barcode Shipping Labels & Consignment Booking | `Logistics`, `Order` | `feat/p7-t05-shipping-label-printer` | `[ ] TODO` | `php artisan test --filter=ShippingLabelTest` |
@@ -783,10 +783,10 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Logistics/Http/Controllers/SteadfastWebhookController.php`
   - `tests/Feature/SteadfastCourierAdapterTest.php`
 - **Acceptance Criteria**:
-  - [ ] Creates parcel consignment on Steadfast API with invoice number, recipient info, and COD amount.
-  - [ ] Queries live tracking status from Steadfast API.
-  - [ ] Inbound webhook listener verifies HMAC / secret token, updates `CourierConsignment` status, and transitions `Order` lifecycle (e.g. `dispatched` -> `delivered` or `delivery_failed`).
-  - [ ] Feature tests pass, Pint PSR-12 clean.
+  - [x] Creates parcel consignment on Steadfast API with invoice number, recipient info, and COD amount.
+  - [x] Queries live tracking status from Steadfast API.
+  - [x] Inbound webhook listener verifies HMAC / secret token, updates `CourierConsignment` status, and transitions `Order` lifecycle (e.g. `dispatched` -> `delivered` or `delivery_failed`).
+  - [x] Feature tests pass, Pint PSR-12 clean.
 
 #### `P7-T03`: Pathao Courier Driver & Tracking Webhook Listener
 - **Objective**: Pathao Courier API driver implementing `CourierAdapterContract`: Bearer token management with Redis cache TTL, store lookup, parcel creation (`POST /aladdin/api/v1/orders/issue-order`), parcel tracking (`GET /aladdin/api/v1/orders/{consignment_id}/info`), price calculation, and inbound webhook listener.

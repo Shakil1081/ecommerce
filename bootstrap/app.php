@@ -20,6 +20,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'ensure.human' => EnsureHumanSubmission::class,
         ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'payment/sslcommerz/*',
+            'webhooks/courier/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
