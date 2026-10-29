@@ -175,7 +175,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 | `P2-T01` | Bangladesh Geographic Boundaries & Zone Classification | `Customer`, `Logistics` | `feat/p2-t01-bangladesh-geo` | `[x] DONE` | `php artisan test --filter=BangladeshGeoTest` |
 | `P2-T02` | Catalog Taxonomy: Categories Tree & Brands with Origin | `Catalog` | `feat/p2-t02-categories-brands` | `[x] DONE` | `php artisan test --filter=CategoryAndBrandTest` |
 | `P2-T03` | Matrix Product & Variant Engine with HS Codes & EANs | `Catalog` | `feat/p2-t03-product-matrix-engine` | `[x] DONE` | `php artisan test --filter=ProductMatrixTest` |
-| `P2-T04` | Wholesale B2B Tier Pricing & MOQ Engine | `Pricing` | `feat/p2-t04-tier-pricing` | `[ ] TODO` | `php artisan test --filter=TierPricingTest` |
+| `P2-T04` | Wholesale B2B Tier Pricing & MOQ Engine | `Pricing` | `feat/p2-t04-tier-pricing` | `[x] DONE` | `php artisan test --filter=TierPricingTest` |
 | `P2-T05` | Multi-Warehouse Inventory Hubs & Stock Tracking | `Inventory` | `feat/p2-t05-warehouse-inventory` | `[ ] TODO` | `php artisan test --filter=WarehouseInventoryTest` |
 | `P2-T06` | Inter-Depot Transfers & Mushak 6.5 Transfer Challan | `Inventory`, `TaxCompliance` | `feat/p2-t06-stock-transfers-mushak65` | `[ ] TODO` | `php artisan test --filter=StockTransferTest` |
 | `P2-T07` | Customer Reviews, Ratings & Photo Attachments | `Catalog` | `feat/p2-t07-customer-reviews` | `[ ] TODO` | `php artisan test --filter=ProductReviewTest` |
@@ -238,8 +238,9 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Pricing/Actions/CalculateApplicablePriceAction.php`
   - `tests/Feature/TierPricingTest.php`
 - **Acceptance Criteria**:
-  - [ ] Pricing tiers define volume price breaks based on quantity.
-  - [ ] B2B buyers automatically qualify for wholesale tier pricing when MOQ threshold is met.
+  - [x] Pricing tiers define volume price breaks based on quantity.
+  - [x] B2B buyers automatically qualify for wholesale tier pricing when MOQ threshold is met.
+  - [x] Retail volume discounts and savings calculations verified via automated feature test (4 passed, 21 assertions).
 
 #### `P2-T05`: Multi-Warehouse Inventory Hubs & Stock Tracking
 - **Objective**: Warehouse depot entity (Central Hub, Regional Hubs) tracking physical, reserved, and available stock per variant with bin locations.
