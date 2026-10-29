@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Modules\Cart\Http\Resources\CartResource;
 use App\Modules\Cart\Models\Cart;
 use App\Modules\Common\Models\BangladeshDistrict;
+use App\Modules\Marketing\Actions\MarkCartAsRecoveredAction;
 use App\Modules\Marketing\Actions\RecordCouponUsageAction;
 use App\Modules\Marketing\Models\Coupon;
 use App\Modules\Order\DTOs\OrderFraudRiskAssessmentDto;
@@ -203,11 +204,13 @@ final class CreateOrderFromCartAction
                 'created_at' => $now,
             ]);
 
-            // Transition cart status to converted
+            // Transition cart status to converted and mark any recovery sequences as recovered
             $cart->update([
                 'status' => 'converted',
                 'last_activity_at' => $now,
             ]);
+
+            app(MarkCartAsRecoveredAction::class)($cart, $order);
 
             return $order->fresh(['items', 'statusHistories', 'division', 'district', 'thana']);
         });
