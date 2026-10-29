@@ -300,7 +300,115 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 ---
 
-## 4. Product Backlog (Upcoming Sprints)
+## 4. Active Sprint: Sprint 3 (Phase 3 — Dual Sourcing Procurement & Landed Cost Engine)
+
+- **Target Phase**: **Phase 3: Dual Sourcing Procurement (Import & Local) & Landed Cost Engine**
+- **Sprint Goal**: Implement global commercial import tracking (CI, PI, LC/TT, BOE customs tariffs at Chattogram/Dhaka ICD), local domestic procurement in BDT (৳), supplier BIN/e-TIN verification, unified Landed Cost COGS allocation engine, and Inward Goods Receiving (GRN) with barcode intake.
+- **Sprint Status**: `[ ⏳ IN PROGRESS ]`
+
+| Ticket ID | Task Name / User Story | Module | Git Branch | Status | Verification Command |
+|---|---|---|---|---|---|
+| `P3-T01` | Supplier Directory (International & Local) with BIN/TIN | `Procurement` | `feat/p3-t01-supplier-directory` | `[ ] TODO` | `php artisan test --filter=SupplierTest` |
+| `P3-T02` | Global Import Purchase Orders & Commercial Invoices | `Procurement` | `feat/p3-t02-import-orders` | `[ ] TODO` | `php artisan test --filter=ImportOrderTest` |
+| `P3-T03` | Bill of Entry (BOE / বিল অফ এন্ট্রি) & Customs Tariffs | `Procurement`, `TaxCompliance` | `feat/p3-t03-bill-of-entry` | `[ ] TODO` | `php artisan test --filter=BillOfEntryTest` |
+| `P3-T04` | Local Purchase Orders (BDT ৳) & Supplier Mushak 6.3 | `Procurement`, `TaxCompliance` | `feat/p3-t04-local-purchase-orders` | `[ ] TODO` | `php artisan test --filter=LocalPoTest` |
+| `P3-T05` | Unified Landed Cost & True COGS Allocation Engine | `Procurement` | `feat/p3-t05-landed-cost-engine` | `[ ] TODO` | `php artisan test --filter=LandedCostTest` |
+| `P3-T06` | Inward Goods Received Notes (GRN) & Multi-Depot Stock Intake | `Procurement`, `Inventory` | `feat/p3-t06-grn-intake` | `[ ] TODO` | `php artisan test --filter=GoodsReceivedNoteTest` |
+| `P3-T07` | Back-Office Dual Sourcing Procurement UI | `Procurement`, `Admin` | `feat/p3-t07-procurement-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=ProcurementAdminTest` |
+
+---
+
+### Detailed Ticket Specifications (Sprint 3)
+
+#### `P3-T01`: Supplier Directory (International & Local) with BIN/TIN
+- **Objective**: Directory of international manufacturers (China, UAE, USA) and domestic authorized distributors with 9/13-digit BIN, 12-digit e-TIN, and bank/payment terms.
+- **Files**:
+  - `database/migrations/xxxx_create_suppliers_table.php`
+  - `app/Modules/Procurement/Models/Supplier.php`
+  - `app/Modules/Procurement/Actions/VerifySupplierBinAction.php`
+  - `tests/Feature/SupplierTest.php`
+- **Acceptance Criteria**:
+  - [ ] Supports international suppliers (with FX currency and overseas wire details) and domestic vendors.
+  - [ ] Validates Bangladesh 9-digit and 13-digit Business Identification Number (BIN) formats.
+  - [ ] Feature tests verified.
+
+#### `P3-T02`: Global Import Purchase Orders & Commercial Invoices
+- **Objective**: Track global commercial imports with Proforma Invoices (PI), Commercial Invoices (CI), Letter of Credit (LC) / TT, foreign currency (USD, RMB, EUR), and bank settlement exchange rates.
+- **Files**:
+  - `database/migrations/xxxx_create_import_purchase_orders_table.php`
+  - `database/migrations/xxxx_create_import_po_items_table.php`
+  - `app/Modules/Procurement/Models/ImportPurchaseOrder.php`
+  - `app/Modules/Procurement/Models/ImportPoItem.php`
+  - `tests/Feature/ImportOrderTest.php`
+- **Acceptance Criteria**:
+  - [ ] Records foreign currency (USD, RMB, EUR) FOB prices and bank settlement exchange rates in BDT (৳).
+  - [ ] Tracks LC/TT numbers, issuing bank, margin deposit, and settlement date.
+
+#### `P3-T03`: Bill of Entry (BOE / বিল অফ এন্ট্রি) & Customs Tariffs
+- **Objective**: Model Bangladesh Customs clearance at ports of entry (Chattogram, Dhaka Airport/ICD) with statutory Customs Assessment Value, Customs Duty (CD), Regulatory Duty (RD), Supplementary Duty (SD), Advance Tax (AT - 5%), and Advance Income Tax (AIT - 5%).
+- **Files**:
+  - `database/migrations/xxxx_create_bills_of_entry_table.php`
+  - `database/migrations/xxxx_create_boe_items_table.php`
+  - `app/Modules/Procurement/Models/BillOfEntry.php`
+  - `app/Modules/Procurement/Models/BoeItem.php`
+  - `tests/Feature/BillOfEntryTest.php`
+- **Acceptance Criteria**:
+  - [ ] Tracks port of clearance, BOE serial number, and customs assessment value in BDT.
+  - [ ] Computes statutory tariffs: CD, RD, SD, AT (5%), and AIT (5%).
+
+#### `P3-T04`: Local Purchase Orders (BDT ৳) & Supplier Mushak 6.3
+- **Objective**: Domestic procurement in Bangladeshi Taka with supplier Mushak 6.3 Tax Invoice registration, VDS calculation with Mushak 6.6 Certificates, and TDS withholding under the Income Tax Act 2023.
+- **Files**:
+  - `database/migrations/xxxx_create_local_purchase_orders_table.php`
+  - `database/migrations/xxxx_create_local_po_items_table.php`
+  - `app/Modules/Procurement/Models/LocalPurchaseOrder.php`
+  - `app/Modules/Procurement/Models/LocalPoItem.php`
+  - `tests/Feature/LocalPoTest.php`
+- **Acceptance Criteria**:
+  - [ ] Records local POs in BDT (৳) with supplier's Mushak 6.3 serial and invoice date.
+  - [ ] Computes VDS and TDS withholding deductions with precision.
+
+#### `P3-T05`: Unified Landed Cost & True COGS Allocation Engine
+- **Objective**: Computes true Cost of Goods Sold (COGS in BDT ৳) per unit batch across import shipments (FOB + Freight + Insurance + Port C&F + Customs Duties + Carrying) and domestic purchases (Purchase Price + Local Transport + Handling).
+- **Files**:
+  - `database/migrations/xxxx_create_landed_cost_allocations_table.php`
+  - `app/Modules/Procurement/Models/LandedCostAllocation.php`
+  - `app/Modules/Procurement/Actions/CalculateImportLandedCostAction.php`
+  - `app/Modules/Procurement/Actions/CalculateLocalLandedCostAction.php`
+  - `tests/Feature/LandedCostTest.php`
+- **Acceptance Criteria**:
+  - [ ] Allocates international freight, port C&F fees, and customs duties proportionately onto import variants.
+  - [ ] 100% of landed costs absorbed into true domestic unit COGS in BDT (৳).
+
+#### `P3-T06`: Inward Goods Received Notes (GRN) & Multi-Depot Stock Intake
+- **Objective**: Physical inward receiving into designated warehouse hubs regardless of origin (import container or domestic truck) with barcode scans, discrepancy notes, and physical inventory commit.
+- **Files**:
+  - `database/migrations/xxxx_create_goods_received_notes_table.php`
+  - `database/migrations/xxxx_create_grn_items_table.php`
+  - `app/Modules/Procurement/Models/GoodsReceivedNote.php`
+  - `app/Modules/Procurement/Models/GrnItem.php`
+  - `app/Modules/Procurement/Actions/ReceiveGoodsNoteAction.php`
+  - `tests/Feature/GoodsReceivedNoteTest.php`
+- **Acceptance Criteria**:
+  - [ ] GRN records ordered, received, and damaged quantities.
+  - [ ] Inward receiving atomically increments physical inventory stock in the specified warehouse depot.
+
+#### `P3-T07`: Back-Office Dual Sourcing Procurement UI
+- **Objective**: Full Vue 3 Inertia back-office management views for Global Import Orders, Domestic POs, BOE Tariffs, and GRN Intake.
+- **Files**:
+  - `app/Modules/Admin/Http/Controllers/ProcurementController.php`
+  - `resources/js/Pages/Admin/Procurement/SupplierIndex.vue`
+  - `resources/js/Pages/Admin/Procurement/ImportOrderIndex.vue`
+  - `resources/js/Pages/Admin/Procurement/LocalPoIndex.vue`
+  - `resources/js/Pages/Admin/Procurement/GrnReceiving.vue`
+  - `tests/Feature/ProcurementAdminTest.php`
+- **Acceptance Criteria**:
+  - [ ] Vue components compile cleanly with zero TypeScript errors.
+  - [ ] Admin can view suppliers, import orders, domestic POs, and GRN receipts.
+
+---
+
+## 5. Product Backlog (Upcoming Sprints)
 
 | Sprint / Phase | Phase Name | Primary Domain Modules | Estimated Tickets |
 |---|---|---|---|
