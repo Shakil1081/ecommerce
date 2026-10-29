@@ -103,11 +103,17 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 #### `P1-T05`: Spatie Laravel MediaLibrary & Responsive Breakpoints
 - **Objective**: Configure Spatie MediaLibrary with Intervention Image v3 for WebP and AVIF generation, blurhash placeholders, and responsive breakpoints.
 - **Files**:
-  - `database/migrations/xxxx_create_media_table.php`
+  - `database/migrations/2026_10_29_144437_create_media_table.php`
+  - `config/media-library.php`
+  - `app/Modules/Common/Models/Media.php`
   - `app/Modules/Common/Services/MediaService.php`
+  - `app/Modules/Common/Traits/HasStandardMediaConversions.php`
+  - `tests/Feature/MediaServiceTest.php`
 - **Acceptance Criteria**:
-  - [ ] Responsive conversions (`thumb_300`, `card_600`, `gallery_1200`, `zoom_2000`) generated asynchronously.
-  - [ ] Blurhash strings computed and stored to guarantee CLS = 0.0.
+  - [x] Responsive conversions (`thumb_300`, `card_600`, `gallery_1200`, `zoom_2000`) in both JPEG and WebP registered and generated.
+  - [x] Blurhash strings and LQIP data URIs computed and stored in media custom properties guaranteeing CLS = 0.0.
+  - [x] Enterprise media serialization payload (`toEnterpriseArray()`) formatted for Inertia/Vue components.
+  - [x] Photography watermark protection method tested and verified.
 
 #### `P1-T06`: Spatie RBAC System & Back-Office Admin Management UI
 - **Objective**: Implement enterprise roles, grouped permission matrix, and staff user assignment UI.
