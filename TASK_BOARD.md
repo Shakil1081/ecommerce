@@ -310,7 +310,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 |---|---|---|---|---|---|
 | `P3-T01` | Supplier Directory (International & Local) with BIN/TIN | `Procurement` | `feat/p3-t01-supplier-directory` | `[x] DONE` | `php artisan test --filter=SupplierTest` |
 | `P3-T02` | Global Import Purchase Orders & Commercial Invoices | `Procurement` | `feat/p3-t02-import-orders` | `[x] DONE` | `php artisan test --filter=ImportOrderTest` |
-| `P3-T03` | Bill of Entry (BOE / বিল অফ এন্ট্রি) & Customs Tariffs | `Procurement`, `TaxCompliance` | `feat/p3-t03-bill-of-entry` | `[ ] TODO` | `php artisan test --filter=BillOfEntryTest` |
+| `P3-T03` | Bill of Entry (BOE / বিল অফ এন্ট্রি) & Customs Tariffs | `Procurement`, `TaxCompliance` | `feat/p3-t03-bill-of-entry` | `[x] DONE` | `php artisan test --filter=BillOfEntryTest` |
 | `P3-T04` | Local Purchase Orders (BDT ৳) & Supplier Mushak 6.3 | `Procurement`, `TaxCompliance` | `feat/p3-t04-local-purchase-orders` | `[ ] TODO` | `php artisan test --filter=LocalPoTest` |
 | `P3-T05` | Unified Landed Cost & True COGS Allocation Engine | `Procurement` | `feat/p3-t05-landed-cost-engine` | `[ ] TODO` | `php artisan test --filter=LandedCostTest` |
 | `P3-T06` | Inward Goods Received Notes (GRN) & Multi-Depot Stock Intake | `Procurement`, `Inventory` | `feat/p3-t06-grn-intake` | `[ ] TODO` | `php artisan test --filter=GoodsReceivedNoteTest` |
@@ -354,8 +354,9 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Procurement/Models/BoeItem.php`
   - `tests/Feature/BillOfEntryTest.php`
 - **Acceptance Criteria**:
-  - [ ] Tracks port of clearance, BOE serial number, and customs assessment value in BDT.
-  - [ ] Computes statutory tariffs: CD, RD, SD, AT (5%), and AIT (5%).
+  - [x] Tracks port of clearance, BOE serial number, and customs assessment value in BDT.
+  - [x] Computes statutory tariffs: CD, RD, SD, AT (5%), and AIT (5%).
+  - [x] Feature tests verified (2 passed, 19 assertions), Pint PSR-12 passed.
 
 #### `P3-T04`: Local Purchase Orders (BDT ৳) & Supplier Mushak 6.3
 - **Objective**: Domestic procurement in Bangladeshi Taka with supplier Mushak 6.3 Tax Invoice registration, VDS calculation with Mushak 6.6 Certificates, and TDS withholding under the Income Tax Act 2023.
