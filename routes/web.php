@@ -13,6 +13,7 @@ use App\Modules\Admin\Http\Controllers\StaffUserController;
 use App\Modules\Admin\Http\Controllers\SystemInfoController;
 use App\Modules\Cart\Http\Controllers\CartController;
 use App\Modules\Payment\Http\Controllers\BkashCallbackController;
+use App\Modules\Payment\Http\Controllers\NagadCallbackController;
 use App\Modules\Seo\Http\Controllers\SitemapController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -50,6 +51,7 @@ Route::get('/orders/confirmed/{order}', function (string $order) {
 // Payment Callbacks & Webhooks
 Route::prefix('payment')->name('payment.')->group(function () {
     Route::get('/bkash/callback', BkashCallbackController::class)->name('bkash.callback');
+    Route::get('/nagad/callback', NagadCallbackController::class)->name('nagad.callback');
 });
 
 Route::prefix('admin')->name('admin.')->group(function () {
