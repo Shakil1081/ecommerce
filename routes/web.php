@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Admin\Http\Controllers\CatalogController;
+use App\Modules\Admin\Http\Controllers\FraudDirectoryAdminController;
 use App\Modules\Admin\Http\Controllers\MediaStorageController;
 use App\Modules\Admin\Http\Controllers\OrderAdminController;
 use App\Modules\Admin\Http\Controllers\ProcurementController;
@@ -48,6 +49,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/orders', [OrderAdminController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderAdminController::class, 'show'])->name('orders.show');
     Route::post('/orders/{order}/transition', [OrderAdminController::class, 'transitionStatus'])->name('orders.transition');
+
+    // Merchant Anti-Fraud Directory (Blacklist & Whitelist)
+    Route::get('/fraud-directory', [FraudDirectoryAdminController::class, 'index'])->name('fraud.index');
+    Route::post('/fraud-directory', [FraudDirectoryAdminController::class, 'store'])->name('fraud.store');
+    Route::delete('/fraud-directory/{customerFraudList}', [FraudDirectoryAdminController::class, 'destroy'])->name('fraud.destroy');
 
     // Dual Sourcing Procurement (Import & Local Domestic)
     Route::prefix('procurement')->name('procurement.')->group(function () {

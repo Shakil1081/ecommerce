@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Order\Actions;
 
 use App\Modules\Common\Security\HoneypotTimingGuardService;
+use App\Modules\Customer\Actions\CheckCustomerFraudListAction;
 use App\Modules\Customer\Rules\BangladeshPhoneNumberRule;
 use App\Modules\Customer\Services\TextEntropyService;
 use App\Modules\Logistics\Services\AggregatedCourierIntelligenceService;
@@ -17,7 +18,8 @@ final class CalculateOrderFraudRiskScoreAction
         private readonly HoneypotTimingGuardService $honeypotGuard,
         private readonly TextEntropyService $textEntropyService,
         private readonly CheckOrderVelocityAction $checkOrderVelocity,
-        private readonly AggregatedCourierIntelligenceService $courierIntelligence
+        private readonly AggregatedCourierIntelligenceService $courierIntelligence,
+        private readonly CheckCustomerFraudListAction $checkFraudList
     ) {}
 
     /**
@@ -45,6 +47,50 @@ final class CalculateOrderFraudRiskScoreAction
         $signals = [];
         $reasons = [];
         $isCourierHighRisk = false;
+
+        // 0. Layer 0: Merchant Directory (Whitelist / Blacklist)
+        $directoryCheck = ($this->checkFraudList)(
+            phone: $orderData['customer_phone'] ?? null,
+            ipAddress: $orderData['ip_address'] ?? null,
+            deviceFingerprint: $orderData['device_fingerprint'] ?? null
+        );
+
+        if ($directoryCheck->isWhitelisted) {
+            return new OrderFraudRiskAssessmentDto(
+                score: 0,
+                riskLevel: OrderFraudRiskAssessmentDto::LEVEL_LOW,
+                isCodAllowed: true,
+                requiresOtp: false,
+                requiresAdvanceDeliveryCharge: false,
+                signals: [
+                    'merchant_whitelist' => [
+                        'entry_id' => $directoryCheck->matchedWhitelistEntry?->id,
+                        'reason' => $directoryCheck->reason,
+                    ],
+                ],
+                reasons: []
+            );
+        }
+
+        if ($directoryCheck->isBlacklisted) {
+            return new OrderFraudRiskAssessmentDto(
+                score: 100,
+                riskLevel: OrderFraudRiskAssessmentDto::LEVEL_BLACKLISTED,
+                isCodAllowed: false,
+                requiresOtp: false,
+                requiresAdvanceDeliveryCharge: false,
+                signals: [
+                    'merchant_blacklist' => [
+                        'entry_id' => $directoryCheck->matchedBlacklistEntry?->id,
+                        'reason' => $directoryCheck->reason,
+                        'points' => 100,
+                    ],
+                ],
+                reasons: [
+                    $directoryCheck->reason ? "Merchant blacklist: {$directoryCheck->reason}" : 'Customer identifier is blacklisted by merchant.',
+                ]
+            );
+        }
 
         // 1. Layer 1: Invisible Honeypot Trap
         $honeypotKey = $orderData['honeypot_field'] ?? HoneypotTimingGuardService::DEFAULT_HONEYPOT_FIELD;
