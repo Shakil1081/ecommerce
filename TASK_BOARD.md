@@ -429,8 +429,8 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 |---|---|---|---|---|---|
 | `P4-T01` | Persistent Cart Engine & Session-to-Customer Merge | `Cart` | `feat/p4-t01-cart-engine` | `[x] DONE` | `php artisan test --filter=CartEngineTest` |
 | `P4-T02` | Interactive Slide-Out Cart Drawer & Free Shipping Bar | `Cart`, `Common` | `feat/p4-t02-cart-drawer` | `[x] DONE` | `npm run build && php artisan test --filter=CartDrawerTest` |
-| `P4-T03` | Discount Coupons & Promotional Code Engine | `Marketing`, `Cart` | `feat/p4-t03-coupons-discounts` | `[ ] IN PROGRESS` | `php artisan test --filter=CouponEngineTest` |
-| `P4-T04` | Order Domain Model & Finite State Machine (FSM) | `Order` | `feat/p4-t04-order-state-machine` | `[ ] TODO` | `php artisan test --filter=OrderStateTest` |
+| `P4-T03` | Discount Coupons & Promotional Code Engine | `Marketing`, `Cart` | `feat/p4-t03-coupons-discounts` | `[x] DONE` | `php artisan test --filter=CouponEngineTest` |
+| `P4-T04` | Order Domain Model & Finite State Machine (FSM) | `Order` | `feat/p4-t04-order-state-machine` | `[ ] IN PROGRESS` | `php artisan test --filter=OrderStateTest` |
 | `P4-T05` | Atomic Stock Reservation & Flash Sale Concurrency Lock | `Inventory`, `Order` | `feat/p4-t05-atomic-stock-reservation` | `[ ] TODO` | `php artisan test --filter=StockReservationTest` |
 | `P4-T06` | Back-Office Order Management & Invoice Dispatch UI | `Order`, `Admin` | `feat/p4-t06-order-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=OrderAdminTest` |
 
@@ -485,9 +485,28 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Marketing/Actions/RecordCouponUsageAction.php`
   - `tests/Feature/CouponEngineTest.php`
 - **Acceptance Criteria**:
-  - [ ] Supports discount types: `percentage`, `fixed_amount`, `free_shipping`.
-  - [ ] Enforces validation rules: minimum spend in BDT, start/end dates, total usage limit, per-customer usage limit.
-  - [ ] Recomputes cart discount amount and total with precision.
+  - [x] Supports discount types: `percentage`, `fixed_amount`, `free_shipping`.
+  - [x] Enforces validation rules: minimum spend in BDT, start/end dates, total usage limit, per-customer usage limit.
+  - [x] Recomputes cart discount amount and total with precision.
+  - [x] Feature tests verified (9 passed, 31 assertions), Pint PSR-12 passed.
+
+#### `P4-T04`: Order Domain Model & Finite State Machine (FSM)
+- **Objective**: Robust Order entity, items, status transition audit history, and deterministic state machine transitions with validation and event dispatching.
+- **Files**:
+  - `database/migrations/xxxx_create_orders_table.php`
+  - `database/migrations/xxxx_create_order_items_table.php`
+  - `database/migrations/xxxx_create_order_status_histories_table.php`
+  - `app/Modules/Order/Models/Order.php`
+  - `app/Modules/Order/Models/OrderItem.php`
+  - `app/Modules/Order/Models/OrderStatusHistory.php`
+  - `app/Modules/Order/Actions/CreateOrderFromCartAction.php`
+  - `app/Modules/Order/Actions/TransitionOrderStatusAction.php`
+  - `tests/Feature/OrderStateTest.php`
+- **Acceptance Criteria**:
+  - [ ] Strict lifecycle state machine: `pending` $\rightarrow$ `confirmed` $\rightarrow$ `processing` $\rightarrow$ `picked_and_packed` $\rightarrow$ `handed_to_courier` $\rightarrow$ `out_for_delivery` $\rightarrow$ `delivered` / `returned` / `cancelled`.
+  - [ ] Prevents illegal status transitions (e.g., delivered to pending).
+  - [ ] Logs immutable transition audit history (`from_status`, `to_status`, `changed_by_user_id`, `reason`).
+  - [ ] Feature tests pass, Pint PSR-12 passed.
   - [ ] Feature tests pass, Pint PSR-12 passed.
 
 ---
