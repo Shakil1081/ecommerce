@@ -174,7 +174,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 |---|---|---|---|---|---|
 | `P2-T01` | Bangladesh Geographic Boundaries & Zone Classification | `Customer`, `Logistics` | `feat/p2-t01-bangladesh-geo` | `[x] DONE` | `php artisan test --filter=BangladeshGeoTest` |
 | `P2-T02` | Catalog Taxonomy: Categories Tree & Brands with Origin | `Catalog` | `feat/p2-t02-categories-brands` | `[x] DONE` | `php artisan test --filter=CategoryAndBrandTest` |
-| `P2-T03` | Matrix Product & Variant Engine with HS Codes & EANs | `Catalog` | `feat/p2-t03-product-matrix-engine` | `[ ] TODO` | `php artisan test --filter=ProductMatrixTest` |
+| `P2-T03` | Matrix Product & Variant Engine with HS Codes & EANs | `Catalog` | `feat/p2-t03-product-matrix-engine` | `[x] DONE` | `php artisan test --filter=ProductMatrixTest` |
 | `P2-T04` | Wholesale B2B Tier Pricing & MOQ Engine | `Pricing` | `feat/p2-t04-tier-pricing` | `[ ] TODO` | `php artisan test --filter=TierPricingTest` |
 | `P2-T05` | Multi-Warehouse Inventory Hubs & Stock Tracking | `Inventory` | `feat/p2-t05-warehouse-inventory` | `[ ] TODO` | `php artisan test --filter=WarehouseInventoryTest` |
 | `P2-T06` | Inter-Depot Transfers & Mushak 6.5 Transfer Challan | `Inventory`, `TaxCompliance` | `feat/p2-t06-stock-transfers-mushak65` | `[ ] TODO` | `php artisan test --filter=StockTransferTest` |
@@ -225,9 +225,10 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Catalog/Actions/GenerateProductVariantsAction.php`
   - `tests/Feature/ProductMatrixTest.php`
 - **Acceptance Criteria**:
-  - [ ] Products track statutory HS codes (for customs clearance) and warranty policy.
-  - [ ] Variant matrix action generates Cartesian product of attributes without duplicate SKUs.
-  - [ ] Variants store integer minor units or decimal monetary values for purchase cost and selling price.
+  - [x] Products track statutory HS codes (for customs clearance) and warranty policy.
+  - [x] Variant matrix action generates Cartesian product of attributes without duplicate SKUs.
+  - [x] Variants store decimal monetary values for purchase cost and selling price with precision.
+  - [x] Feature tests verified (2 passed, 16 assertions), Pint PSR-12 passed.
 
 #### `P2-T04`: Wholesale B2B Tier Pricing & MOQ Engine
 - **Objective**: Dynamic pricing engine calculating volume discounts, minimum order quantities (MOQ), and customer group pricing (Retail B2C vs Wholesale B2B).
