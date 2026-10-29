@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Modules\Inventory\Models;
 
 use App\Models\User;
+use App\Modules\TaxCompliance\Models\Mushak65Challan;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Inter-Warehouse Depot Stock Transfer with NBR Statutory Mushak 6.5 Challan.
@@ -74,6 +76,11 @@ class WarehouseTransfer extends Model
     public function items(): HasMany
     {
         return $this->hasMany(WarehouseTransferItem::class, 'transfer_id');
+    }
+
+    public function mushak65Challan(): HasOne
+    {
+        return $this->hasOne(Mushak65Challan::class, 'warehouse_transfer_id');
     }
 
     /**
