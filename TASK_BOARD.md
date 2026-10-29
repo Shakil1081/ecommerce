@@ -854,13 +854,13 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 - **Target Phase**: **Phase 8: Omnichannel Messaging, Voice AI Verification, Social Commerce & Customer Portal** (`app/Modules/Communication/`, `app/Modules/Marketing/`, `app/Modules/Customer/`)
 - **Sprint Goal**: Implement an enterprise omnichannel communication infrastructure: database-configured dynamic SMTP settings with pre-flight handshake, Bangladesh SMS gateway adapters (Greenweb, Reve SMS, Twilio) with medium-risk order OTP verification, WhatsApp Business API order alert triggers with digital invoice delivery, AI Automated Outbound Voice Calling Verification Agent with DTMF touch-tone (1=confirm, 2=cancel) and speech intent detection, multi-step abandoned cart recovery sequencers, social commerce product feeds (Google Merchant Center XML, Facebook Catalog CSV/XML, TikTok Shop), public self-service order tracking portal with milestone timeline, and a full back-office communication administration dashboard.
-- **Sprint Status**: `[ ⏳ IN PROGRESS ] (0 of 8 Tickets Completed)`
+- **Sprint Status**: `[ ⏳ IN PROGRESS ] (1 of 8 Tickets Completed)`
 
 ### Sprint 8 Ticket Breakdown
 
 | Ticket ID | Task Name / User Story | Module | Git Branch | Status | Verification Command |
 |---|---|---|---|---|---|
-| `P8-T01` | Dynamic SMTP Mail Settings Engine & Pre-Flight Handshake | `Communication`, `Admin` | `feat/p8-t01-smtp-mail-settings` | `[ ] TODO` | `php artisan test --filter=MailSettingsTest` |
+| `P8-T01` | Dynamic SMTP Mail Settings Engine & Pre-Flight Handshake | `Communication`, `Admin` | `feat/p8-t01-smtp-mail-settings` | `[x] DONE` | `php artisan test --filter=MailSettingsTest` |
 | `P8-T02` | Dynamic SMS Gateway Engine (Greenweb, Reve, Twilio) & OTP Verification | `Communication`, `Order` | `feat/p8-t02-sms-gateway-otp` | `[ ] TODO` | `php artisan test --filter=SmsGatewayTest` |
 | `P8-T03` | WhatsApp Business API Integration & Order Lifecycle Alerts | `Communication`, `Order` | `feat/p8-t03-whatsapp-integration` | `[ ] TODO` | `php artisan test --filter=WhatsAppNotificationTest` |
 | `P8-T04` | AI Automated Outbound Voice Calling Verification Agent | `Communication`, `Order` | `feat/p8-t04-voice-calling-verification` | `[ ] TODO` | `php artisan test --filter=VoiceCallingVerificationTest` |
@@ -883,10 +883,10 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Communication/DTOs/MailTestResultDto.php`
   - `tests/Feature/MailSettingsTest.php`
 - **Acceptance Criteria**:
-  - [ ] Migration creates `mail_settings` (`driver`, `host`, `port`, `encryption`, `username`, `password` encrypted, `from_address`, `from_name`, `is_active`, `last_tested_at`, `last_test_status`, `last_test_message`).
-  - [ ] Action dynamically applies mail configuration to runtime mailer config (`mail.mailers.smtp`, `mail.from`).
-  - [ ] `SendTestEmailAction` validates live SMTP connection and sends test email.
-  - [ ] Feature tests pass, Pint PSR-12 clean.
+  - [x] Migration creates `mail_settings` (`driver`, `host`, `port`, `encryption`, `username`, `password` encrypted, `from_address`, `from_name`, `is_active`, `last_tested_at`, `last_test_status`, `last_test_message`).
+  - [x] Action dynamically applies mail configuration to runtime mailer config (`mail.mailers.smtp`, `mail.from`).
+  - [x] `SendTestEmailAction` validates live SMTP connection and sends test email.
+  - [x] Feature tests pass (7 passed, 34 assertions), Pint PSR-12 clean.
 
 ---
 

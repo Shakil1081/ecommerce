@@ -2,6 +2,7 @@
 
 use App\Modules\Cart\Providers\CartServiceProvider;
 use App\Modules\Common\Providers\CommonServiceProvider;
+use App\Modules\Communication\Providers\CommunicationServiceProvider;
 use App\Modules\Inventory\Providers\InventoryServiceProvider;
 use App\Modules\Logistics\Providers\LogisticsServiceProvider;
 use App\Modules\Payment\Providers\PaymentServiceProvider;
@@ -16,4 +17,5 @@ return [
     InventoryServiceProvider::class,
     PaymentServiceProvider::class,
     LogisticsServiceProvider::class,
+    CommunicationServiceProvider::class,
 ];

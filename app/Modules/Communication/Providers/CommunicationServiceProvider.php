@@ -1,0 +1,36 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\Communication\Providers;
+
+use App\Modules\Communication\Actions\ConfigureDynamicMailerAction;
+use App\Modules\Communication\Models\MailSetting;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\ServiceProvider;
+use Throwable;
+
+class CommunicationServiceProvider extends ServiceProvider
+{
+    public function register(): void
+    {
+        $this->app->singleton(ConfigureDynamicMailerAction::class);
+    }
+
+    public function boot(): void
+    {
+        // Dynamically apply active database SMTP settings if configured
+        try {
+            if (! $this->app->runningInConsole() || $this->app->runningUnitTests()) {
+                if (Schema::hasTable('mail_settings')) {
+                    $setting = MailSetting::active()->first();
+                    if ($setting && $setting->isConfigured()) {
+                        ($this->app->make(ConfigureDynamicMailerAction::class))($setting);
+                    }
+                }
+            }
+        } catch (Throwable) {
+            // Silently fall back to default environment mailer before migration
+        }
+    }
+}
