@@ -173,7 +173,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 | Ticket ID | Task Name / User Story | Module | Git Branch | Status | Verification Command |
 |---|---|---|---|---|---|
 | `P2-T01` | Bangladesh Geographic Boundaries & Zone Classification | `Customer`, `Logistics` | `feat/p2-t01-bangladesh-geo` | `[x] DONE` | `php artisan test --filter=BangladeshGeoTest` |
-| `P2-T02` | Catalog Taxonomy: Categories Tree & Brands with Origin | `Catalog` | `feat/p2-t02-categories-brands` | `[ ] TODO` | `php artisan test --filter=CategoryAndBrandTest` |
+| `P2-T02` | Catalog Taxonomy: Categories Tree & Brands with Origin | `Catalog` | `feat/p2-t02-categories-brands` | `[x] DONE` | `php artisan test --filter=CategoryAndBrandTest` |
 | `P2-T03` | Matrix Product & Variant Engine with HS Codes & EANs | `Catalog` | `feat/p2-t03-product-matrix-engine` | `[ ] TODO` | `php artisan test --filter=ProductMatrixTest` |
 | `P2-T04` | Wholesale B2B Tier Pricing & MOQ Engine | `Pricing` | `feat/p2-t04-tier-pricing` | `[ ] TODO` | `php artisan test --filter=TierPricingTest` |
 | `P2-T05` | Multi-Warehouse Inventory Hubs & Stock Tracking | `Inventory` | `feat/p2-t05-warehouse-inventory` | `[ ] TODO` | `php artisan test --filter=WarehouseInventoryTest` |
@@ -210,9 +210,10 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Catalog/Models/Brand.php`
   - `tests/Feature/CategoryAndBrandTest.php`
 - **Acceptance Criteria**:
-  - [ ] Category hierarchy supports parent-child trees and active status.
-  - [ ] Brand model tracks country of origin and active status.
-  - [ ] Media collections for category banners and brand logos registered with Spatie MediaLibrary.
+  - [x] Category hierarchy supports parent-child trees and active status.
+  - [x] Brand model tracks country of origin and active status.
+  - [x] Media collections for category banners, thumbnails, and brand logos registered with Spatie MediaLibrary.
+  - [x] Feature tests verified (3 passed, 18 assertions), Pint PSR-12 passed.
 
 #### `P2-T03`: Matrix Product & Variant Engine with HS Codes & EANs
 - **Objective**: Base Product model with ULID identifier, HS code, warranty policy, JSON specifications, and Variant combinations (Size $\times$ Color $\times$ Material) with SKU and Barcode/EAN.
