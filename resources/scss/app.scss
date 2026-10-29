@@ -1,0 +1,41 @@
+// ==============================================================================
+// ENTERPRISE E-COMMERCE MASTER STYLESHEET ENTRY POINT
+// ==============================================================================
+
+@use 'abstracts/variables' as *;
+@use 'abstracts/functions' as *;
+@use 'abstracts/mixins' as *;
+
+@use 'base/reset';
+@use 'base/typography';
+
+@use 'components/buttons';
+@use 'components/cards';
+
+// --- Global Layout Helpers & Utilities
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: $space-4;
+  padding-right: $space-4;
+
+  @include media-up(md) {
+    padding-left: $space-6;
+    padding-right: $space-6;
+  }
+}
+
+.text-primary { color: $color-primary-600; }
+.text-secondary { color: $color-secondary-900; }
+.text-muted { color: $color-neutral-500; }
+.text-danger { color: $color-danger; }
+.text-success { color: $color-success; }
+
+.bg-surface { background-color: $color-neutral-0; }
+.bg-subtle { background-color: $color-neutral-50; }
+
+.shadow-card { box-shadow: $shadow-md; }
+.rounded-xl { border-radius: $radius-xl; }
+

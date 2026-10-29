@@ -1,0 +1,36 @@
+@use 'sass:math';
+
+// ==============================================================================
+// SCSS UTILITY FUNCTIONS
+// ==============================================================================
+
+/// Convert pixel value to rem
+/// @param {Number} $px - Pixel value (with or without unit)
+/// @return {Number} Converted rem value
+@function rem($px) {
+  @if math.is-unitless($px) {
+    @return math.div($px, 16) * 1rem;
+  } @else {
+    @return math.div($px, 16px) * 1rem;
+  }
+}
+
+/// Convert pixel value to em
+/// @param {Number} $px - Pixel value
+/// @param {Number} $base - Base context in pixels (defaults to 16px)
+/// @return {Number} Converted em value
+@function em($px, $base: 16px) {
+  @return math.div($px, $base) * 1em;
+}
+
+/// Calculate dynamic clamp value for fluid responsive typography
+/// @param {Number} $min-size - Minimum font size in px
+/// @param {Number} $max-size - Maximum font size in px
+/// @param {Number} $min-viewport - Minimum viewport width (defaults to 375px)
+/// @param {Number} $max-viewport - Maximum viewport width (defaults to 1440px)
+@function fluid-clamp($min-size, $max-size, $min-viewport: 375, $max-viewport: 1440) {
+  $slope: math.div($max-size - $min-size, $max-viewport - $min-viewport);
+  $intersection: (-1 * $min-viewport) * $slope + $min-size;
+  @return clamp(#{rem($min-size)}, #{rem($intersection)} + #{($slope * 100) * 1vw}, #{rem($max-size)});
+}
+

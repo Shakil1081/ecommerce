@@ -1,0 +1,114 @@
+@use '../abstracts/variables' as *;
+@use '../abstracts/mixins' as *;
+
+// ==============================================================================
+// ENTERPRISE CARD & METRIC PRIMITIVES
+// ==============================================================================
+
+.card {
+  background-color: $color-neutral-0;
+  border-radius: $radius-xl;
+  border: 1px solid $color-neutral-200;
+  box-shadow: $shadow-sm;
+  overflow: hidden;
+  transition: all $transition-base;
+
+  &-interactive {
+    @include card-hover;
+    cursor: pointer;
+  }
+
+  &-header {
+    padding: $space-4 $space-6;
+    border-bottom: 1px solid $color-neutral-200;
+    @include flex-between;
+  }
+
+  &-body {
+    padding: $space-6;
+  }
+
+  &-footer {
+    padding: $space-4 $space-6;
+    background-color: $color-neutral-50;
+    border-top: 1px solid $color-neutral-200;
+  }
+}
+
+// --- Executive Metric Card
+.metric-card {
+  background-color: $color-neutral-0;
+  border: 1px solid $color-neutral-200;
+  border-radius: $radius-xl;
+  padding: $space-5;
+  box-shadow: $shadow-xs;
+  @include flex-column;
+  gap: $space-2;
+
+  .metric-label {
+    font-size: $fs-xs;
+    font-weight: $fw-medium;
+    color: $color-neutral-500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .metric-value {
+    font-family: $font-heading;
+    font-size: $fs-2xl;
+    font-weight: $fw-bold;
+    color: $color-neutral-900;
+    line-height: 1;
+  }
+
+  .metric-trend {
+    font-size: $fs-xs;
+    font-weight: $fw-semibold;
+    display: inline-flex;
+    align-items: center;
+    gap: $space-1;
+
+    &.positive { color: $color-success; }
+    &.negative { color: $color-danger; }
+  }
+}
+
+// --- Badges
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-1;
+  padding: $space-1 $space-2;
+  font-size: $fs-2xs;
+  font-weight: $fw-semibold;
+  line-height: 1;
+  border-radius: $radius-full;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  &-primary {
+    background-color: $color-primary-100;
+    color: $color-primary-800;
+  }
+
+  &-secondary {
+    background-color: $color-secondary-100;
+    color: $color-secondary-800;
+  }
+
+  &-success {
+    background-color: hsl(142, 76%, 94%);
+    color: hsl(142, 76%, 28%);
+  }
+
+  &-danger {
+    background-color: hsl(0, 86%, 95%);
+    color: hsl(0, 72%, 40%);
+  }
+
+  &-warning {
+    background-color: hsl(43, 96%, 94%);
+    color: hsl(38, 92%, 30%);
+  }
+}
+

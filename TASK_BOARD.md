@@ -29,7 +29,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 | Ticket ID | Title | Target Module | Branch | Status | Verification Command |
 |---|---|---|---|---|---|
 | `P1-T01` | Laravel 13 Core & Modular Autoloading Setup | `Common` | `feat/p1-t01-laravel-skeleton` | `[x] DONE` | `php artisan test --filter=InfrastructureTest` |
-| `P1-T02` | SCSS Design Token Architecture (`resources/scss/`) | `Common` | `feat/p1-t02-scss-tokens` | `[ ] TODO` | `npm run build` |
+| `P1-T02` | SCSS Design Token Architecture (`resources/scss/`) | `Common` | `feat/p1-t02-scss-tokens` | `[x] DONE` | `npm run build` |
 | `P1-T03` | Inertia.js v2 with Vue 3 TypeScript & SSR Shell | `Common`, `Seo` | `feat/p1-t03-inertia-ssr-shell` | `[ ] TODO` | `npm run build:ssr` |
 | `P1-T04` | Dynamic Multi-Cloud Storage Engine (`media_storage_settings`) | `Common`, `Admin` | `feat/p1-t04-storage-engine` | `[ ] TODO` | `php artisan test --filter=StorageEngineTest` |
 | `P1-T05` | Spatie Laravel MediaLibrary & Responsive Breakpoints | `Common` | `feat/p1-t05-media-conversions` | `[ ] TODO` | `php artisan test --filter=MediaServiceTest` |
@@ -66,8 +66,9 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `resources/scss/app.scss`
   - `vite.config.ts`
 - **Acceptance Criteria**:
-  - [ ] SCSS tokens accessible inside any Vue SFC `<style lang="scss" scoped>` without manual `@use` imports.
-  - [ ] `npm run build` compiles stylesheet with 0 errors.
+  - [x] SCSS tokens accessible inside any Vue SFC `<style lang="scss" scoped>` without manual `@use` imports.
+  - [x] `npm run build` compiles stylesheet with 0 errors.
+  - [x] TypeScript strictness verified with `npx vue-tsc --noEmit`.
 
 #### `P1-T03`: Inertia.js v2 with Vue 3 TypeScript & SSR Shell
 - **Objective**: Setup client-side app (`app.ts`) and server-side rendering script (`ssr.ts`) with typed layouts.
