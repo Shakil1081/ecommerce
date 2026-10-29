@@ -248,3 +248,4 @@ const processGrn = (grn: GrnRecord) => {
   color: $color-text-muted;
 }
 </style>
+

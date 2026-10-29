@@ -427,12 +427,36 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 | Ticket ID | Task Name / User Story | Module | Git Branch | Status | Verification Command |
 |---|---|---|---|---|---|
-| `P4-T01` | Persistent Cart Engine & Session-to-Customer Merge | `Cart` | `feat/p4-t01-cart-engine` | `[ ] TODO` | `php artisan test --filter=CartEngineTest` |
+| `P4-T01` | Persistent Cart Engine & Session-to-Customer Merge | `Cart` | `feat/p4-t01-cart-engine` | `[x] DONE` | `php artisan test --filter=CartEngineTest` |
 | `P4-T02` | Interactive Slide-Out Cart Drawer & Free Shipping Bar | `Cart`, `Common` | `feat/p4-t02-cart-drawer` | `[ ] TODO` | `npm run build && php artisan test --filter=CartDrawerTest` |
 | `P4-T03` | Discount Coupons & Promotional Code Engine | `Marketing`, `Cart` | `feat/p4-t03-coupons-discounts` | `[ ] TODO` | `php artisan test --filter=CouponEngineTest` |
 | `P4-T04` | Order Domain Model & Finite State Machine (FSM) | `Order` | `feat/p4-t04-order-state-machine` | `[ ] TODO` | `php artisan test --filter=OrderStateTest` |
 | `P4-T05` | Atomic Stock Reservation & Flash Sale Concurrency Lock | `Inventory`, `Order` | `feat/p4-t05-atomic-stock-reservation` | `[ ] TODO` | `php artisan test --filter=StockReservationTest` |
 | `P4-T06` | Back-Office Order Management & Invoice Dispatch UI | `Order`, `Admin` | `feat/p4-t06-order-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=OrderAdminTest` |
+
+---
+
+### Detailed Ticket Specifications (Sprint 4)
+
+#### `P4-T01`: Persistent Cart Engine & Session-to-Customer Merge
+- **Objective**: Persistent cart for guest sessions and authenticated users with dynamic volume tier pricing and session merge on login.
+- **Files**:
+  - `database/migrations/xxxx_create_carts_table.php`
+  - `database/migrations/xxxx_create_cart_items_table.php`
+  - `app/Modules/Cart/Models/Cart.php`
+  - `app/Modules/Cart/Models/CartItem.php`
+  - `app/Modules/Cart/Actions/AddToCartAction.php`
+  - `app/Modules/Cart/Actions/UpdateCartItemQuantityAction.php`
+  - `app/Modules/Cart/Actions/RemoveFromCartAction.php`
+  - `app/Modules/Cart/Actions/MergeGuestCartAction.php`
+  - `app/Modules/Cart/Actions/GetActiveCartAction.php`
+  - `app/Modules/Cart/Actions/RecalculateCartAction.php`
+  - `tests/Feature/CartEngineTest.php`
+- **Acceptance Criteria**:
+  - [x] Guest cart tracks session cookie token and activity timestamp.
+  - [x] Adding/updating item quantities automatically computes volume tier price breaks and unit savings.
+  - [x] Merging guest cart into customer account transfers items, combines duplicates, and recalculates totals.
+  - [x] Feature tests verified (5 passed, 31 assertions), Pint PSR-12 passed.
 
 ---
 
