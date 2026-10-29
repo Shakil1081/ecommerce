@@ -313,7 +313,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 | `P3-T03` | Bill of Entry (BOE / বিল অফ এন্ট্রি) & Customs Tariffs | `Procurement`, `TaxCompliance` | `feat/p3-t03-bill-of-entry` | `[x] DONE` | `php artisan test --filter=BillOfEntryTest` |
 | `P3-T04` | Local Purchase Orders (BDT ৳) & Supplier Mushak 6.3 | `Procurement`, `TaxCompliance` | `feat/p3-t04-local-purchase-orders` | `[x] DONE` | `php artisan test --filter=LocalPoTest` |
 | `P3-T05` | Unified Landed Cost & True COGS Allocation Engine | `Procurement` | `feat/p3-t05-landed-cost-engine` | `[x] DONE` | `php artisan test --filter=LandedCostTest` |
-| `P3-T06` | Inward Goods Received Notes (GRN) & Multi-Depot Stock Intake | `Procurement`, `Inventory` | `feat/p3-t06-grn-intake` | `[ ] TODO` | `php artisan test --filter=GoodsReceivedNoteTest` |
+| `P3-T06` | Inward Goods Received Notes (GRN) & Multi-Depot Stock Intake | `Procurement`, `Inventory` | `feat/p3-t06-grn-intake` | `[x] DONE` | `php artisan test --filter=GoodsReceivedNoteTest` |
 | `P3-T07` | Back-Office Dual Sourcing Procurement UI | `Procurement`, `Admin` | `feat/p3-t07-procurement-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=ProcurementAdminTest` |
 
 ---
@@ -395,8 +395,10 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Procurement/Actions/ReceiveGoodsNoteAction.php`
   - `tests/Feature/GoodsReceivedNoteTest.php`
 - **Acceptance Criteria**:
-  - [ ] GRN records ordered, received, and damaged quantities.
-  - [ ] Inward receiving atomically increments physical inventory stock in the specified warehouse depot.
+  - [x] GRN records ordered, received, and damaged quantities.
+  - [x] Inward receiving atomically increments physical inventory stock in the specified warehouse depot.
+  - [x] Reconciles parent PO lifecycle status and flags discrepancies.
+  - [x] Feature tests verified (3 passed, 13 assertions), Pint PSR-12 passed.
 
 #### `P3-T07`: Back-Office Dual Sourcing Procurement UI
 - **Objective**: Full Vue 3 Inertia back-office management views for Global Import Orders, Domestic POs, BOE Tariffs, and GRN Intake.
