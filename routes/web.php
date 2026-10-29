@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Modules\Admin\Http\Controllers\MediaStorageController;
 use App\Modules\Admin\Http\Controllers\RoleController;
 use App\Modules\Admin\Http\Controllers\StaffUserController;
+use App\Modules\Admin\Http\Controllers\SystemInfoController;
 use App\Modules\Seo\Http\Controllers\SitemapController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -30,5 +31,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/media-storage', [MediaStorageController::class, 'store'])->name('media-storage.store');
         Route::post('/media-storage/test', [MediaStorageController::class, 'test'])->name('media-storage.test');
         Route::delete('/media-storage/{setting}', [MediaStorageController::class, 'destroy'])->name('media-storage.destroy');
+
+        Route::get('/system', [SystemInfoController::class, 'index'])->name('system');
     });
 });

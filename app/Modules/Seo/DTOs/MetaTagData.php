@@ -61,3 +61,4 @@ readonly class MetaTagData
         return implode("\n", $scripts);
     }
 }
+
