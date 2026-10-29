@@ -9,8 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.7.0] - 2026-10-29
+
 ### Added
-- **Dynamic Courier Gateway Settings & Consignment Ledger (`App\Modules\Logistics`)**:
+- **Automated Courier Logistics, Dynamic Delivery Pricing & Payout Reconciliation (`App\Modules\Logistics`, `App\Modules\Admin`, `App\Modules\Order`)**:
   - Dynamic courier gateway configuration schema with encrypted credentials (`encrypted:array`), active toggles, sandbox flags, live base URLs, supported features JSON array, and pre-flight "Test Courier API Connection" action (`CourierGatewaySetting`, `TestCourierConnectionAction`).
   - Unified `CourierGatewayManager` and `CourierAdapterContract` interface for decoupled multi-carrier logistics (Steadfast, Pathao, RedX, Paperfly, Sundarban).
   - Courier consignments tracking ledger (`CourierConsignment`) tracking ULIDs, order IDs, courier codes, consignment IDs, tracking numbers, delivery zones, fees, COD amounts, and webhook payloads with relationships on `Order` (`$order->consignments`, `$order->latestConsignment`).
@@ -24,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Database seeder (`ShippingZoneSeeder`) initializing Bangladesh shipping zones, estimated delivery windows, and default rates.
   - Consignment booking dispatchers for single and bulk dispatches (`BookCourierConsignmentAction`, `BulkBookCourierConsignmentsAction`) with auto-fallback to active couriers and order audit histories.
   - Printable 4x6 inch (100mm x 150mm) / A6 thermal barcode shipping label generator (`GenerateShippingLabelHtmlAction`, `ShippingLabelController`) with crisp pure-PHP Code128 vector SVG barcodes, recipient details, and prominent COD cash collection boxes.
+  - Back-office Courier Gateway Management portal (`CourierSettings.vue`, `CourierAdminController`) featuring masked credentials, pre-flight test API connection handshake with latency measurement, and webhook URL clipboard copy.
+  - Shipping Zones & Pricing management UI (`ShippingZones.vue`) allowing merchants to adjust base rates, weight thresholds, and free shipping triggers without code deployments.
+  - Automated COD Cash Reconciliation system (`courier_disbursements`, `courier_disbursement_items`, `ReconcileCodPaymentAction`, `CodReconciliation.vue`) tracking collected COD amounts, courier service fees, net disbursements, and automated discrepancy flagging.
 
 ---
 

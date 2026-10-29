@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Admin\Http\Controllers\BotSecuritySettingsController;
 use App\Modules\Admin\Http\Controllers\CatalogController;
+use App\Modules\Admin\Http\Controllers\CourierAdminController;
 use App\Modules\Admin\Http\Controllers\FraudDirectoryAdminController;
 use App\Modules\Admin\Http\Controllers\MediaStorageController;
 use App\Modules\Admin\Http\Controllers\OrderAdminController;
@@ -126,6 +127,19 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/payment-gateways', [PaymentAdminController::class, 'save'])->name('payment-gateways.save');
         Route::post('/payment-gateways/test', [PaymentAdminController::class, 'testConnection'])->name('payment-gateways.test');
 
+        // Dynamic Courier Logistics Settings
+        Route::get('/couriers', [CourierAdminController::class, 'index'])->name('couriers.index');
+        Route::post('/couriers/test', [CourierAdminController::class, 'testConnection'])->name('couriers.test');
+        Route::post('/couriers/{courierGatewaySetting}', [CourierAdminController::class, 'update'])->name('couriers.update');
+
         Route::get('/system', [SystemInfoController::class, 'index'])->name('system');
+    });
+
+    // Courier Logistics Hub & Payout Reconciliation
+    Route::prefix('logistics')->name('logistics.')->group(function () {
+        Route::get('/zones', [CourierAdminController::class, 'zones'])->name('zones');
+        Route::post('/zones/{zone}/rate', [CourierAdminController::class, 'updateZoneRate'])->name('zones.rate');
+        Route::get('/cod-reconciliation', [CourierAdminController::class, 'codReconciliation'])->name('reconciliation');
+        Route::post('/cod-reconciliation', [CourierAdminController::class, 'storeDisbursement'])->name('reconciliation.store');
     });
 });
