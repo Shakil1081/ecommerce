@@ -14,6 +14,7 @@ use App\Modules\Admin\Http\Controllers\RoleController;
 use App\Modules\Admin\Http\Controllers\StaffUserController;
 use App\Modules\Admin\Http\Controllers\SystemInfoController;
 use App\Modules\Cart\Http\Controllers\CartController;
+use App\Modules\Communication\Http\Controllers\WhatsAppWebhookController;
 use App\Modules\Logistics\Http\Controllers\PathaoWebhookController;
 use App\Modules\Logistics\Http\Controllers\ShippingLabelController;
 use App\Modules\Logistics\Http\Controllers\SteadfastWebhookController;
@@ -74,6 +75,10 @@ Route::prefix('webhooks/courier')->name('webhooks.courier.')->group(function () 
     Route::post('/steadfast', SteadfastWebhookController::class)->name('steadfast');
     Route::post('/pathao', PathaoWebhookController::class)->name('pathao');
 });
+
+// Omnichannel WhatsApp Webhook
+Route::get('/webhooks/whatsapp', [WhatsAppWebhookController::class, 'verify'])->name('webhooks.whatsapp.verify');
+Route::post('/webhooks/whatsapp', [WhatsAppWebhookController::class, 'handle'])->name('webhooks.whatsapp.handle');
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::resource('roles', RoleController::class);

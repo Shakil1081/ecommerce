@@ -854,7 +854,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 - **Target Phase**: **Phase 8: Omnichannel Messaging, Voice AI Verification, Social Commerce & Customer Portal** (`app/Modules/Communication/`, `app/Modules/Marketing/`, `app/Modules/Customer/`)
 - **Sprint Goal**: Implement an enterprise omnichannel communication infrastructure: database-configured dynamic SMTP settings with pre-flight handshake, Bangladesh SMS gateway adapters (Greenweb, Reve SMS, Twilio) with medium-risk order OTP verification, WhatsApp Business API order alert triggers with digital invoice delivery, AI Automated Outbound Voice Calling Verification Agent with DTMF touch-tone (1=confirm, 2=cancel) and speech intent detection, multi-step abandoned cart recovery sequencers, social commerce product feeds (Google Merchant Center XML, Facebook Catalog CSV/XML, TikTok Shop), public self-service order tracking portal with milestone timeline, and a full back-office communication administration dashboard.
-- **Sprint Status**: `[ ⏳ IN PROGRESS ] (2 of 8 Tickets Completed)`
+- **Sprint Status**: `[ ⏳ IN PROGRESS ] (3 of 8 Tickets Completed)`
 
 ### Sprint 8 Ticket Breakdown
 
@@ -862,7 +862,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 |---|---|---|---|---|---|
 | `P8-T01` | Dynamic SMTP Mail Settings Engine & Pre-Flight Handshake | `Communication`, `Admin` | `feat/p8-t01-smtp-mail-settings` | `[x] DONE` | `php artisan test --filter=MailSettingsTest` |
 | `P8-T02` | Dynamic SMS Gateway Engine (Greenweb, Reve, Twilio) & OTP Verification | `Communication`, `Order` | `feat/p8-t02-sms-gateway-otp` | `[x] DONE` | `php artisan test --filter=SmsGatewayTest` |
-| `P8-T03` | WhatsApp Business API Integration & Order Lifecycle Alerts | `Communication`, `Order` | `feat/p8-t03-whatsapp-integration` | `[ ] TODO` | `php artisan test --filter=WhatsAppNotificationTest` |
+| `P8-T03` | WhatsApp Business API Integration & Order Lifecycle Alerts | `Communication`, `Order` | `feat/p8-t03-whatsapp-integration` | `[x] DONE` | `php artisan test --filter=WhatsAppNotificationTest` |
 | `P8-T04` | AI Automated Outbound Voice Calling Verification Agent | `Communication`, `Order` | `feat/p8-t04-voice-calling-verification` | `[ ] TODO` | `php artisan test --filter=VoiceCallingVerificationTest` |
 | `P8-T05` | Abandoned Cart Multi-Step Recovery Engine & SMS/WhatsApp Sequencer | `Marketing`, `Cart` | `feat/p8-t05-cart-recovery-sequencer` | `[ ] TODO` | `php artisan test --filter=AbandonedCartRecoveryTest` |
 | `P8-T06` | Social Commerce Feeds (Google Merchant Center, Facebook, TikTok) | `Communication`, `Catalog` | `feat/p8-t06-social-commerce-feeds` | `[ ] TODO` | `php artisan test --filter=SocialCommerceFeedsTest` |
@@ -915,6 +915,26 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - [x] OTP generation action creates hashed codes, enforces expiration TTL, and dispatches SMS.
   - [x] OTP verification action checks codes, increments attempt counter, and blocks brute-force attempts.
   - [x] Feature tests pass (10 passed, 55 assertions), Pint PSR-12 clean.
+
+#### `P8-T03`: WhatsApp Business API Integration & Order Lifecycle Alerts
+- **Objective**: Direct integration with Meta WhatsApp Business Cloud API for templated lifecycle alerts (Order Confirmed, Courier Dispatched, Delivered with Mushak 6.3 digital invoice link), inbound webhook verification handshake, and delivery receipt tracking.
+- **Files**:
+  - `database/migrations/2026_10_29_800301_create_whatsapp_settings_table.php`
+  - `app/Modules/Communication/Models/WhatsAppSetting.php`
+  - `app/Modules/Communication/DTOs/WhatsAppDispatchResultDto.php`
+  - `app/Modules/Communication/DTOs/WhatsAppConnectionTestResultDto.php`
+  - `app/Modules/Communication/Services/WhatsAppClient.php`
+  - `app/Modules/Communication/Actions/SendOrderWhatsAppAlertAction.php`
+  - `app/Modules/Communication/Http/Controllers/WhatsAppWebhookController.php`
+  - `routes/web.php`
+  - `bootstrap/app.php`
+  - `tests/Feature/WhatsAppNotificationTest.php`
+- **Acceptance Criteria**:
+  - [x] Schema stores WhatsApp Cloud API credentials encrypted (`phone_number_id`, `access_token`, `webhook_verify_token`, `app_secret`).
+  - [x] WhatsAppClient dispatches pre-approved templates and free-form messages with error handling.
+  - [x] Automated action formats dynamic payloads for Confirmed, Dispatched, and Delivered orders with tracking and invoice links.
+  - [x] Webhook controller handles Meta verification GET handshake and POST status updates.
+  - [x] Feature tests pass (7 passed, 26 assertions), Pint PSR-12 clean.
 
 ---
 
