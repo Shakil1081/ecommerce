@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Procurement\Models;
 
+use App\Modules\TaxCompliance\Models\Mushak66Certificate;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
 /**
@@ -97,6 +99,11 @@ class LocalPurchaseOrder extends Model
     public function items(): HasMany
     {
         return $this->hasMany(LocalPoItem::class, 'local_purchase_order_id');
+    }
+
+    public function mushak66Certificate(): HasOne
+    {
+        return $this->hasOne(Mushak66Certificate::class, 'local_purchase_order_id');
     }
 
     /**
