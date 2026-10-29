@@ -11,9 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **7-Layer Anti-Fraud & Fake Order Defense Shield (`App\Modules\Order`, `App\Modules\Customer`)**:
-  - Multi-signal dynamic fraud risk scoring engine (0-100).
-  - Invisible bot honeypot traps and checkout submission timing guards.
-  - Bangladesh mobile operator regex and repeating dummy digit detector.
+  - Bangladesh mobile operator validation rule with operator detection (GP, Banglalink, Robi/Airtel, Teletalk), E.164 normalization, and dummy/sequential repeating digit rejection (`BangladeshPhoneNumberRule`).
+  - Multi-lingual Shannon text entropy and gibberish scoring engine (0-100) supporting English and Bengali (বাংলা) UTF-8 (`TextEntropyService`).
+  - Order velocity throttling enforcing max 1 active unfulfilled COD order per phone, and max 2 orders/day burst limits per IP and device fingerprint (`CheckOrderVelocityAction`).
+  - Added indexed `ip_address`, `device_fingerprint`, and `user_agent` metadata tracking on Orders table.
+  - Invisible bot honeypot traps and checkout submission timing guards with encrypted tokens (`HoneypotTimingGuardService`).
   - Merchant blacklist and whitelist directory (`customer_fraud_lists`).
   - Google reCAPTCHA / Cloudflare Turnstile dynamic bot protection settings.
 

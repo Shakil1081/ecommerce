@@ -29,6 +29,9 @@ use Illuminate\Support\Str;
  * @property string $customer_name
  * @property string $customer_phone
  * @property string|null $customer_email
+ * @property string|null $ip_address
+ * @property string|null $device_fingerprint
+ * @property string|null $user_agent
  * @property int $division_id
  * @property int $district_id
  * @property int|null $thana_id
@@ -114,6 +117,9 @@ class Order extends Model
         'customer_name',
         'customer_phone',
         'customer_email',
+        'ip_address',
+        'device_fingerprint',
+        'user_agent',
         'division_id',
         'district_id',
         'thana_id',
