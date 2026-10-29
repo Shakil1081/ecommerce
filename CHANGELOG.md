@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Inbound status webhook listener (`SteadfastWebhookController`) at `/webhooks/courier/steadfast` with optional secret verification, consignment ledger updates, and automated order state transitions to delivered/returned with audit histories.
   - Pathao Courier driver (`PathaoCourierAdapter`) with automated OAuth token management and caching (`/aladdin/api/v1/issue-token`), store resolution (`/aladdin/api/v1/stores`), parcel consignment creation (`/aladdin/api/v1/orders/issue-order`), and parcel status inquiry (`/aladdin/api/v1/orders/{id}/info`).
   - Inbound Pathao status webhook listener (`PathaoWebhookController`) at `/webhooks/courier/pathao` supporting signature validation, consignment status synchronization, and order lifecycle transitions.
+  - Dynamic Bangladesh delivery pricing and zone calculation engine (`ShippingZone`, `ShippingRate`, `CalculateShippingRateAction`, `ShippingRateCalculationDto`) featuring zone classifications (`inside_dhaka` ৳70, `dhaka_suburbs` ৳100, `outside_dhaka` ৳130), weight-tier brackets (base 1.0kg + ৳20/kg incremental), cart free delivery thresholds, and courier-specific price overrides.
+  - Database seeder (`ShippingZoneSeeder`) initializing Bangladesh shipping zones, estimated delivery windows, and default rates.
 
 ---
 
