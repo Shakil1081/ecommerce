@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Payment transactions ledger (`PaymentTransaction`) tracking ULIDs, order IDs, gateway codes, transaction references, fees, and lifecycle statuses.
   - bKash Tokenized Checkout driver (`BkashPaymentAdapter`) with automated grant token retrieval and caching, checkout session creation, execution verification, and customer return callback handler (`BkashCallbackController`).
   - Nagad digital payment adapter (`NagadPaymentAdapter`, `NagadCryptographicService`) with RSA public/private key encryption and SHA256 digital signatures, two-step checkout initialization, return callback validation, and order fulfillment (`NagadCallbackController`).
+  - SSLCommerz hosted session gateway adapter (`SslcommerzPaymentAdapter`) with dynamic session creation, return callback routes (success, fail, cancel), Instant Payment Notification (IPN) asynchronous verification (`SslcommerzCallbackController`), and pre-flight validation server handshake.
 
 ---
 
