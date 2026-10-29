@@ -47,6 +47,14 @@ class Cart extends Model
         'last_activity_at',
     ];
 
+    protected $attributes = [
+        'status' => 'active',
+        'subtotal_bdt' => '0.0000',
+        'discount_amount_bdt' => '0.0000',
+        'total_bdt' => '0.0000',
+        'total_items_count' => 0,
+    ];
+
     protected function casts(): array
     {
         return [

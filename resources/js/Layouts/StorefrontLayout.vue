@@ -2,6 +2,8 @@
 import { ref } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import type { SharedProps } from '@/types';
+import CartDrawer from '@/Components/Cart/CartDrawer.vue';
+import { useCartStore } from '@/Stores/cartStore';
 
 defineProps<{
   title?: string;
@@ -9,6 +11,7 @@ defineProps<{
 }>();
 
 const page = usePage<SharedProps>();
+const cartStore = useCartStore();
 const mobileMenuOpen = ref(false);
 const currentLocale = ref(page.props.app?.locale || 'en');
 
@@ -52,10 +55,11 @@ const toggleLocale = () => {
 
         <!-- Navigation Actions -->
         <nav class="header-nav-actions">
-          <Link href="/cart" class="header-action-btn cart-btn">
+          <button type="button" class="header-action-btn cart-btn" @click="cartStore.openDrawer">
             <span class="action-icon">🛒</span>
             <span class="action-label">{{ currentLocale === 'bn' ? 'কার্ট' : 'Cart' }}</span>
-          </Link>
+            <span v-if="cartStore.totalItemsCount > 0" class="cart-badge-count">{{ cartStore.totalItemsCount }}</span>
+          </button>
           <Link href="/login" class="header-action-btn">
             <span class="action-icon">👤</span>
             <span class="action-label">{{ currentLocale === 'bn' ? 'লগইন' : 'Account' }}</span>
@@ -110,6 +114,9 @@ const toggleLocale = () => {
         <p>&copy; 2026 Enterprise E-Commerce Platform. All rights reserved. NBR BIN Compliant.</p>
       </div>
     </footer>
+
+    <!-- Interactive Slide-Out Cart Drawer -->
+    <CartDrawer />
   </div>
 </template>
 
@@ -191,6 +198,15 @@ const toggleLocale = () => {
       &:hover {
         background-color: $color-neutral-100;
         color: $color-neutral-900;
+      }
+
+      .cart-badge-count {
+        background: $color-primary;
+        color: #ffffff;
+        font-size: $fs-2xs;
+        font-weight: 700;
+        padding: 1px 6px;
+        border-radius: $radius-full;
       }
     }
   }

@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Shopping Cart Engine & Slide-Out Drawer (`App\Modules\Cart`)**:
+  - Persistent guest session and authenticated user shopping cart synchronization.
+  - Multi-tier B2B volume pricing automatic application on cart items.
+  - Free shipping progress bar dynamic calculation (৳2,000 threshold).
+  - Slide-out cart drawer with interactive item quantity adjustments and cart preview.
+
 ---
 
 ## [0.3.0] - 2026-10-29

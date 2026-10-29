@@ -8,6 +8,7 @@ use App\Modules\Admin\Http\Controllers\ProcurementController;
 use App\Modules\Admin\Http\Controllers\RoleController;
 use App\Modules\Admin\Http\Controllers\StaffUserController;
 use App\Modules\Admin\Http\Controllers\SystemInfoController;
+use App\Modules\Cart\Http\Controllers\CartController;
 use App\Modules\Seo\Http\Controllers\SitemapController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +20,13 @@ Route::get('/', function () {
         'phpVersion' => PHP_VERSION,
     ]);
 });
+
+// Shopping Cart & Slide-Out Drawer Endpoints
+Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+Route::get('/cart/drawer', [CartController::class, 'index'])->name('cart.drawer');
+Route::post('/cart/items', [CartController::class, 'addItem'])->name('cart.items.add');
+Route::patch('/cart/items/{variantId}', [CartController::class, 'updateQuantity'])->name('cart.items.update');
+Route::delete('/cart/items/{variantId}', [CartController::class, 'removeItem'])->name('cart.items.remove');
 
 // Dynamic SEO Endpoints
 Route::get('/sitemap.xml', [SitemapController::class, 'sitemap'])->name('seo.sitemap');
