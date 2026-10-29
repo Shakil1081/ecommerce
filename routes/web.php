@@ -14,6 +14,7 @@ use App\Modules\Admin\Http\Controllers\RoleController;
 use App\Modules\Admin\Http\Controllers\StaffUserController;
 use App\Modules\Admin\Http\Controllers\SystemInfoController;
 use App\Modules\Cart\Http\Controllers\CartController;
+use App\Modules\Communication\Http\Controllers\SocialCommerceFeedController;
 use App\Modules\Communication\Http\Controllers\VoiceCallWebhookController;
 use App\Modules\Communication\Http\Controllers\WhatsAppWebhookController;
 use App\Modules\Logistics\Http\Controllers\PathaoWebhookController;
@@ -47,6 +48,13 @@ Route::delete('/cart/coupon', [CartController::class, 'removeCoupon'])->name('ca
 // Dynamic SEO Endpoints
 Route::get('/sitemap.xml', [SitemapController::class, 'sitemap'])->name('seo.sitemap');
 Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('seo.robots');
+
+// Social Commerce Product Feeds
+Route::prefix('feeds')->name('feeds.')->group(function () {
+    Route::get('/google-merchant.xml', [SocialCommerceFeedController::class, 'googleMerchant'])->name('google-merchant');
+    Route::get('/facebook-catalog.csv', [SocialCommerceFeedController::class, 'facebookCatalog'])->name('facebook-catalog');
+    Route::get('/tiktok-shop.csv', [SocialCommerceFeedController::class, 'tiktokCatalog'])->name('tiktok-shop');
+});
 
 // Storefront Checkout & Order Confirmation
 Route::get('/checkout', function () {

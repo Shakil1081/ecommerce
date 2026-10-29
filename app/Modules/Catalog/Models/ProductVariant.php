@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Catalog\Models;
 
+use App\Modules\Inventory\Models\InventoryStock;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Product Variant SKU Model.
@@ -73,5 +75,21 @@ class ProductVariant extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * Stock records across all warehouses.
+     */
+    public function stocks(): HasMany
+    {
+        return $this->hasMany(InventoryStock::class, 'product_variant_id');
+    }
+
+    /**
+     * Total available quantity across all active warehouses.
+     */
+    public function getAvailableQuantityAttribute(): int
+    {
+        return (int) $this->stocks->sum(fn ($s) => max(0, $s->physical_quantity - $s->reserved_quantity));
     }
 }
