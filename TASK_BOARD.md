@@ -854,14 +854,14 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 - **Target Phase**: **Phase 8: Omnichannel Messaging, Voice AI Verification, Social Commerce & Customer Portal** (`app/Modules/Communication/`, `app/Modules/Marketing/`, `app/Modules/Customer/`)
 - **Sprint Goal**: Implement an enterprise omnichannel communication infrastructure: database-configured dynamic SMTP settings with pre-flight handshake, Bangladesh SMS gateway adapters (Greenweb, Reve SMS, Twilio) with medium-risk order OTP verification, WhatsApp Business API order alert triggers with digital invoice delivery, AI Automated Outbound Voice Calling Verification Agent with DTMF touch-tone (1=confirm, 2=cancel) and speech intent detection, multi-step abandoned cart recovery sequencers, social commerce product feeds (Google Merchant Center XML, Facebook Catalog CSV/XML, TikTok Shop), public self-service order tracking portal with milestone timeline, and a full back-office communication administration dashboard.
-- **Sprint Status**: `[ ⏳ IN PROGRESS ] (1 of 8 Tickets Completed)`
+- **Sprint Status**: `[ ⏳ IN PROGRESS ] (2 of 8 Tickets Completed)`
 
 ### Sprint 8 Ticket Breakdown
 
 | Ticket ID | Task Name / User Story | Module | Git Branch | Status | Verification Command |
 |---|---|---|---|---|---|
 | `P8-T01` | Dynamic SMTP Mail Settings Engine & Pre-Flight Handshake | `Communication`, `Admin` | `feat/p8-t01-smtp-mail-settings` | `[x] DONE` | `php artisan test --filter=MailSettingsTest` |
-| `P8-T02` | Dynamic SMS Gateway Engine (Greenweb, Reve, Twilio) & OTP Verification | `Communication`, `Order` | `feat/p8-t02-sms-gateway-otp` | `[ ] TODO` | `php artisan test --filter=SmsGatewayTest` |
+| `P8-T02` | Dynamic SMS Gateway Engine (Greenweb, Reve, Twilio) & OTP Verification | `Communication`, `Order` | `feat/p8-t02-sms-gateway-otp` | `[x] DONE` | `php artisan test --filter=SmsGatewayTest` |
 | `P8-T03` | WhatsApp Business API Integration & Order Lifecycle Alerts | `Communication`, `Order` | `feat/p8-t03-whatsapp-integration` | `[ ] TODO` | `php artisan test --filter=WhatsAppNotificationTest` |
 | `P8-T04` | AI Automated Outbound Voice Calling Verification Agent | `Communication`, `Order` | `feat/p8-t04-voice-calling-verification` | `[ ] TODO` | `php artisan test --filter=VoiceCallingVerificationTest` |
 | `P8-T05` | Abandoned Cart Multi-Step Recovery Engine & SMS/WhatsApp Sequencer | `Marketing`, `Cart` | `feat/p8-t05-cart-recovery-sequencer` | `[ ] TODO` | `php artisan test --filter=AbandonedCartRecoveryTest` |
@@ -887,6 +887,34 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - [x] Action dynamically applies mail configuration to runtime mailer config (`mail.mailers.smtp`, `mail.from`).
   - [x] `SendTestEmailAction` validates live SMTP connection and sends test email.
   - [x] Feature tests pass (7 passed, 34 assertions), Pint PSR-12 clean.
+
+#### `P8-T02`: Dynamic SMS Gateway Engine (Greenweb, Reve, Twilio) & OTP Verification
+- **Objective**: Multi-provider SMS gateway architecture supporting Bangladesh providers (Greenweb, Reve SMS) and Twilio with encrypted credentials, balance checking, and OTP verification engine (generating 4-digit codes, expiration TTL, rate limiting, and verification).
+- **Files**:
+  - `database/migrations/2026_10_29_800201_create_sms_gateway_settings_table.php`
+  - `database/migrations/2026_10_29_800202_create_sms_otps_table.php`
+  - `app/Modules/Communication/Models/SmsGatewaySetting.php`
+  - `app/Modules/Communication/Models/SmsOtp.php`
+  - `app/Modules/Communication/Contracts/SmsGatewayContract.php`
+  - `app/Modules/Communication/DTOs/SmsDispatchResultDto.php`
+  - `app/Modules/Communication/DTOs/SmsBalanceResultDto.php`
+  - `app/Modules/Communication/DTOs/SmsConnectionTestResultDto.php`
+  - `app/Modules/Communication/DTOs/OtpVerificationResultDto.php`
+  - `app/Modules/Communication/Adapters/GreenwebSmsAdapter.php`
+  - `app/Modules/Communication/Adapters/ReveSmsAdapter.php`
+  - `app/Modules/Communication/Adapters/TwilioSmsAdapter.php`
+  - `app/Modules/Communication/Services/SmsGatewayManager.php`
+  - `app/Modules/Communication/Actions/SendSmsNotificationAction.php`
+  - `app/Modules/Communication/Actions/GenerateAndSendOtpAction.php`
+  - `app/Modules/Communication/Actions/VerifyOtpAction.php`
+  - `database/seeders/SmsGatewaySeeder.php`
+  - `tests/Feature/SmsGatewayTest.php`
+- **Acceptance Criteria**:
+  - [x] Dynamic SMS gateway schema with encrypted credentials and masked keys (`••••••••3456`).
+  - [x] Greenweb, Reve SMS, and Twilio adapters with dispatching, balance inquiry, and pre-flight connection test.
+  - [x] OTP generation action creates hashed codes, enforces expiration TTL, and dispatches SMS.
+  - [x] OTP verification action checks codes, increments attempt counter, and blocks brute-force attempts.
+  - [x] Feature tests pass (10 passed, 55 assertions), Pint PSR-12 clean.
 
 ---
 
