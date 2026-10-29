@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Planned
+- **Phase 8: Omnichannel Messaging, Voice AI, Promotional SMS & Customer Portal**:
+  - Outbound AI voice calling agent with DTMF/Speech confirmation for COD order verification.
+  - Omnichannel SMS & WhatsApp notifications for order lifecycle updates and dispatch tracking.
+  - Multi-step automated abandoned cart recovery campaigns via SMS and WhatsApp.
+  - Customer self-service order tracking timeline portal.
+
 ---
 
 ## [0.7.0] - 2026-10-29
