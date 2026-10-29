@@ -732,7 +732,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 ---
 
-## 7. Active Sprint: Sprint 7 (Phase 7 — Automated Courier Logistics, Dynamic Delivery Pricing & Payout Reconciliation)
+## 7. Sprint 7 (Phase 7 — Automated Courier Logistics, Dynamic Delivery Pricing & Payout Reconciliation — COMPLETED)
 
 - **Target Phase**: **Phase 7: Automated Courier Logistics, Dynamic Delivery Pricing & Payout Reconciliation** (`app/Modules/Logistics/`)
 - **Sprint Goal**: Scaffold multi-courier gateway adapters with encrypted database credentials for **Steadfast**, **Pathao**, **RedX**, **Paperfly**, and **Sundarban**, 1-click consignment booking, printable 4x6 thermal barcode shipping labels, live tracking webhooks, dynamic zone-based delivery pricing calculation, and automated Cash on Delivery (COD) payout reconciliation.
@@ -850,7 +850,47 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 ---
 
-## 8. Product Backlog (Upcoming Sprints)
+## 8. Active Sprint: Sprint 8 (Phase 8 — Omnichannel Messaging, Voice AI Verification, Social Commerce & Customer Portal)
+
+- **Target Phase**: **Phase 8: Omnichannel Messaging, Voice AI Verification, Social Commerce & Customer Portal** (`app/Modules/Communication/`, `app/Modules/Marketing/`, `app/Modules/Customer/`)
+- **Sprint Goal**: Implement an enterprise omnichannel communication infrastructure: database-configured dynamic SMTP settings with pre-flight handshake, Bangladesh SMS gateway adapters (Greenweb, Reve SMS, Twilio) with medium-risk order OTP verification, WhatsApp Business API order alert triggers with digital invoice delivery, AI Automated Outbound Voice Calling Verification Agent with DTMF touch-tone (1=confirm, 2=cancel) and speech intent detection, multi-step abandoned cart recovery sequencers, social commerce product feeds (Google Merchant Center XML, Facebook Catalog CSV/XML, TikTok Shop), public self-service order tracking portal with milestone timeline, and a full back-office communication administration dashboard.
+- **Sprint Status**: `[ ⏳ IN PROGRESS ] (0 of 8 Tickets Completed)`
+
+### Sprint 8 Ticket Breakdown
+
+| Ticket ID | Task Name / User Story | Module | Git Branch | Status | Verification Command |
+|---|---|---|---|---|---|
+| `P8-T01` | Dynamic SMTP Mail Settings Engine & Pre-Flight Handshake | `Communication`, `Admin` | `feat/p8-t01-smtp-mail-settings` | `[ ] TODO` | `php artisan test --filter=MailSettingsTest` |
+| `P8-T02` | Dynamic SMS Gateway Engine (Greenweb, Reve, Twilio) & OTP Verification | `Communication`, `Order` | `feat/p8-t02-sms-gateway-otp` | `[ ] TODO` | `php artisan test --filter=SmsGatewayTest` |
+| `P8-T03` | WhatsApp Business API Integration & Order Lifecycle Alerts | `Communication`, `Order` | `feat/p8-t03-whatsapp-integration` | `[ ] TODO` | `php artisan test --filter=WhatsAppNotificationTest` |
+| `P8-T04` | AI Automated Outbound Voice Calling Verification Agent | `Communication`, `Order` | `feat/p8-t04-voice-calling-verification` | `[ ] TODO` | `php artisan test --filter=VoiceCallingVerificationTest` |
+| `P8-T05` | Abandoned Cart Multi-Step Recovery Engine & SMS/WhatsApp Sequencer | `Marketing`, `Cart` | `feat/p8-t05-cart-recovery-sequencer` | `[ ] TODO` | `php artisan test --filter=AbandonedCartRecoveryTest` |
+| `P8-T06` | Social Commerce Feeds (Google Merchant Center, Facebook, TikTok) | `Communication`, `Catalog` | `feat/p8-t06-social-commerce-feeds` | `[ ] TODO` | `php artisan test --filter=SocialCommerceFeedsTest` |
+| `P8-T07` | Customer Self-Service Order Tracking Portal & Storefront UX | `Customer`, `Order` | `feat/p8-t07-order-tracking-portal` | `[ ] TODO` | `php artisan test --filter=OrderTrackingPortalTest` |
+| `P8-T08` | Back-Office Omnichannel & Communication Management UI | `Admin`, `Communication` | `feat/p8-t08-communication-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=CommunicationAdminTest` |
+
+---
+
+### Detailed Ticket Specifications (Sprint 8)
+
+#### `P8-T01`: Dynamic SMTP Mail Settings Engine & Pre-Flight Handshake
+- **Objective**: Store dynamic SMTP credentials encrypted in database (`mail_settings`), configure runtime Swift/Symfony mailer transport dynamically without requiring `.env` modification, and provide `SendTestEmailAction` for pre-flight verification.
+- **Files**:
+  - `database/migrations/2026_10_29_800101_create_mail_settings_table.php`
+  - `app/Modules/Communication/Models/MailSetting.php`
+  - `app/Modules/Communication/Actions/ConfigureDynamicMailerAction.php`
+  - `app/Modules/Communication/Actions/SendTestEmailAction.php`
+  - `app/Modules/Communication/DTOs/MailTestResultDto.php`
+  - `tests/Feature/MailSettingsTest.php`
+- **Acceptance Criteria**:
+  - [ ] Migration creates `mail_settings` (`driver`, `host`, `port`, `encryption`, `username`, `password` encrypted, `from_address`, `from_name`, `is_active`, `last_tested_at`, `last_test_status`, `last_test_message`).
+  - [ ] Action dynamically applies mail configuration to runtime mailer config (`mail.mailers.smtp`, `mail.from`).
+  - [ ] `SendTestEmailAction` validates live SMTP connection and sends test email.
+  - [ ] Feature tests pass, Pint PSR-12 clean.
+
+---
+
+## 9. Product Backlog (Upcoming Sprints)
 
 | Sprint / Phase | Phase Name | Primary Domain Modules | Estimated Tickets |
 |---|---|---|---|
@@ -860,7 +900,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 | **Sprint 5 (Phase 5)** | 7-Layer Anti-Fraud, Fake Order Defense & Dynamic Bot Security Settings | `Order`, `Customer`, `Admin` | 6 Tickets |
 | **Sprint 6 (Phase 6)** | Dynamic Payment Gateway Module & Advance COD Delivery Engine | `Payment` | 5 Tickets |
 | **Sprint 7 (Phase 7)** | Automated Courier Logistics, Dynamic Delivery Pricing & Payout Reconciliation | `Logistics` | 6 Tickets |
-| **Sprint 8 (Phase 8)** | Omnichannel Messaging, Voice AI, Promotional SMS & Delivery Campaign Manager, Customer Portal & Storefront UX | `Communication`, `Customer`, `Marketing`, `Storefront` | 9 Tickets |
+| **Sprint 8 (Phase 8)** | Omnichannel Messaging, Voice AI Verification, Social Commerce & Customer Portal | `Communication`, `Customer`, `Marketing` | 8 Tickets |
 | **Sprint 9 (Phase 9)** | Comprehensive NBR VAT, Full Statutory Tax Compliance & RMA Return Engine | `TaxCompliance`, `Order` | 6 Tickets |
 | **Sprint 10 (Phase 10)** | Backend AI Intelligence, Trading P&L Analytics, Audit Trail & Automated QA | `AI`, `Admin` | 5 Tickets |
 
