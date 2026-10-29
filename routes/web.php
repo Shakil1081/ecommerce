@@ -14,6 +14,7 @@ use App\Modules\Admin\Http\Controllers\StaffUserController;
 use App\Modules\Admin\Http\Controllers\SystemInfoController;
 use App\Modules\Cart\Http\Controllers\CartController;
 use App\Modules\Logistics\Http\Controllers\PathaoWebhookController;
+use App\Modules\Logistics\Http\Controllers\ShippingLabelController;
 use App\Modules\Logistics\Http\Controllers\SteadfastWebhookController;
 use App\Modules\Payment\Http\Controllers\BkashCallbackController;
 use App\Modules\Payment\Http\Controllers\NagadCallbackController;
@@ -86,6 +87,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/orders', [OrderAdminController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderAdminController::class, 'show'])->name('orders.show');
     Route::post('/orders/{order}/transition', [OrderAdminController::class, 'transitionStatus'])->name('orders.transition');
+    Route::post('/orders/{order}/book-courier', [ShippingLabelController::class, 'book'])->name('orders.book-courier');
+    Route::post('/orders/bulk-book-courier', [ShippingLabelController::class, 'bulkBook'])->name('orders.bulk-book-courier');
+    Route::get('/orders/{order}/shipping-label', [ShippingLabelController::class, 'show'])->name('orders.shipping-label');
+    Route::match(['GET', 'POST'], '/orders/bulk-shipping-labels', [ShippingLabelController::class, 'bulk'])->name('orders.bulk-shipping-labels');
 
     // Merchant Anti-Fraud Directory (Blacklist & Whitelist)
     Route::get('/fraud-directory', [FraudDirectoryAdminController::class, 'index'])->name('fraud.index');

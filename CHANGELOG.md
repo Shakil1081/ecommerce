@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Inbound Pathao status webhook listener (`PathaoWebhookController`) at `/webhooks/courier/pathao` supporting signature validation, consignment status synchronization, and order lifecycle transitions.
   - Dynamic Bangladesh delivery pricing and zone calculation engine (`ShippingZone`, `ShippingRate`, `CalculateShippingRateAction`, `ShippingRateCalculationDto`) featuring zone classifications (`inside_dhaka` ৳70, `dhaka_suburbs` ৳100, `outside_dhaka` ৳130), weight-tier brackets (base 1.0kg + ৳20/kg incremental), cart free delivery thresholds, and courier-specific price overrides.
   - Database seeder (`ShippingZoneSeeder`) initializing Bangladesh shipping zones, estimated delivery windows, and default rates.
+  - Consignment booking dispatchers for single and bulk dispatches (`BookCourierConsignmentAction`, `BulkBookCourierConsignmentsAction`) with auto-fallback to active couriers and order audit histories.
+  - Printable 4x6 inch (100mm x 150mm) / A6 thermal barcode shipping label generator (`GenerateShippingLabelHtmlAction`, `ShippingLabelController`) with crisp pure-PHP Code128 vector SVG barcodes, recipient details, and prominent COD cash collection boxes.
 
 ---
 
