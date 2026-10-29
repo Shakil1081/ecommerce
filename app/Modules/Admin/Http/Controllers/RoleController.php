@@ -148,4 +148,3 @@ class RoleController extends Controller
         return $groups;
     }
 }
-

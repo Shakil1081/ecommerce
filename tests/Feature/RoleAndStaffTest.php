@@ -120,4 +120,3 @@ class RoleAndStaffTest extends TestCase
         $this->assertTrue(Hash::check('Password123#Secure', $user->password));
     }
 }
-

@@ -145,4 +145,3 @@ class StaffUserController extends Controller
             ->with('success', "Staff user '{$staff->name}' removed successfully.");
     }
 }
-

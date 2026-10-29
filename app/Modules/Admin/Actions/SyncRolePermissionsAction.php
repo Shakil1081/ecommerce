@@ -22,4 +22,3 @@ class SyncRolePermissionsAction
         return $role;
     }
 }
-

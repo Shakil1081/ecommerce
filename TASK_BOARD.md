@@ -141,9 +141,12 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Seo/DTOs/MetaTagData.php`
   - `app/Modules/Seo/Services/SchemaGeneratorService.php`
   - `app/Modules/Seo/Http/Controllers/SitemapController.php`
+  - `tests/Feature/SitemapAndSchemaTest.php`
 - **Acceptance Criteria**:
-  - [ ] Valid JSON-LD scripts rendered server-side for Product, Breadcrumbs, Organization, and FAQ.
-  - [ ] Dynamic `/sitemap.xml` and `/robots.txt` generated and accessible.
+  - [x] Valid JSON-LD scripts rendered for Product, Breadcrumbs, Organization, WebSite with SearchAction, and FAQPage.
+  - [x] Dynamic `/sitemap.xml` with priority, frequency, and lastmod tags generated and accessible.
+  - [x] Dynamic `/robots.txt` with crawler directives and sitemap linkage generated and accessible.
+  - [x] Feature tests verified (4 passed, 32 assertions), Pint PSR-12 passed.
 
 #### `P1-T08`: In-App Release Log Viewer & Version Manager
 - **Objective**: Parse `CHANGELOG.md` to render visual release notes timeline modal in admin topbar and track system version.

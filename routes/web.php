@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Modules\Admin\Http\Controllers\MediaStorageController;
 use App\Modules\Admin\Http\Controllers\RoleController;
 use App\Modules\Admin\Http\Controllers\StaffUserController;
+use App\Modules\Seo\Http\Controllers\SitemapController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -15,6 +16,10 @@ Route::get('/', function () {
         'phpVersion' => PHP_VERSION,
     ]);
 });
+
+// Dynamic SEO Endpoints
+Route::get('/sitemap.xml', [SitemapController::class, 'sitemap'])->name('seo.sitemap');
+Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('seo.robots');
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::resource('roles', RoleController::class);
