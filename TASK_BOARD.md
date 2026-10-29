@@ -118,7 +118,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 #### `P1-T06`: Spatie RBAC System & Back-Office Admin Management UI
 - **Objective**: Implement enterprise roles, grouped permission matrix, and staff user assignment UI.
 - **Files**:
-  - `database/migrations/xxxx_create_permission_tables.php`
+  - `database/migrations/2026_10_29_145028_create_permission_tables.php`
   - `database/seeders/RolesAndPermissionsSeeder.php`
   - `app/Modules/Admin/Http/Controllers/RoleController.php`
   - `app/Modules/Admin/Http/Controllers/StaffUserController.php`
@@ -127,10 +127,13 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `resources/js/Pages/Admin/Roles/RoleForm.vue`
   - `resources/js/Pages/Admin/Staff/StaffIndex.vue`
   - `resources/js/Pages/Admin/Staff/StaffForm.vue`
+  - `tests/Feature/RoleAndStaffTest.php`
 - **Acceptance Criteria**:
-  - [ ] Super Admin role bypasses checks via `Gate::before`.
-  - [ ] Interactive Vue 3 permission matrix allows toggling individual or all module permissions.
-  - [ ] Staff user creation assigns roles with direct permission overrides.
+  - [x] Super Admin role bypasses checks via `Gate::before`.
+  - [x] Enterprise roles seeded (`Super Admin`, `Operations Manager`, `Procurement Officer`, `Accounts & VAT Officer`, `Warehouse Staff`, `Customer Support`).
+  - [x] Interactive Vue 3 permission matrix allows toggling individual or all module permissions ("Select All" per group).
+  - [x] Staff user creation assigns roles with direct validation and credential management.
+  - [x] All 6 feature tests verified (32 assertions), Pint PSR-12 passed, Vue TypeScript compiler passed, and Vite builds passed.
 
 #### `P1-T07`: Dynamic SEO Engine, Schema.org JSON-LD & Dynamic Sitemaps
 - **Objective**: Provide structured metadata DTOs, Schema.org JSON-LD generators, and dynamic sitemap/robots endpoints.

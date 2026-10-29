@@ -143,3 +143,32 @@ $transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
 $transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 $transition-bounce: 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
 
+// --- Ergonomic Semantic & Spacing Aliases
+$spacing-0: $space-0;
+$spacing-1: $space-1;
+$spacing-2: $space-2;
+$spacing-3: $space-3;
+$spacing-4: $space-4;
+$spacing-5: $space-5;
+$spacing-6: $space-6;
+$spacing-8: $space-8;
+$spacing-10: $space-10;
+$spacing-12: $space-12;
+
+$font-size-2xs: $fs-2xs;
+$font-size-xs:  $fs-xs;
+$font-size-sm:  $fs-sm;
+$font-size-base:$fs-base;
+$font-size-lg:  $fs-lg;
+$font-size-xl:  $fs-xl;
+$font-size-2xl: $fs-2xl;
+$font-size-3xl: $fs-3xl;
+
+$color-primary: $color-primary-500;
+$color-text-main: $color-neutral-900;
+$color-text-muted: $color-neutral-500;
+$color-border: $color-neutral-200;
+$color-surface: $color-neutral-0;
+$color-surface-hover: $color-neutral-100;
+
+
