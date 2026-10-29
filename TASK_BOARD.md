@@ -736,7 +736,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 - **Target Phase**: **Phase 7: Automated Courier Logistics, Dynamic Delivery Pricing & Payout Reconciliation** (`app/Modules/Logistics/`)
 - **Sprint Goal**: Scaffold multi-courier gateway adapters with encrypted database credentials for **Steadfast**, **Pathao**, **RedX**, **Paperfly**, and **Sundarban**, 1-click consignment booking, printable 4x6 thermal barcode shipping labels, live tracking webhooks, dynamic zone-based delivery pricing calculation, and automated Cash on Delivery (COD) payout reconciliation.
-- **Sprint Status**: `[ ⏳ IN PROGRESS ] (3 of 6 Tickets Completed)`
+- **Sprint Status**: `[ ⏳ IN PROGRESS ] (4 of 6 Tickets Completed)`
 
 ### Sprint 7 Ticket Breakdown
 
@@ -745,7 +745,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 | `P7-T01` | Dynamic Courier Gateway Settings & Encrypted Credential Engine | `Logistics`, `Common` | `feat/p7-t01-courier-gateway-settings` | `[x] DONE` | `php artisan test --filter=CourierGatewaySettingsTest` |
 | `P7-T02` | Steadfast Courier Driver & Tracking Webhook Listener | `Logistics` | `feat/p7-t02-steadfast-courier-driver` | `[x] DONE` | `php artisan test --filter=SteadfastCourierAdapterTest` |
 | `P7-T03` | Pathao Courier Driver & Tracking Webhook Listener | `Logistics` | `feat/p7-t03-pathao-courier-driver` | `[x] DONE` | `php artisan test --filter=PathaoCourierAdapterTest` |
-| `P7-T04` | Dynamic Zone-Based Delivery Pricing Engine | `Logistics`, `Order`, `Cart` | `feat/p7-t04-delivery-pricing-engine` | `[ ] TODO` | `php artisan test --filter=DeliveryPricingEngineTest` |
+| `P7-T04` | Dynamic Zone-Based Delivery Pricing Engine | `Logistics`, `Order`, `Cart` | `feat/p7-t04-delivery-pricing-engine` | `[x] DONE` | `php artisan test --filter=DeliveryPricingEngineTest` |
 | `P7-T05` | Printable 4x6 Thermal Barcode Shipping Labels & Consignment Booking | `Logistics`, `Order` | `feat/p7-t05-shipping-label-printer` | `[ ] TODO` | `php artisan test --filter=ShippingLabelTest` |
 | `P7-T06` | Back-Office Courier Gateway Management & COD Cash Reconciliation UI | `Logistics`, `Admin` | `feat/p7-t06-courier-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=CourierAdminTest` |
 
@@ -811,10 +811,10 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Logistics/DTOs/ShippingRateCalculationDto.php`
   - `tests/Feature/DeliveryPricingEngineTest.php`
 - **Acceptance Criteria**:
-  - [ ] Zones represent Inside Dhaka (৳70), Dhaka Suburbs (৳100), and Outside Dhaka (৳130) with configurable base weights (e.g. 1.0kg) and incremental per-kg rates (৳20/kg).
-  - [ ] Automatically maps recipient district/thana to appropriate shipping zone.
-  - [ ] Grants free shipping when subtotal exceeds `free_shipping_threshold_bdt`.
-  - [ ] Feature tests pass, Pint PSR-12 clean.
+  - [x] Zones represent Inside Dhaka (৳70), Dhaka Suburbs (৳100), and Outside Dhaka (৳130) with configurable base weights (e.g. 1.0kg) and incremental per-kg rates (৳20/kg).
+  - [x] Automatically maps recipient district/thana to appropriate shipping zone.
+  - [x] Grants free shipping when subtotal exceeds `free_shipping_threshold_bdt`.
+  - [x] Feature tests pass, Pint PSR-12 clean.
 
 #### `P7-T05`: Printable 4x6 Thermal Barcode Shipping Labels & Consignment Booking
 - **Objective**: Consignment booking dispatcher for single and bulk orders, plus thermal label generator (4x6 inch / 100mm x 150mm & A6) with Code128 barcodes for order number and consignment ID, customer info, COD amount in BDT, and merchant details.
