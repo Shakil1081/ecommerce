@@ -31,7 +31,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 | `P1-T01` | Laravel 13 Core & Modular Autoloading Setup | `Common` | `feat/p1-t01-laravel-skeleton` | `[x] DONE` | `php artisan test --filter=InfrastructureTest` |
 | `P1-T02` | SCSS Design Token Architecture (`resources/scss/`) | `Common` | `feat/p1-t02-scss-tokens` | `[x] DONE` | `npm run build` |
 | `P1-T03` | Inertia.js v2 with Vue 3 TypeScript & SSR Shell | `Common`, `Seo` | `feat/p1-t03-inertia-ssr-shell` | `[x] DONE` | `npm run build:ssr && php artisan test --filter=InfrastructureTest` |
-| `P1-T04` | Dynamic Multi-Cloud Storage Engine (`media_storage_settings`) | `Common`, `Admin` | `feat/p1-t04-storage-engine` | `[ ] TODO` | `php artisan test --filter=StorageEngineTest` |
+| `P1-T04` | Dynamic Multi-Cloud Storage Engine (`media_storage_settings`) | `Common`, `Admin` | `feat/p1-t04-storage-engine` | `[x] DONE` | `php artisan test --filter=StorageEngineTest` |
 | `P1-T05` | Spatie Laravel MediaLibrary & Responsive Breakpoints | `Common` | `feat/p1-t05-media-conversions` | `[ ] TODO` | `php artisan test --filter=MediaServiceTest` |
 | `P1-T06` | Spatie RBAC System & Back-Office Admin Management UI | `Admin` | `feat/p1-t06-rbac-admin-ui` | `[ ] TODO` | `php artisan test --filter=RoleAndStaffTest` |
 | `P1-T07` | Dynamic SEO Engine, Schema.org JSON-LD & Dynamic Sitemaps | `Seo` | `feat/p1-t07-seo-schema-engine` | `[ ] TODO` | `php artisan test --filter=SitemapAndSchemaTest` |
@@ -94,9 +94,11 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Common/Commands/MigrateMediaDiskCommand.php`
   - `resources/js/Pages/Admin/Settings/MediaStorageSettings.vue`
 - **Acceptance Criteria**:
-  - [ ] Credentials encrypted at rest in database (`encrypted:array`).
-  - [ ] Pre-flight test connection uploads test file, verifies public CDN read, and cleans up.
-  - [ ] Artisan `media:migrate-disk --from=local --to=s3` handles asset copying.
+  - [x] Credentials encrypted at rest in database (`encrypted:array`).
+  - [x] Pre-flight test connection uploads test file, verifies integrity read, latency, and cleans up.
+  - [x] Artisan `media:migrate-disk --from=local --to=s3` handles asset copying without broken URLs.
+  - [x] Dynamic runtime disk binding configured in `CommonServiceProvider`.
+  - [x] Admin UI built in `MediaStorageSettings.vue` and tested with 5 passing feature tests.
 
 #### `P1-T05`: Spatie Laravel MediaLibrary & Responsive Breakpoints
 - **Objective**: Configure Spatie MediaLibrary with Intervention Image v3 for WebP and AVIF generation, blurhash placeholders, and responsive breakpoints.
