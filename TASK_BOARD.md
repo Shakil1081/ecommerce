@@ -312,7 +312,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 | `P3-T02` | Global Import Purchase Orders & Commercial Invoices | `Procurement` | `feat/p3-t02-import-orders` | `[x] DONE` | `php artisan test --filter=ImportOrderTest` |
 | `P3-T03` | Bill of Entry (BOE / বিল অফ এন্ট্রি) & Customs Tariffs | `Procurement`, `TaxCompliance` | `feat/p3-t03-bill-of-entry` | `[x] DONE` | `php artisan test --filter=BillOfEntryTest` |
 | `P3-T04` | Local Purchase Orders (BDT ৳) & Supplier Mushak 6.3 | `Procurement`, `TaxCompliance` | `feat/p3-t04-local-purchase-orders` | `[x] DONE` | `php artisan test --filter=LocalPoTest` |
-| `P3-T05` | Unified Landed Cost & True COGS Allocation Engine | `Procurement` | `feat/p3-t05-landed-cost-engine` | `[ ] TODO` | `php artisan test --filter=LandedCostTest` |
+| `P3-T05` | Unified Landed Cost & True COGS Allocation Engine | `Procurement` | `feat/p3-t05-landed-cost-engine` | `[x] DONE` | `php artisan test --filter=LandedCostTest` |
 | `P3-T06` | Inward Goods Received Notes (GRN) & Multi-Depot Stock Intake | `Procurement`, `Inventory` | `feat/p3-t06-grn-intake` | `[ ] TODO` | `php artisan test --filter=GoodsReceivedNoteTest` |
 | `P3-T07` | Back-Office Dual Sourcing Procurement UI | `Procurement`, `Admin` | `feat/p3-t07-procurement-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=ProcurementAdminTest` |
 
@@ -381,8 +381,9 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Procurement/Actions/CalculateLocalLandedCostAction.php`
   - `tests/Feature/LandedCostTest.php`
 - **Acceptance Criteria**:
-  - [ ] Allocates international freight, port C&F fees, and customs duties proportionately onto import variants.
-  - [ ] 100% of landed costs absorbed into true domestic unit COGS in BDT (৳).
+  - [x] Allocates international freight, port C&F fees, and customs duties proportionately onto import variants.
+  - [x] 100% of landed costs absorbed into true domestic unit COGS in BDT (৳).
+  - [x] Feature tests verified (2 passed, 11 assertions), Pint PSR-12 passed.
 
 #### `P3-T06`: Inward Goods Received Notes (GRN) & Multi-Depot Stock Intake
 - **Objective**: Physical inward receiving into designated warehouse hubs regardless of origin (import container or domestic truck) with barcode scans, discrepancy notes, and physical inventory commit.
