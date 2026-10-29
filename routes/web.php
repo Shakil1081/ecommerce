@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Admin\Http\Controllers\CatalogController;
 use App\Modules\Admin\Http\Controllers\MediaStorageController;
+use App\Modules\Admin\Http\Controllers\OrderAdminController;
 use App\Modules\Admin\Http\Controllers\ProcurementController;
 use App\Modules\Admin\Http\Controllers\RoleController;
 use App\Modules\Admin\Http\Controllers\StaffUserController;
@@ -42,6 +43,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::resource('products', CatalogController::class);
     Route::get('products/{product}/matrix', [CatalogController::class, 'matrix'])->name('products.matrix');
     Route::post('products/{product}/generate-variants', [CatalogController::class, 'generateVariants'])->name('products.generate-variants');
+
+    // Order Lifecycle Management & Dispatch
+    Route::get('/orders', [OrderAdminController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [OrderAdminController::class, 'show'])->name('orders.show');
+    Route::post('/orders/{order}/transition', [OrderAdminController::class, 'transitionStatus'])->name('orders.transition');
 
     // Dual Sourcing Procurement (Import & Local Domestic)
     Route::prefix('procurement')->name('procurement.')->group(function () {
