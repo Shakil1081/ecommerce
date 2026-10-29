@@ -9,8 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.5.0] - 2026-10-29
+
 ### Added
-- **7-Layer Anti-Fraud & Fake Order Defense Shield (`App\Modules\Order`, `App\Modules\Customer`, `App\Modules\Logistics`)**:
+- **7-Layer Anti-Fraud & Fake Order Defense Shield (`App\Modules\Order`, `App\Modules\Customer`, `App\Modules\Logistics`, `App\Modules\Common`)**:
   - Multi-signal order fraud risk scoring engine (0-100) combining honeypots, timing guards, BD telco validity, text entropy, order velocity, and cross-courier return rates with tiered automated enforcement (`CalculateOrderFraudRiskScoreAction`, `OrderFraudRiskAssessmentDto`).
   - Automated checkout enforcement disabling Cash on Delivery when fraud risk $\ge 70$ or courier return rate $> 40\%$, and rejecting blacklisted bot submissions.
   - Cross-courier delivery intelligence adapters querying customer delivery history and return rates for **Steadfast** (`SteadfastDeliveryIntelligenceService`) and **Pathao** (`PathaoDeliveryIntelligenceService`).
@@ -22,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Invisible bot honeypot traps and checkout submission timing guards with encrypted tokens (`HoneypotTimingGuardService`).
   - Merchant blacklist and whitelist directory (`customer_fraud_lists`) with Vue 3 Inertia management UI (`FraudDirectory.vue`, `FraudDirectoryAdminController`).
   - Automated directory matching action (`CheckCustomerFraudListAction`) enabling VIP zero-friction checkout for whitelisted customers and instant blocks for blacklisted actors.
-  - Google reCAPTCHA / Cloudflare Turnstile dynamic bot protection settings.
+  - Back-office Google reCAPTCHA (v2 Checkbox, v3 Invisible) and Cloudflare Turnstile dynamic bot protection settings with encrypted keys, page-level protection toggles, and pre-flight "Test API Connection" validation (`BotSecuritySettingsController`, `BotCaptchaVerificationService`, `BotSecuritySettings.vue`).
 
 ---
 

@@ -421,7 +421,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 - **Target Phase**: **Phase 5: 7-Layer Anti-Fraud, Fake Order Defense & Dynamic Bot Security Settings**
 - **Sprint Goal**: Implement an enterprise 7-layer defense shield against fake orders, bot submissions, and high-return COD customers: invisible honeypots, client timing guards, Bangladesh telco regex, Shannon entropy gibberish detection, order velocity throttling, cross-courier delivery intelligence APIs, merchant blacklist/whitelist directory, and back-office Google reCAPTCHA / Cloudflare Turnstile toggles.
-- **Sprint Status**: `[ 🟡 IN PROGRESS ] (5 of 6 Tickets Passed & 100% Green)`
+- **Sprint Status**: `[ ✅ COMPLETED ] (6 of 6 Tickets Passed & 100% Green)`
 
 ### Sprint 5 Ticket Breakdown
 
@@ -432,7 +432,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 | `P5-T03` | Cross-Courier Delivery Intelligence Adapters (Steadfast & Pathao) | `Logistics`, `Order` | `feat/p5-t03-courier-intelligence` | `[x] DONE` | `php artisan test --filter=CourierIntelligenceTest` |
 | `P5-T04` | Multi-Signal Order Fraud Risk Scoring Engine (0-100) | `Order` | `feat/p5-t04-fraud-risk-score` | `[x] DONE` | `php artisan test --filter=FraudRiskScoreTest` |
 | `P5-T05` | Merchant Fraud Directory: Blacklist & Whitelist UI | `Customer`, `Admin` | `feat/p5-t05-fraud-directory` | `[x] DONE` | `npm run build && php artisan test --filter=FraudDirectoryAdminTest` |
-| `P5-T06` | Back-Office Google reCAPTCHA & Cloudflare Turnstile Settings | `Admin`, `Common` | `feat/p5-t06-bot-security-settings` | `[ ] TODO` | `npm run build && php artisan test --filter=SecuritySettingsAdminTest` |
+| `P5-T06` | Back-Office Google reCAPTCHA & Cloudflare Turnstile Settings | `Admin`, `Common` | `feat/p5-t06-bot-security-settings` | `[x] DONE` | `npm run build && php artisan test --filter=SecuritySettingsAdminTest` |
 
 ---
 
@@ -514,6 +514,23 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - [x] Whitelist allows trusted VIP customers to bypass fraud scoring friction (score 0, low risk).
   - [x] Admin UI provides tabbed view of blacklisted and whitelisted entries with search filter and creation modal.
   - [x] Feature tests verified (8 passed, 38 assertions), Pint PSR-12 passed, Vite build passed.
+
+#### `P5-T06`: Back-Office Google reCAPTCHA & Cloudflare Turnstile Settings
+- **Objective**: Back-office configuration interface for Google reCAPTCHA (v2 Checkbox, v3 Invisible) and Cloudflare Turnstile with encrypted database secrets, score thresholds, page-level toggles (Login, Register, Checkout, Reviews, Inquiries), and pre-flight "Test API Connection" validation.
+- **Files**:
+  - `database/migrations/2026_10_29_500401_create_bot_security_settings_table.php`
+  - `app/Modules/Common/Models/BotSecuritySetting.php`
+  - `app/Modules/Common/DTOs/CaptchaVerificationResultDto.php`
+  - `app/Modules/Common/Services/BotCaptchaVerificationService.php`
+  - `app/Modules/Admin/Http/Controllers/BotSecuritySettingsController.php`
+  - `resources/js/Pages/Admin/Settings/BotSecuritySettings.vue`
+  - `tests/Feature/SecuritySettingsAdminTest.php`
+- **Acceptance Criteria**:
+  - [x] Supports reCAPTCHA v2 Checkbox, v3 Invisible, and Cloudflare Turnstile.
+  - [x] Provider credentials encrypted at rest (`encrypted:string`).
+  - [x] Page-level activation toggles with `isPageProtected()` helper.
+  - [x] Pre-flight "Test API Connection" verifies credentials against provider verify endpoint.
+  - [x] Feature tests verified (9 passed, 38 assertions), Pint PSR-12 passed, Vite build passed.
 
 ---
 
