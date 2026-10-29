@@ -10,13 +10,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Dynamic Payment Gateway Module & Advance COD Delivery Engine (`App\Modules\Payment`)**:
+- **Automated Courier Logistics & Payout Reconciliation (`App\Modules\Logistics`)**:
+  - Upcoming multi-courier booking and reconciliation engine.
+
+---
+
+## [0.6.0] - 2026-10-29
+
+### Added
+- **Dynamic Payment Gateway Module & Advance COD Delivery Engine (`App\Modules\Payment`, `App\Modules\Admin`, `App\Modules\Order`)**:
   - Dynamic payment gateway configuration schema with encrypted credentials (`encrypted:array`), active toggles, sandbox flags, gateway codes (`bkash`, `nagad`, `sslcommerz`, `stripe`, `cod`, `bank_transfer`), and pre-flight "Test API Connection" verification (`PaymentGatewaySetting`, `TestGatewayConnectionAction`).
   - Unified `PaymentGatewayManager` and `PaymentGatewayContract` interface for decoupled multi-provider digital payments.
   - Payment transactions ledger (`PaymentTransaction`) tracking ULIDs, order IDs, gateway codes, transaction references, fees, and lifecycle statuses.
   - bKash Tokenized Checkout driver (`BkashPaymentAdapter`) with automated grant token retrieval and caching, checkout session creation, execution verification, and customer return callback handler (`BkashCallbackController`).
   - Nagad digital payment adapter (`NagadPaymentAdapter`, `NagadCryptographicService`) with RSA public/private key encryption and SHA256 digital signatures, two-step checkout initialization, return callback validation, and order fulfillment (`NagadCallbackController`).
   - SSLCommerz hosted session gateway adapter (`SslcommerzPaymentAdapter`) with dynamic session creation, return callback routes (success, fail, cancel), Instant Payment Notification (IPN) asynchronous verification (`SslcommerzCallbackController`), and pre-flight validation server handshake.
+  - Advance partial delivery fee checkout engine (`ProcessAdvanceDeliveryPaymentAction`, `ProcessAdvanceDeliveryPaymentController`) enabling high-risk Cash on Delivery buyers to prepay courier shipping fees (৳70/৳100/৳130) to confirm orders.
+  - Back-office Vue 3 Inertia payment gateway management portal (`PaymentGatewaySettings.vue`, `PaymentAdminController`) featuring masked secret credentials, live pre-flight API test handshake with latency metrics, active/sandbox mode switches, and 1-click Webhook/IPN URL copy shortcuts.
 
 ---
 
