@@ -32,6 +32,24 @@ const toggleSidebar = () => {
       </div>
 
       <nav class="sidebar-nav">
+        <div class="nav-section-title" v-if="!sidebarCollapsed">PROCUREMENT & SOURCING</div>
+        <Link href="/admin/procurement/suppliers" class="nav-item">
+          <span class="nav-icon">🏢</span>
+          <span v-if="!sidebarCollapsed">Suppliers Directory</span>
+        </Link>
+        <Link href="/admin/procurement/import-orders" class="nav-item">
+          <span class="nav-icon">🚢</span>
+          <span v-if="!sidebarCollapsed">Global Import Orders</span>
+        </Link>
+        <Link href="/admin/procurement/local-pos" class="nav-item">
+          <span class="nav-icon">🧾</span>
+          <span v-if="!sidebarCollapsed">Local Purchase Orders</span>
+        </Link>
+        <Link href="/admin/procurement/grn" class="nav-item">
+          <span class="nav-icon">📥</span>
+          <span v-if="!sidebarCollapsed">Inward GRN Receiving</span>
+        </Link>
+
         <div class="nav-section-title" v-if="!sidebarCollapsed">OPERATIONS</div>
         <Link href="/admin/dashboard" class="nav-item">
           <span class="nav-icon">📊</span>
@@ -40,10 +58,6 @@ const toggleSidebar = () => {
         <Link href="/admin/catalog/products" class="nav-item">
           <span class="nav-icon">📦</span>
           <span v-if="!sidebarCollapsed">Catalog & Matrix</span>
-        </Link>
-        <Link href="/admin/procurement/orders" class="nav-item">
-          <span class="nav-icon">🚢</span>
-          <span v-if="!sidebarCollapsed">Imports & Local PO</span>
         </Link>
         <Link href="/admin/inventory/stocks" class="nav-item">
           <span class="nav-icon">🏭</span>

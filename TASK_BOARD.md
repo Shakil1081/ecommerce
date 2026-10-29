@@ -304,7 +304,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 - **Target Phase**: **Phase 3: Dual Sourcing Procurement (Import & Local) & Landed Cost Engine**
 - **Sprint Goal**: Implement global commercial import tracking (CI, PI, LC/TT, BOE customs tariffs at Chattogram/Dhaka ICD), local domestic procurement in BDT (৳), supplier BIN/e-TIN verification, unified Landed Cost COGS allocation engine, and Inward Goods Receiving (GRN) with barcode intake.
-- **Sprint Status**: `[ ⏳ IN PROGRESS ]`
+- **Sprint Status**: `[ ✅ COMPLETED ] (7 of 7 Tickets Passed & 100% Green)`
 
 | Ticket ID | Task Name / User Story | Module | Git Branch | Status | Verification Command |
 |---|---|---|---|---|---|
@@ -314,7 +314,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 | `P3-T04` | Local Purchase Orders (BDT ৳) & Supplier Mushak 6.3 | `Procurement`, `TaxCompliance` | `feat/p3-t04-local-purchase-orders` | `[x] DONE` | `php artisan test --filter=LocalPoTest` |
 | `P3-T05` | Unified Landed Cost & True COGS Allocation Engine | `Procurement` | `feat/p3-t05-landed-cost-engine` | `[x] DONE` | `php artisan test --filter=LandedCostTest` |
 | `P3-T06` | Inward Goods Received Notes (GRN) & Multi-Depot Stock Intake | `Procurement`, `Inventory` | `feat/p3-t06-grn-intake` | `[x] DONE` | `php artisan test --filter=GoodsReceivedNoteTest` |
-| `P3-T07` | Back-Office Dual Sourcing Procurement UI | `Procurement`, `Admin` | `feat/p3-t07-procurement-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=ProcurementAdminTest` |
+| `P3-T07` | Back-Office Dual Sourcing Procurement UI | `Procurement`, `Admin` | `feat/p3-t07-procurement-admin-ui` | `[x] DONE` | `npm run build && php artisan test --filter=ProcurementAdminTest` |
 
 ---
 
@@ -410,12 +410,33 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `resources/js/Pages/Admin/Procurement/GrnReceiving.vue`
   - `tests/Feature/ProcurementAdminTest.php`
 - **Acceptance Criteria**:
-  - [ ] Vue components compile cleanly with zero TypeScript errors.
-  - [ ] Admin can view suppliers, import orders, domestic POs, and GRN receipts.
+  - [x] Vue components compile cleanly with zero TypeScript errors (`npx vue-tsc --noEmit`).
+  - [x] `npm run build` and `npm run build:ssr` pass cleanly.
+  - [x] Admin can view suppliers, import orders, domestic POs, and GRN receipts.
+  - [x] Feature tests verified (5 passed, 56 assertions), Pint PSR-12 passed.
 
 ---
 
-## 5. Product Backlog (Upcoming Sprints)
+## 5. Active Sprint: Sprint 4 (Phase 4 — Cart Engine, Coupons, Order State Machine & Atomic Stock Reservation)
+
+- **Target Phase**: **Phase 4: Cart Engine, Coupons, Order State Machine & Atomic Stock Reservation**
+- **Sprint Goal**: Implement high-concurrency cart engine (guest & authenticated session migration), dynamic free shipping bar, coupon engine with percentage/fixed/free shipping rules, immutable order state machine, and atomic concurrency inventory reservation (`lockForUpdate` / Redis atomic decrement).
+- **Sprint Status**: `[ ⏳ READY TO EXECUTE ]`
+
+### Sprint 4 Ticket Breakdown
+
+| Ticket ID | Task Name / User Story | Module | Git Branch | Status | Verification Command |
+|---|---|---|---|---|---|
+| `P4-T01` | Persistent Cart Engine & Session-to-Customer Merge | `Cart` | `feat/p4-t01-cart-engine` | `[ ] TODO` | `php artisan test --filter=CartEngineTest` |
+| `P4-T02` | Interactive Slide-Out Cart Drawer & Free Shipping Bar | `Cart`, `Common` | `feat/p4-t02-cart-drawer` | `[ ] TODO` | `npm run build && php artisan test --filter=CartDrawerTest` |
+| `P4-T03` | Discount Coupons & Promotional Code Engine | `Marketing`, `Cart` | `feat/p4-t03-coupons-discounts` | `[ ] TODO` | `php artisan test --filter=CouponEngineTest` |
+| `P4-T04` | Order Domain Model & Finite State Machine (FSM) | `Order` | `feat/p4-t04-order-state-machine` | `[ ] TODO` | `php artisan test --filter=OrderStateTest` |
+| `P4-T05` | Atomic Stock Reservation & Flash Sale Concurrency Lock | `Inventory`, `Order` | `feat/p4-t05-atomic-stock-reservation` | `[ ] TODO` | `php artisan test --filter=StockReservationTest` |
+| `P4-T06` | Back-Office Order Management & Invoice Dispatch UI | `Order`, `Admin` | `feat/p4-t06-order-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=OrderAdminTest` |
+
+---
+
+## 6. Product Backlog (Upcoming Sprints)
 
 | Sprint / Phase | Phase Name | Primary Domain Modules | Estimated Tickets |
 |---|---|---|---|
