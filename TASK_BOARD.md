@@ -417,26 +417,26 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 ---
 
-## 5. Active Sprint: Sprint 4 (Phase 4 — Cart Engine, Coupons, Order State Machine & Atomic Stock Reservation)
+## 5. Active Sprint: Sprint 5 (Phase 5 — 7-Layer Anti-Fraud, Fake Order Defense & Dynamic Bot Security Settings)
 
-- **Target Phase**: **Phase 4: Cart Engine, Coupons, Order State Machine & Atomic Stock Reservation**
-- **Sprint Goal**: Implement high-concurrency cart engine (guest & authenticated session migration), dynamic free shipping bar, coupon engine with percentage/fixed/free shipping rules, immutable order state machine, and atomic concurrency inventory reservation (`lockForUpdate` / Redis atomic decrement).
+- **Target Phase**: **Phase 5: 7-Layer Anti-Fraud, Fake Order Defense & Dynamic Bot Security Settings**
+- **Sprint Goal**: Implement an enterprise 7-layer defense shield against fake orders, bot submissions, and high-return COD customers: invisible honeypots, client timing guards, Bangladesh telco regex, Shannon entropy gibberish detection, order velocity throttling, cross-courier delivery intelligence APIs, merchant blacklist/whitelist directory, and back-office Google reCAPTCHA / Cloudflare Turnstile toggles.
 - **Sprint Status**: `[ ⏳ READY TO EXECUTE ]`
 
-### Sprint 4 Ticket Breakdown
+### Sprint 5 Ticket Breakdown
 
 | Ticket ID | Task Name / User Story | Module | Git Branch | Status | Verification Command |
 |---|---|---|---|---|---|
-| `P4-T01` | Persistent Cart Engine & Session-to-Customer Merge | `Cart` | `feat/p4-t01-cart-engine` | `[x] DONE` | `php artisan test --filter=CartEngineTest` |
-| `P4-T02` | Interactive Slide-Out Cart Drawer & Free Shipping Bar | `Cart`, `Common` | `feat/p4-t02-cart-drawer` | `[x] DONE` | `npm run build && php artisan test --filter=CartDrawerTest` |
-| `P4-T03` | Discount Coupons & Promotional Code Engine | `Marketing`, `Cart` | `feat/p4-t03-coupons-discounts` | `[x] DONE` | `php artisan test --filter=CouponEngineTest` |
-| `P4-T04` | Order Domain Model & Finite State Machine (FSM) | `Order` | `feat/p4-t04-order-state-machine` | `[x] DONE` | `php artisan test --filter=OrderStateTest` |
-| `P4-T05` | Atomic Stock Reservation & Flash Sale Concurrency Lock | `Inventory`, `Order` | `feat/p4-t05-atomic-stock-reservation` | `[x] DONE` | `php artisan test --filter=StockReservationTest` |
-| `P4-T06` | Back-Office Order Management & Invoice Dispatch UI | `Order`, `Admin` | `feat/p4-t06-order-admin-ui` | `[ ] IN PROGRESS` | `npm run build && php artisan test --filter=OrderAdminTest` |
+| `P5-T01` | Invisible Bot Honeypots & Submission Timing Guard | `Order`, `Common` | `feat/p5-t01-honeypot-timing` | `[ ] TODO` | `php artisan test --filter=HoneypotAndTimingTest` |
+| `P5-T02` | BD Phone Operator Integrity, Gibberish Entropy & Velocity Guard | `Order`, `Customer` | `feat/p5-t02-phone-velocity-guard` | `[ ] TODO` | `php artisan test --filter=CustomerIntegrityTest` |
+| `P5-T03` | Cross-Courier Delivery Intelligence Adapters (Steadfast & Pathao) | `Logistics`, `Order` | `feat/p5-t03-courier-intelligence` | `[ ] TODO` | `php artisan test --filter=CourierIntelligenceTest` |
+| `P5-T04` | Multi-Signal Order Fraud Risk Scoring Engine (0-100) | `Order` | `feat/p5-t04-fraud-risk-score` | `[ ] TODO` | `php artisan test --filter=FraudRiskScoreTest` |
+| `P5-T05` | Merchant Fraud Directory: Blacklist & Whitelist UI | `Customer`, `Admin` | `feat/p5-t05-fraud-directory` | `[ ] TODO` | `npm run build && php artisan test --filter=FraudDirectoryAdminTest` |
+| `P5-T06` | Back-Office Google reCAPTCHA & Cloudflare Turnstile Settings | `Admin`, `Common` | `feat/p5-t06-bot-security-settings` | `[ ] TODO` | `npm run build && php artisan test --filter=SecuritySettingsAdminTest` |
 
 ---
 
-### Detailed Ticket Specifications (Sprint 4)
+### Detailed Ticket Specifications (Sprint 4 — COMPLETED)
 
 #### `P4-T01`: Persistent Cart Engine & Session-to-Customer Merge
 - **Objective**: Persistent cart for guest sessions and authenticated users with dynamic volume tier pricing and session merge on login.
@@ -534,10 +534,10 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `resources/js/Pages/Admin/Orders/OrderDetail.vue`
   - `tests/Feature/OrderAdminTest.php`
 - **Acceptance Criteria**:
-  - [ ] Order list with status tabs (`pending`, `confirmed`, `processing`, `delivered`, `cancelled`).
-  - [ ] Order detail view displaying customer info, cascading address, items table with COGS, monetary breakdown, and status timeline.
-  - [ ] Admin can transition order status with validation and reason prompt.
-  - [ ] Feature tests pass, Pint PSR-12 passed, Vite build passed.
+  - [x] Order list with status tabs (`pending`, `confirmed`, `processing`, `delivered`, `cancelled`).
+  - [x] Order detail view displaying customer info, cascading address, items table with COGS, monetary breakdown, and status timeline.
+  - [x] Admin can transition order status with validation and reason prompt.
+  - [x] Feature tests verified (4 passed, 48 assertions), Pint PSR-12 passed, Vite build passed.
 
 ---
 

@@ -10,11 +10,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **7-Layer Anti-Fraud & Fake Order Defense Shield (`App\Modules\Order`, `App\Modules\Customer`)**:
+  - Multi-signal dynamic fraud risk scoring engine (0-100).
+  - Invisible bot honeypot traps and checkout submission timing guards.
+  - Bangladesh mobile operator regex and repeating dummy digit detector.
+  - Merchant blacklist and whitelist directory (`customer_fraud_lists`).
+  - Google reCAPTCHA / Cloudflare Turnstile dynamic bot protection settings.
+
+---
+
+## [0.4.0] - 2026-10-29
+
+### Added
 - **Shopping Cart Engine & Slide-Out Drawer (`App\Modules\Cart`)**:
-  - Persistent guest session and authenticated user shopping cart synchronization.
-  - Multi-tier B2B volume pricing automatic application on cart items.
-  - Free shipping progress bar dynamic calculation (৳2,000 threshold).
-  - Slide-out cart drawer with interactive item quantity adjustments and cart preview.
+  - Persistent guest session and authenticated user shopping cart synchronization (`GetActiveCartAction`, `MergeGuestCartAction`).
+  - Dynamic volume tier pricing and wholesale customer group price computation on cart items.
+  - Dynamic free shipping threshold calculation (৳2,000 threshold) with live progress bar.
+  - Slide-out Vue 3 cart drawer with item quantity steppers and cart preview (`CartDrawer.vue`).
+- **Promotional Coupon & Discount Code Engine (`App\Modules\Marketing`)**:
+  - Percentage discounts (with optional cap), fixed BDT discounts, and free shipping triggers.
+  - Minimum cart spend requirements, expiry dates, total usage caps, and per-customer usage limits.
+  - Atomic redemption tracking (`coupon_usages`) and cart recomputation.
+- **Order Domain Model & Finite State Machine (`App\Modules\Order`)**:
+  - Strict lifecycle state machine: `pending` $\rightarrow$ `confirmed` $\rightarrow$ `processing` $\rightarrow$ `picked_and_packed` $\rightarrow$ `handed_to_courier` $\rightarrow$ `out_for_delivery` $\rightarrow$ `delivered` / `returned` / `cancelled`.
+  - Immutable status transition audit trail (`order_status_histories`) and domain event dispatching (`OrderStatusChangedEvent`).
+  - Order conversion from shopping cart with Bangladesh delivery zone pricing (Inside Dhaka ৳70, Suburbs ৳100, Outside Dhaka ৳130).
+- **Atomic Stock Reservation & Flash Sale Concurrency Protection (`App\Modules\Inventory`)**:
+  - Row-level pessimistic locking (`lockForUpdate()`) to prevent flash-sale overselling.
+  - Stock hold reservations with 15-minute TTL expiration.
+  - Automatic reservation release upon timeout or cancellation (`inventory:release-expired-reservations`).
+  - Atomic stock commit upon order dispatch (decrements physical & reserved count).
+- **Back-Office Order Management & Lifecycle Dispatch UI (`App\Modules\Admin`)**:
+  - Vue 3 Inertia order dashboard with status filter tabs and search (`OrderIndex.vue`).
+  - Comprehensive order detail view with items, COGS margins, financial breakdown, cascading address, and status transition modal (`OrderDetail.vue`).
 
 ---
 
