@@ -126,4 +126,3 @@ class SitemapAndSchemaTest extends TestCase
         $this->assertEquals('index, follow', $props['robots']);
     }
 }
-

@@ -164,7 +164,133 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 ---
 
-## 3. Product Backlog (Upcoming Sprints)
+## 3. Active Sprint: Sprint 2 (Phase 2 — Core Catalog, Matrix Variants, Multi-Warehouse Inventory & Reviews)
+
+- **Target Phase**: **Phase 2: Core Catalog, Matrix Variants, Multi-Warehouse Inventory, Reviews & Inter-Depot Transfers**
+- **Sprint Goal**: Implement catalog taxonomy, multi-dimensional matrix variant manager, HS code tracking, B2B wholesale tier pricing, multi-warehouse inventory hubs, Mushak 6.5 inter-depot transfers, customer reviews, and Bangladesh geographic boundaries.
+- **Sprint Status**: `[ ⏳ IN PROGRESS ]`
+
+| Ticket ID | Task Name / User Story | Module | Git Branch | Status | Verification Command |
+|---|---|---|---|---|---|
+| `P2-T01` | Bangladesh Geographic Boundaries & Zone Classification | `Customer`, `Logistics` | `feat/p2-t01-bangladesh-geo` | `[x] DONE` | `php artisan test --filter=BangladeshGeoTest` |
+| `P2-T02` | Catalog Taxonomy: Categories Tree & Brands with Origin | `Catalog` | `feat/p2-t02-categories-brands` | `[ ] TODO` | `php artisan test --filter=CategoryAndBrandTest` |
+| `P2-T03` | Matrix Product & Variant Engine with HS Codes & EANs | `Catalog` | `feat/p2-t03-product-matrix-engine` | `[ ] TODO` | `php artisan test --filter=ProductMatrixTest` |
+| `P2-T04` | Wholesale B2B Tier Pricing & MOQ Engine | `Pricing` | `feat/p2-t04-tier-pricing` | `[ ] TODO` | `php artisan test --filter=TierPricingTest` |
+| `P2-T05` | Multi-Warehouse Inventory Hubs & Stock Tracking | `Inventory` | `feat/p2-t05-warehouse-inventory` | `[ ] TODO` | `php artisan test --filter=WarehouseInventoryTest` |
+| `P2-T06` | Inter-Depot Transfers & Mushak 6.5 Transfer Challan | `Inventory`, `TaxCompliance` | `feat/p2-t06-stock-transfers-mushak65` | `[ ] TODO` | `php artisan test --filter=StockTransferTest` |
+| `P2-T07` | Customer Reviews, Ratings & Photo Attachments | `Catalog` | `feat/p2-t07-customer-reviews` | `[ ] TODO` | `php artisan test --filter=ProductReviewTest` |
+| `P2-T08` | Back-Office Catalog & Matrix Variant Manager UI | `Catalog`, `Admin` | `feat/p2-t08-catalog-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=CatalogAdminTest` |
+
+---
+
+### Detailed Ticket Specifications (Sprint 2)
+
+#### `P2-T01`: Bangladesh Geographic Boundaries & Zone Classification
+- **Objective**: Create migrations, models, and comprehensive seeder for 8 Divisions, 64 Districts, and Thanas with delivery zone tags (`inside_dhaka`, `dhaka_suburbs`, `outside_dhaka`).
+- **Files**:
+  - `database/migrations/xxxx_create_bangladesh_divisions_table.php`
+  - `database/migrations/xxxx_create_bangladesh_districts_table.php`
+  - `database/migrations/xxxx_create_bangladesh_thanas_table.php`
+  - `database/seeders/BangladeshGeoLocationsSeeder.php`
+  - `app/Modules/Common/Models/BangladeshDivision.php`
+  - `app/Modules/Common/Models/BangladeshDistrict.php`
+  - `app/Modules/Common/Models/BangladeshThana.php`
+  - `tests/Feature/BangladeshGeoTest.php`
+- **Acceptance Criteria**:
+  - [x] 8 Divisions, 64 Districts, and major Thanas seeded with both English and Bangla names.
+  - [x] Districts tagged with correct courier delivery zone (`inside_dhaka`, `dhaka_suburbs`, `outside_dhaka`).
+  - [x] Cascading relationship queries (Division $\rightarrow$ Districts $\rightarrow$ Thanas) verified via feature test (3 passed, 28 assertions).
+
+#### `P2-T02`: Catalog Taxonomy: Categories Tree & Brands with Origin
+- **Objective**: Nested categories with SEO slugs and banner media collections; Brand profiles with Country of Origin and logo media.
+- **Files**:
+  - `database/migrations/xxxx_create_categories_table.php`
+  - `database/migrations/xxxx_create_brands_table.php`
+  - `app/Modules/Catalog/Models/Category.php`
+  - `app/Modules/Catalog/Models/Brand.php`
+  - `tests/Feature/CategoryAndBrandTest.php`
+- **Acceptance Criteria**:
+  - [ ] Category hierarchy supports parent-child trees and active status.
+  - [ ] Brand model tracks country of origin and active status.
+  - [ ] Media collections for category banners and brand logos registered with Spatie MediaLibrary.
+
+#### `P2-T03`: Matrix Product & Variant Engine with HS Codes & EANs
+- **Objective**: Base Product model with ULID identifier, HS code, warranty policy, JSON specifications, and Variant combinations (Size $\times$ Color $\times$ Material) with SKU and Barcode/EAN.
+- **Files**:
+  - `database/migrations/xxxx_create_products_table.php`
+  - `database/migrations/xxxx_create_product_variants_table.php`
+  - `app/Modules/Catalog/Models/Product.php`
+  - `app/Modules/Catalog/Models/ProductVariant.php`
+  - `app/Modules/Catalog/Actions/GenerateProductVariantsAction.php`
+  - `tests/Feature/ProductMatrixTest.php`
+- **Acceptance Criteria**:
+  - [ ] Products track statutory HS codes (for customs clearance) and warranty policy.
+  - [ ] Variant matrix action generates Cartesian product of attributes without duplicate SKUs.
+  - [ ] Variants store integer minor units or decimal monetary values for purchase cost and selling price.
+
+#### `P2-T04`: Wholesale B2B Tier Pricing & MOQ Engine
+- **Objective**: Dynamic pricing engine calculating volume discounts, minimum order quantities (MOQ), and customer group pricing (Retail B2C vs Wholesale B2B).
+- **Files**:
+  - `database/migrations/xxxx_create_pricing_tiers_table.php`
+  - `app/Modules/Pricing/Models/PricingTier.php`
+  - `app/Modules/Pricing/Actions/CalculateApplicablePriceAction.php`
+  - `tests/Feature/TierPricingTest.php`
+- **Acceptance Criteria**:
+  - [ ] Pricing tiers define volume price breaks based on quantity.
+  - [ ] B2B buyers automatically qualify for wholesale tier pricing when MOQ threshold is met.
+
+#### `P2-T05`: Multi-Warehouse Inventory Hubs & Stock Tracking
+- **Objective**: Warehouse depot entity (Central Hub, Regional Hubs) tracking physical, reserved, and available stock per variant with bin locations.
+- **Files**:
+  - `database/migrations/xxxx_create_warehouses_table.php`
+  - `database/migrations/xxxx_create_inventory_stocks_table.php`
+  - `app/Modules/Inventory/Models/Warehouse.php`
+  - `app/Modules/Inventory/Models/InventoryStock.php`
+  - `app/Modules/Inventory/Actions/AdjustInventoryStockAction.php`
+  - `tests/Feature/WarehouseInventoryTest.php`
+- **Acceptance Criteria**:
+  - [ ] Multi-warehouse stock records physical, reserved, and available quantities.
+  - [ ] Atomic stock adjustment action validates quantity changes and logs reason codes.
+
+#### `P2-T06`: Inter-Depot Transfers & Mushak 6.5 Transfer Challan
+- **Objective**: Inter-depot stock transfer state machine generating statutory NBR Mushak 6.5 Transfer Challan with atomic source stock deduction.
+- **Files**:
+  - `database/migrations/xxxx_create_warehouse_transfers_table.php`
+  - `database/migrations/xxxx_create_warehouse_transfer_items_table.php`
+  - `app/Modules/Inventory/Models/WarehouseTransfer.php`
+  - `app/Modules/Inventory/Models/WarehouseTransferItem.php`
+  - `app/Modules/Inventory/Actions/TransferWarehouseStockAction.php`
+  - `app/Modules/Inventory/Actions/ReceiveWarehouseTransferAction.php`
+  - `tests/Feature/StockTransferTest.php`
+- **Acceptance Criteria**:
+  - [ ] Stock transfer atomically reserves from source and commits to destination upon receiving.
+  - [ ] Issues legal sequential Mushak 6.5 Transfer Challan serial.
+
+#### `P2-T07`: Customer Reviews, Ratings & Photo Attachments
+- **Objective**: Customer reviews with 1-5 star ratings, verified buyer flag, customer photo uploads, and moderation workflow.
+- **Files**:
+  - `database/migrations/xxxx_create_product_reviews_table.php`
+  - `app/Modules/Catalog/Models/ProductReview.php`
+  - `app/Modules/Catalog/Actions/ModerateProductReviewAction.php`
+  - `tests/Feature/ProductReviewTest.php`
+- **Acceptance Criteria**:
+  - [ ] Review submissions validated with 1-5 star rating and optional photo gallery.
+  - [ ] Moderation action approves, rejects, or flags reviews with auto-recalculated aggregate rating.
+
+#### `P2-T08`: Back-Office Catalog & Matrix Variant Manager UI
+- **Objective**: Full Vue 3 Inertia admin management views for Products, Categories, Brands, Matrix Variant Editor, and Inventory.
+- **Files**:
+  - `resources/js/Pages/Admin/Catalog/ProductIndex.vue`
+  - `resources/js/Pages/Admin/Catalog/ProductForm.vue`
+  - `resources/js/Pages/Admin/Catalog/ProductMatrixEditor.vue`
+  - `tests/Feature/CatalogAdminTest.php`
+- **Acceptance Criteria**:
+  - [ ] Interactive matrix variant editor allows bulk price, SKU, barcode, and attribute generation.
+  - [ ] Vue TypeScript and Vite builds compile cleanly.
+
+---
+
+## 4. Product Backlog (Upcoming Sprints)
 
 | Sprint / Phase | Phase Name | Primary Domain Modules | Estimated Tickets |
 |---|---|---|---|

@@ -41,4 +41,3 @@ class SystemInfoTest extends TestCase
         );
     }
 }
-

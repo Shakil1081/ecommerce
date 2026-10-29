@@ -42,4 +42,3 @@ class SystemInfoController extends Controller
         ]);
     }
 }
-
