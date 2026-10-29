@@ -732,7 +732,125 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 ---
 
-## 7. Product Backlog (Upcoming Sprints)
+## 7. Active Sprint: Sprint 7 (Phase 7 — Automated Courier Logistics, Dynamic Delivery Pricing & Payout Reconciliation)
+
+- **Target Phase**: **Phase 7: Automated Courier Logistics, Dynamic Delivery Pricing & Payout Reconciliation** (`app/Modules/Logistics/`)
+- **Sprint Goal**: Scaffold multi-courier gateway adapters with encrypted database credentials for **Steadfast**, **Pathao**, **RedX**, **Paperfly**, and **Sundarban**, 1-click consignment booking, printable 4x6 thermal barcode shipping labels, live tracking webhooks, dynamic zone-based delivery pricing calculation, and automated Cash on Delivery (COD) payout reconciliation.
+- **Sprint Status**: `[ ⏳ IN PROGRESS ] (1 of 6 Tickets Completed)`
+
+### Sprint 7 Ticket Breakdown
+
+| Ticket ID | Task Name / User Story | Module | Git Branch | Status | Verification Command |
+|---|---|---|---|---|---|
+| `P7-T01` | Dynamic Courier Gateway Settings & Encrypted Credential Engine | `Logistics`, `Common` | `feat/p7-t01-courier-gateway-settings` | `[x] DONE` | `php artisan test --filter=CourierGatewaySettingsTest` |
+| `P7-T02` | Steadfast Courier Driver & Tracking Webhook Listener | `Logistics` | `feat/p7-t02-steadfast-courier-driver` | `[ ] TODO` | `php artisan test --filter=SteadfastCourierAdapterTest` |
+| `P7-T03` | Pathao Courier Driver & Tracking Webhook Listener | `Logistics` | `feat/p7-t03-pathao-courier-driver` | `[ ] TODO` | `php artisan test --filter=PathaoCourierAdapterTest` |
+| `P7-T04` | Dynamic Zone-Based Delivery Pricing Engine | `Logistics`, `Order`, `Cart` | `feat/p7-t04-delivery-pricing-engine` | `[ ] TODO` | `php artisan test --filter=DeliveryPricingEngineTest` |
+| `P7-T05` | Printable 4x6 Thermal Barcode Shipping Labels & Consignment Booking | `Logistics`, `Order` | `feat/p7-t05-shipping-label-printer` | `[ ] TODO` | `php artisan test --filter=ShippingLabelTest` |
+| `P7-T06` | Back-Office Courier Gateway Management & COD Cash Reconciliation UI | `Logistics`, `Admin` | `feat/p7-t06-courier-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=CourierAdminTest` |
+
+---
+
+### Detailed Ticket Specifications (Sprint 7)
+
+#### `P7-T01`: Dynamic Courier Gateway Settings & Encrypted Credential Engine
+- **Objective**: Create database schema for dynamic courier gateway configurations with encrypted credentials (`encrypted:array`), sandbox mode flags, live base URLs, active toggles, supported features JSON array, tracking consignment ledger table (`courier_consignments`), contract interfaces, and pre-flight "Test Courier API Connection" action.
+- **Files**:
+  - `database/migrations/2026_10_29_700101_create_courier_gateway_settings_table.php`
+  - `database/migrations/2026_10_29_700102_create_courier_consignments_table.php`
+  - `app/Modules/Logistics/Models/CourierGatewaySetting.php`
+  - `app/Modules/Logistics/Models/CourierConsignment.php`
+  - `app/Modules/Logistics/Contracts/CourierAdapterContract.php`
+  - `app/Modules/Logistics/DTOs/CourierBookingResultDto.php`
+  - `app/Modules/Logistics/DTOs/CourierTrackingResultDto.php`
+  - `app/Modules/Logistics/DTOs/CourierConnectionTestResultDto.php`
+  - `app/Modules/Logistics/Services/CourierGatewayManager.php`
+  - `app/Modules/Logistics/Actions/TestCourierConnectionAction.php`
+  - `app/Modules/Logistics/Providers/LogisticsServiceProvider.php`
+  - `tests/Feature/CourierGatewaySettingsTest.php`
+- **Acceptance Criteria**:
+  - [x] Migration creates `courier_gateway_settings` with encrypted credentials, provider codes (`steadfast`, `pathao`, `redx`, `paperfly`, `sundarban`), sandbox toggles, and health check audit columns.
+  - [x] Migration creates `courier_consignments` tracking consignment ID, tracking code, courier code, delivery status, COD amount in BDT, delivery fee, and webhook payloads.
+  - [x] `CourierGatewaySetting` model masks secret keys (`••••••••b7a1`) for UI display.
+  - [x] `CourierGatewayManager` dynamically resolves active adapter instance by code.
+  - [x] `TestCourierConnectionAction` executes pre-flight credentials validation.
+  - [x] Feature tests pass, Pint PSR-12 clean.
+
+#### `P7-T02`: Steadfast Courier Driver & Tracking Webhook Listener
+- **Objective**: Steadfast Courier API driver implementing `CourierAdapterContract`: booking orders (`POST /create_order`), status checking (`GET /status_by_cid/{id}` or `GET /status_by_invoice/{inv}`), current balance check (`GET /get_balance`), and inbound status webhook handling with order state transitions.
+- **Files**:
+  - `app/Modules/Logistics/Adapters/SteadfastCourierAdapter.php`
+  - `app/Modules/Logistics/Http/Controllers/SteadfastWebhookController.php`
+  - `tests/Feature/SteadfastCourierAdapterTest.php`
+- **Acceptance Criteria**:
+  - [ ] Creates parcel consignment on Steadfast API with invoice number, recipient info, and COD amount.
+  - [ ] Queries live tracking status from Steadfast API.
+  - [ ] Inbound webhook listener verifies HMAC / secret token, updates `CourierConsignment` status, and transitions `Order` lifecycle (e.g. `dispatched` -> `delivered` or `delivery_failed`).
+  - [ ] Feature tests pass, Pint PSR-12 clean.
+
+#### `P7-T03`: Pathao Courier Driver & Tracking Webhook Listener
+- **Objective**: Pathao Courier API driver implementing `CourierAdapterContract`: Bearer token management with Redis cache TTL, store lookup, parcel creation (`POST /aladdin/api/v1/orders/issue-order`), parcel tracking (`GET /aladdin/api/v1/orders/{consignment_id}/info`), price calculation, and inbound webhook listener.
+- **Files**:
+  - `app/Modules/Logistics/Adapters/PathaoCourierAdapter.php`
+  - `app/Modules/Logistics/Http/Controllers/PathaoWebhookController.php`
+  - `tests/Feature/PathaoCourierAdapterTest.php`
+- **Acceptance Criteria**:
+  - [ ] Obtains OAuth Bearer token from Pathao `/aladdin/api/v1/issue-token` with caching.
+  - [ ] Issues order parcel with store ID, recipient address, city, zone, area, and amount to collect.
+  - [ ] Queries parcel tracking information.
+  - [ ] Inbound webhook listener validates signature, maps Pathao event types (`Pickup_Requested`, `In_Transit`, `Delivered`, `Returned`) to order lifecycle.
+  - [ ] Feature tests pass, Pint PSR-12 clean.
+
+#### `P7-T04`: Dynamic Zone-Based Delivery Pricing Engine
+- **Objective**: Dynamic Bangladesh shipping zone engine: schema for `shipping_zones` & `shipping_rates`, mapping Bangladesh districts/thanas to zones (`inside_dhaka`, `dhaka_suburbs`, `outside_dhaka`), weight brackets, extra weight per kg pricing, and free shipping threshold.
+- **Files**:
+  - `database/migrations/2026_10_29_700103_create_shipping_zones_and_rates_table.php`
+  - `app/Modules/Logistics/Models/ShippingZone.php`
+  - `app/Modules/Logistics/Models/ShippingRate.php`
+  - `app/Modules/Logistics/Actions/CalculateShippingRateAction.php`
+  - `app/Modules/Logistics/DTOs/ShippingRateCalculationDto.php`
+  - `tests/Feature/DeliveryPricingEngineTest.php`
+- **Acceptance Criteria**:
+  - [ ] Zones represent Inside Dhaka (৳70), Dhaka Suburbs (৳100), and Outside Dhaka (৳130) with configurable base weights (e.g. 1.0kg) and incremental per-kg rates (৳20/kg).
+  - [ ] Automatically maps recipient district/thana to appropriate shipping zone.
+  - [ ] Grants free shipping when subtotal exceeds `free_shipping_threshold_bdt`.
+  - [ ] Feature tests pass, Pint PSR-12 clean.
+
+#### `P7-T05`: Printable 4x6 Thermal Barcode Shipping Labels & Consignment Booking
+- **Objective**: Consignment booking dispatcher for single and bulk orders, plus thermal label generator (4x6 inch / 100mm x 150mm & A6) with Code128 barcodes for order number and consignment ID, customer info, COD amount in BDT, and merchant details.
+- **Files**:
+  - `app/Modules/Logistics/Actions/BookCourierConsignmentAction.php`
+  - `app/Modules/Logistics/Actions/BulkBookCourierConsignmentsAction.php`
+  - `app/Modules/Logistics/Actions/GenerateShippingLabelHtmlAction.php`
+  - `app/Modules/Logistics/Http/Controllers/ShippingLabelController.php`
+  - `tests/Feature/ShippingLabelTest.php`
+- **Acceptance Criteria**:
+  - [ ] Dispatches order to active courier driver, records `CourierConsignment`, updates order status to `dispatched`.
+  - [ ] Bulk booking dispatches multiple confirmed orders in a single request.
+  - [ ] Generates clean, printer-ready 4x6 thermal barcode shipping label view with barcode, COD collection box, recipient address, and merchant branding.
+  - [ ] Feature tests pass, Pint PSR-12 clean.
+
+#### `P7-T06`: Back-Office Courier Gateway Management & COD Cash Reconciliation UI
+- **Objective**: Comprehensive back-office courier management portal: gateway settings editor, pre-flight test connection button, zone rate editor, courier consignment status list, and automated COD cash disbursement reconciliation tracking (`courier_disbursements` and `courier_disbursement_items`).
+- **Files**:
+  - `database/migrations/2026_10_29_700104_create_courier_disbursements_table.php`
+  - `app/Modules/Logistics/Models/CourierDisbursement.php`
+  - `app/Modules/Logistics/Models/CourierDisbursementItem.php`
+  - `app/Modules/Logistics/Actions/ReconcileCodPaymentAction.php`
+  - `app/Modules/Admin/Http/Controllers/CourierAdminController.php`
+  - `resources/js/Pages/Admin/Settings/CourierSettings.vue`
+  - `resources/js/Pages/Admin/Logistics/ShippingZones.vue`
+  - `resources/js/Pages/Admin/Logistics/CodReconciliation.vue`
+  - `tests/Feature/CourierAdminTest.php`
+- **Acceptance Criteria**:
+  - [ ] Admin can view, edit, and test all courier gateways (Steadfast, Pathao, RedX, Paperfly, Sundarban) with credentials masking.
+  - [ ] Admin can configure zone rates and weight tiers directly in Vue 3 Inertia UI.
+  - [ ] Admin can upload courier settlement reports and reconcile COD amounts collected vs. courier fees vs. net payouts.
+  - [ ] TypeScript passes (`npx vue-tsc --noEmit`), Vite production/SSR builds pass cleanly, feature tests pass.
+
+---
+
+## 8. Product Backlog (Upcoming Sprints)
 
 | Sprint / Phase | Phase Name | Primary Domain Modules | Estimated Tickets |
 |---|---|---|---|
