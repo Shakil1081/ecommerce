@@ -309,7 +309,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 | Ticket ID | Task Name / User Story | Module | Git Branch | Status | Verification Command |
 |---|---|---|---|---|---|
 | `P3-T01` | Supplier Directory (International & Local) with BIN/TIN | `Procurement` | `feat/p3-t01-supplier-directory` | `[x] DONE` | `php artisan test --filter=SupplierTest` |
-| `P3-T02` | Global Import Purchase Orders & Commercial Invoices | `Procurement` | `feat/p3-t02-import-orders` | `[ ] TODO` | `php artisan test --filter=ImportOrderTest` |
+| `P3-T02` | Global Import Purchase Orders & Commercial Invoices | `Procurement` | `feat/p3-t02-import-orders` | `[x] DONE` | `php artisan test --filter=ImportOrderTest` |
 | `P3-T03` | Bill of Entry (BOE / বিল অফ এন্ট্রি) & Customs Tariffs | `Procurement`, `TaxCompliance` | `feat/p3-t03-bill-of-entry` | `[ ] TODO` | `php artisan test --filter=BillOfEntryTest` |
 | `P3-T04` | Local Purchase Orders (BDT ৳) & Supplier Mushak 6.3 | `Procurement`, `TaxCompliance` | `feat/p3-t04-local-purchase-orders` | `[ ] TODO` | `php artisan test --filter=LocalPoTest` |
 | `P3-T05` | Unified Landed Cost & True COGS Allocation Engine | `Procurement` | `feat/p3-t05-landed-cost-engine` | `[ ] TODO` | `php artisan test --filter=LandedCostTest` |
@@ -341,8 +341,9 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Procurement/Models/ImportPoItem.php`
   - `tests/Feature/ImportOrderTest.php`
 - **Acceptance Criteria**:
-  - [ ] Records foreign currency (USD, RMB, EUR) FOB prices and bank settlement exchange rates in BDT (৳).
-  - [ ] Tracks LC/TT numbers, issuing bank, margin deposit, and settlement date.
+  - [x] Records foreign currency (USD, RMB, EUR) FOB prices and bank settlement exchange rates in BDT (৳).
+  - [x] Tracks LC/TT numbers, issuing bank, margin deposit, and settlement date.
+  - [x] Feature tests verified (2 passed, 9 assertions), Pint PSR-12 passed.
 
 #### `P3-T03`: Bill of Entry (BOE / বিল অফ এন্ট্রি) & Customs Tariffs
 - **Objective**: Model Bangladesh Customs clearance at ports of entry (Chattogram, Dhaka Airport/ICD) with statutory Customs Assessment Value, Customs Duty (CD), Regulatory Duty (RD), Supplementary Duty (SD), Advance Tax (AT - 5%), and Advance Income Tax (AIT - 5%).
