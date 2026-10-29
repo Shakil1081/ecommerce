@@ -28,6 +28,15 @@ class OrderStatusHistory extends Model
 
     public $timestamps = false;
 
+    protected static function booted(): void
+    {
+        static::creating(function (OrderStatusHistory $model): void {
+            if (! $model->created_at) {
+                $model->created_at = now();
+            }
+        });
+    }
+
     protected $fillable = [
         'order_id',
         'from_status',

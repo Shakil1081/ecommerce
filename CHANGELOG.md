@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Dynamic payment gateway configuration schema with encrypted credentials (`encrypted:array`), active toggles, sandbox flags, gateway codes (`bkash`, `nagad`, `sslcommerz`, `stripe`, `cod`, `bank_transfer`), and pre-flight "Test API Connection" verification (`PaymentGatewaySetting`, `TestGatewayConnectionAction`).
   - Unified `PaymentGatewayManager` and `PaymentGatewayContract` interface for decoupled multi-provider digital payments.
   - Payment transactions ledger (`PaymentTransaction`) tracking ULIDs, order IDs, gateway codes, transaction references, fees, and lifecycle statuses.
+  - bKash Tokenized Checkout driver (`BkashPaymentAdapter`) with automated grant token retrieval and caching, checkout session creation, execution verification, and customer return callback handler (`BkashCallbackController`).
 
 ---
 

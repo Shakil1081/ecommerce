@@ -12,6 +12,7 @@ use App\Modules\Admin\Http\Controllers\RoleController;
 use App\Modules\Admin\Http\Controllers\StaffUserController;
 use App\Modules\Admin\Http\Controllers\SystemInfoController;
 use App\Modules\Cart\Http\Controllers\CartController;
+use App\Modules\Payment\Http\Controllers\BkashCallbackController;
 use App\Modules\Seo\Http\Controllers\SitemapController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +37,20 @@ Route::delete('/cart/coupon', [CartController::class, 'removeCoupon'])->name('ca
 // Dynamic SEO Endpoints
 Route::get('/sitemap.xml', [SitemapController::class, 'sitemap'])->name('seo.sitemap');
 Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('seo.robots');
+
+// Storefront Checkout & Order Confirmation
+Route::get('/checkout', function () {
+    return Inertia::render('Storefront/Checkout');
+})->name('storefront.checkout');
+
+Route::get('/orders/confirmed/{order}', function (string $order) {
+    return Inertia::render('Storefront/OrderConfirmed', ['orderNumber' => $order]);
+})->name('storefront.order-confirmed');
+
+// Payment Callbacks & Webhooks
+Route::prefix('payment')->name('payment.')->group(function () {
+    Route::get('/bkash/callback', BkashCallbackController::class)->name('bkash.callback');
+});
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::resource('roles', RoleController::class);
