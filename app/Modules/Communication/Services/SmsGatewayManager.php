@@ -14,6 +14,16 @@ use InvalidArgumentException;
 class SmsGatewayManager
 {
     /**
+     * Alias for resolve().
+     *
+     * @param  array<string, mixed>|null  $overrideCredentials
+     */
+    public function driver(?string $code = null, ?array $overrideCredentials = null): SmsGatewayContract
+    {
+        return $this->resolve($code, $overrideCredentials);
+    }
+
+    /**
      * Resolve an SMS gateway driver instance.
      *
      * @param  array<string, mixed>|null  $overrideCredentials

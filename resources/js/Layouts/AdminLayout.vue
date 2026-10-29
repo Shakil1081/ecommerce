@@ -82,6 +82,24 @@ const toggleSidebar = () => {
           <span v-if="!sidebarCollapsed">Payment Gateways</span>
         </Link>
 
+        <div class="nav-section-title" v-if="!sidebarCollapsed">COMMUNICATION & MARKETING</div>
+        <Link href="/admin/communication/mail-settings" class="nav-item">
+          <span class="nav-icon">📧</span>
+          <span v-if="!sidebarCollapsed">SMTP Mail Settings</span>
+        </Link>
+        <Link href="/admin/communication/sms-settings" class="nav-item">
+          <span class="nav-icon">📱</span>
+          <span v-if="!sidebarCollapsed">SMS Gateways & OTP</span>
+        </Link>
+        <Link href="/admin/communication/voice-settings" class="nav-item">
+          <span class="nav-icon">📞</span>
+          <span v-if="!sidebarCollapsed">AI Voice Verification</span>
+        </Link>
+        <Link href="/admin/marketing/cart-recovery" class="nav-item">
+          <span class="nav-icon">🛒</span>
+          <span v-if="!sidebarCollapsed">Cart Recovery Sequencer</span>
+        </Link>
+
         <div class="nav-section-title" v-if="!sidebarCollapsed">ADMINISTRATION</div>
         <Link href="/admin/roles" class="nav-item">
           <span class="nav-icon">🛡️</span>

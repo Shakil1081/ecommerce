@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Admin\Http\Controllers\BotSecuritySettingsController;
 use App\Modules\Admin\Http\Controllers\CatalogController;
+use App\Modules\Admin\Http\Controllers\CommunicationAdminController;
 use App\Modules\Admin\Http\Controllers\CourierAdminController;
 use App\Modules\Admin\Http\Controllers\FraudDirectoryAdminController;
 use App\Modules\Admin\Http\Controllers\MediaStorageController;
@@ -167,5 +168,27 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/zones/{zone}/rate', [CourierAdminController::class, 'updateZoneRate'])->name('zones.rate');
         Route::get('/cod-reconciliation', [CourierAdminController::class, 'codReconciliation'])->name('reconciliation');
         Route::post('/cod-reconciliation', [CourierAdminController::class, 'storeDisbursement'])->name('reconciliation.store');
+    });
+
+    // Omnichannel Communication Settings (SMTP, SMS, Voice AI)
+    Route::prefix('communication')->name('communication.')->group(function () {
+        Route::get('/mail-settings', [CommunicationAdminController::class, 'mailSettings'])->name('mail');
+        Route::post('/mail-settings', [CommunicationAdminController::class, 'updateMailSettings'])->name('mail.update');
+        Route::post('/mail-settings/test', [CommunicationAdminController::class, 'testMailSettings'])->name('mail.test');
+
+        Route::get('/sms-settings', [CommunicationAdminController::class, 'smsSettings'])->name('sms');
+        Route::post('/sms-settings/test', [CommunicationAdminController::class, 'testSmsConnection'])->name('sms.test');
+        Route::post('/sms-settings/balance', [CommunicationAdminController::class, 'checkSmsBalance'])->name('sms.balance');
+        Route::post('/sms-settings/{setting}', [CommunicationAdminController::class, 'updateSmsSetting'])->name('sms.update');
+
+        Route::get('/voice-settings', [CommunicationAdminController::class, 'voiceSettings'])->name('voice');
+        Route::post('/voice-settings/test', [CommunicationAdminController::class, 'testVoiceCall'])->name('voice.test');
+        Route::post('/voice-settings/{setting}', [CommunicationAdminController::class, 'updateVoiceSetting'])->name('voice.update');
+    });
+
+    // Marketing & Abandoned Cart Recovery
+    Route::prefix('marketing')->name('marketing.')->group(function () {
+        Route::get('/cart-recovery', [CommunicationAdminController::class, 'cartRecoveryIndex'])->name('cart-recovery');
+        Route::post('/cart-recovery/trigger', [CommunicationAdminController::class, 'triggerManualRecovery'])->name('cart-recovery.trigger');
     });
 });
