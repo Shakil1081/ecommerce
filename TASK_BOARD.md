@@ -311,7 +311,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 | `P3-T01` | Supplier Directory (International & Local) with BIN/TIN | `Procurement` | `feat/p3-t01-supplier-directory` | `[x] DONE` | `php artisan test --filter=SupplierTest` |
 | `P3-T02` | Global Import Purchase Orders & Commercial Invoices | `Procurement` | `feat/p3-t02-import-orders` | `[x] DONE` | `php artisan test --filter=ImportOrderTest` |
 | `P3-T03` | Bill of Entry (BOE / বিল অফ এন্ট্রি) & Customs Tariffs | `Procurement`, `TaxCompliance` | `feat/p3-t03-bill-of-entry` | `[x] DONE` | `php artisan test --filter=BillOfEntryTest` |
-| `P3-T04` | Local Purchase Orders (BDT ৳) & Supplier Mushak 6.3 | `Procurement`, `TaxCompliance` | `feat/p3-t04-local-purchase-orders` | `[ ] TODO` | `php artisan test --filter=LocalPoTest` |
+| `P3-T04` | Local Purchase Orders (BDT ৳) & Supplier Mushak 6.3 | `Procurement`, `TaxCompliance` | `feat/p3-t04-local-purchase-orders` | `[x] DONE` | `php artisan test --filter=LocalPoTest` |
 | `P3-T05` | Unified Landed Cost & True COGS Allocation Engine | `Procurement` | `feat/p3-t05-landed-cost-engine` | `[ ] TODO` | `php artisan test --filter=LandedCostTest` |
 | `P3-T06` | Inward Goods Received Notes (GRN) & Multi-Depot Stock Intake | `Procurement`, `Inventory` | `feat/p3-t06-grn-intake` | `[ ] TODO` | `php artisan test --filter=GoodsReceivedNoteTest` |
 | `P3-T07` | Back-Office Dual Sourcing Procurement UI | `Procurement`, `Admin` | `feat/p3-t07-procurement-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=ProcurementAdminTest` |
@@ -367,8 +367,10 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Procurement/Models/LocalPoItem.php`
   - `tests/Feature/LocalPoTest.php`
 - **Acceptance Criteria**:
-  - [ ] Records local POs in BDT (৳) with supplier's Mushak 6.3 serial and invoice date.
-  - [ ] Computes VDS and TDS withholding deductions with precision.
+  - [x] Records local POs in BDT (৳) with supplier's Mushak 6.3 serial and invoice date.
+  - [x] Computes VDS and TDS withholding deductions with precision.
+  - [x] Issues statutory NBR Mushak 6.6 Certificates (উৎসে মূসক কর্তন সনদপত্র) with verified BIN checks.
+  - [x] Feature tests verified (3 passed, 14 assertions), Pint PSR-12 passed.
 
 #### `P3-T05`: Unified Landed Cost & True COGS Allocation Engine
 - **Objective**: Computes true Cost of Goods Sold (COGS in BDT ৳) per unit batch across import shipments (FOB + Freight + Insurance + Port C&F + Customs Duties + Carrying) and domestic purchases (Purchase Price + Local Transport + Handling).
