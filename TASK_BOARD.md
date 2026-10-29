@@ -430,8 +430,8 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 | `P4-T01` | Persistent Cart Engine & Session-to-Customer Merge | `Cart` | `feat/p4-t01-cart-engine` | `[x] DONE` | `php artisan test --filter=CartEngineTest` |
 | `P4-T02` | Interactive Slide-Out Cart Drawer & Free Shipping Bar | `Cart`, `Common` | `feat/p4-t02-cart-drawer` | `[x] DONE` | `npm run build && php artisan test --filter=CartDrawerTest` |
 | `P4-T03` | Discount Coupons & Promotional Code Engine | `Marketing`, `Cart` | `feat/p4-t03-coupons-discounts` | `[x] DONE` | `php artisan test --filter=CouponEngineTest` |
-| `P4-T04` | Order Domain Model & Finite State Machine (FSM) | `Order` | `feat/p4-t04-order-state-machine` | `[ ] IN PROGRESS` | `php artisan test --filter=OrderStateTest` |
-| `P4-T05` | Atomic Stock Reservation & Flash Sale Concurrency Lock | `Inventory`, `Order` | `feat/p4-t05-atomic-stock-reservation` | `[ ] TODO` | `php artisan test --filter=StockReservationTest` |
+| `P4-T04` | Order Domain Model & Finite State Machine (FSM) | `Order` | `feat/p4-t04-order-state-machine` | `[x] DONE` | `php artisan test --filter=OrderStateTest` |
+| `P4-T05` | Atomic Stock Reservation & Flash Sale Concurrency Lock | `Inventory`, `Order` | `feat/p4-t05-atomic-stock-reservation` | `[ ] IN PROGRESS` | `php artisan test --filter=StockReservationTest` |
 | `P4-T06` | Back-Office Order Management & Invoice Dispatch UI | `Order`, `Admin` | `feat/p4-t06-order-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=OrderAdminTest` |
 
 ---
@@ -503,10 +503,26 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Order/Actions/TransitionOrderStatusAction.php`
   - `tests/Feature/OrderStateTest.php`
 - **Acceptance Criteria**:
-  - [ ] Strict lifecycle state machine: `pending` $\rightarrow$ `confirmed` $\rightarrow$ `processing` $\rightarrow$ `picked_and_packed` $\rightarrow$ `handed_to_courier` $\rightarrow$ `out_for_delivery` $\rightarrow$ `delivered` / `returned` / `cancelled`.
-  - [ ] Prevents illegal status transitions (e.g., delivered to pending).
-  - [ ] Logs immutable transition audit history (`from_status`, `to_status`, `changed_by_user_id`, `reason`).
-  - [ ] Feature tests pass, Pint PSR-12 passed.
+  - [x] Strict lifecycle state machine: `pending` $\rightarrow$ `confirmed` $\rightarrow$ `processing` $\rightarrow$ `picked_and_packed` $\rightarrow$ `handed_to_courier` $\rightarrow$ `out_for_delivery` $\rightarrow$ `delivered` / `returned` / `cancelled`.
+  - [x] Prevents illegal status transitions (e.g., delivered to pending).
+  - [x] Logs immutable transition audit history (`from_status`, `to_status`, `changed_by_user_id`, `reason`).
+  - [x] Feature tests verified (7 passed, 43 assertions), Pint PSR-12 passed.
+
+#### `P4-T05`: Atomic Stock Reservation & Flash Sale Concurrency Lock
+- **Objective**: High-concurrency inventory reservation mechanism with row locking (`lockForUpdate()`), stock holds for checkout orders, TTL expiration, and release of unfulfilled reservations back to available stock.
+- **Files**:
+  - `database/migrations/xxxx_create_stock_reservations_table.php`
+  - `app/Modules/Inventory/Models/StockReservation.php`
+  - `app/Modules/Inventory/Actions/ReserveStockForOrderAction.php`
+  - `app/Modules/Inventory/Actions/CommitStockReservationAction.php`
+  - `app/Modules/Inventory/Actions/ReleaseStockReservationAction.php`
+  - `app/Modules/Inventory/Actions/ReleaseExpiredStockReservationsAction.php`
+  - `tests/Feature/StockReservationTest.php`
+- **Acceptance Criteria**:
+  - [ ] Reserves variant stock atomically in designated warehouse using pessimistic row locking (`lockForUpdate()`).
+  - [ ] Prevents overselling during high-traffic flash sales when quantity requested exceeds available stock.
+  - [ ] Releases expired reservations (e.g. 15-minute TTL) back into available stock.
+  - [ ] Commits stock upon order confirmation (decrements physical and reserved stock).
   - [ ] Feature tests pass, Pint PSR-12 passed.
 
 ---
