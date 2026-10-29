@@ -105,4 +105,3 @@ class ProductMatrixTest extends TestCase
         $this->assertEquals(4500.00, $product->max_price_bdt);
     }
 }
-

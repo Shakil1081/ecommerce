@@ -246,4 +246,3 @@ class CatalogController extends Controller
         ];
     }
 }
-

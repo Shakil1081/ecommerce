@@ -126,4 +126,3 @@ class TierPricingTest extends TestCase
         $this->assertFalse($result['is_tier_applied']);
     }
 }
-

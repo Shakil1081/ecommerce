@@ -132,4 +132,3 @@ class ProductReviewTest extends TestCase
         $action($review, 'invalid_status');
     }
 }
-
