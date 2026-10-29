@@ -10,11 +10,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
-- **Phase 8: Omnichannel Messaging, Voice AI, Promotional SMS & Customer Portal**:
-  - Outbound AI voice calling agent with DTMF/Speech confirmation for COD order verification.
-  - Omnichannel SMS & WhatsApp notifications for order lifecycle updates and dispatch tracking.
-  - Multi-step automated abandoned cart recovery campaigns via SMS and WhatsApp.
-  - Customer self-service order tracking timeline portal.
+- **Phase 9: Comprehensive NBR VAT, Full Statutory Tax Compliance & RMA Return Engine**:
+  - Statutory Mushak 6.3 Tax Invoices with non-gap atomic serial locks for local retail and wholesale trade.
+  - Statutory Input Tax Credit (রেয়াত) claiming both Import Advance Tax (AT - 5%) and Local Supplier Input VAT on monthly Mushak 9.1 returns.
+  - Automated Mushak 6.6 VDS (VAT Deducted at Source) certificates for procurement.
+  - Mushak 6.7 Credit Notes for sales returns, refund adjustments, and decreasing tax adjustments.
+  - Mushak 6.8 Debit Notes for supplier purchase returns.
+  - Mushak 6.5 Transfer Challans for inter-depot multi-warehouse stock movements.
+  - Mushak 6.1, 6.2, and 6.2.1 statutory registers & TDS/AIT tracking under the Income Tax Act 2023.
+
+---
+
+## [0.8.0] - 2026-10-29
+
+### Added
+- **Dynamic SMTP Mail Settings Engine & Pre-Flight Handshake (`App\Modules\Communication`, `App\Modules\Admin`)**:
+  - Database-driven SMTP settings ledger (`mail_settings`) storing encrypted credentials, transport host, port, TLS/SSL encryption, and sender metadata with runtime Dynamic Swift/Symfony Mailer configuration (`ConfigureDynamicMailerAction`, `SendTestEmailAction`, `MailSetting`).
+  - Pre-flight automated handshake test verifying live outbound SMTP connection with latency measurement before activating on production.
+- **Dynamic SMS Gateway Engine & OTP Verification (`App\Modules\Communication`, `App\Modules\Order`)**:
+  - Multi-provider SMS gateway architecture supporting Bangladesh providers (Greenweb SMS, Reve Systems) and Twilio with encrypted credentials, balance checking, and masked previews (`SmsGatewaySetting`, `SmsGatewayManager`, `SmsGatewayContract`).
+  - SMS OTP verification engine (`sms_otps`, `GenerateAndSendOtpAction`, `VerifyOtpAction`) creating 4-digit verification codes, 15-minute TTL, rate limiting, and automated order verification state transitions.
+- **WhatsApp Business Cloud API Integration & Lifecycle Alerts (`App\Modules\Communication`, `App\Modules\Order`)**:
+  - Direct integration with Meta WhatsApp Business Cloud API (`WhatsAppSetting`, `WhatsAppClient`, `SendOrderWhatsAppAlertAction`) delivering order confirmation, courier dispatch, and delivered alerts with direct NBR Mushak 6.3 digital invoice links.
+  - Inbound webhook receiver (`WhatsAppWebhookController`) supporting Meta verification challenge handshake and live delivery status updates.
+- **AI Automated Outbound Voice Calling Verification Agent (`App\Modules\Communication`, `App\Modules\Order`)**:
+  - AI Voice agent calling Cash on Delivery (COD) customers within 60 seconds with natural bilingual Bangla (বাংলা) and English prompts (`VoiceCallingSetting`, `VoiceCallLog`, `TwilioVoiceAdapter`, `TriggerVoiceVerificationCallAction`, `TestVoiceCallAction`).
+  - Dual confirmation support: DTMF Touch-Tone (Key 1 to confirm, Key 2 to cancel) and Conversational Speech-to-Intent AI.
+  - Dynamic bilingual TwiML webhook generator (`VoiceCallWebhookController`) with automated order transition triggers (1 $\rightarrow$ confirmed, 2 $\rightarrow$ cancelled with inventory release) and complete audit logging.
+- **Abandoned Cart Multi-Step Recovery Engine & Sequencer (`App\Modules\Marketing`, `App\Modules\Cart`)**:
+  - Automated 3-step abandoned cart recovery sequencer (`cart_recovery_logs`, `ProcessCartRecoverySequencesAction`, `MarkCartAsRecoveredAction`) re-engaging shoppers via WhatsApp and SMS at 1 hour (Gentle Reminder), 6 hours (Urgency alert), and 24 hours (Incentive coupon `COMEBACK5`).
+  - Scheduled Artisan console command (`cart:process-recovery`) for continuous automated cron execution.
+- **Social Commerce Product Feeds (`App\Modules\Communication`, `App\Modules\Catalog`)**:
+  - Live high-performance product catalog feeds (`SocialCommerceFeedService`, `SocialCommerceFeedController`) generating Google Merchant Center XML (`/feeds/google-merchant.xml`), Facebook / Instagram Catalog CSV (`/feeds/facebook-catalog.csv`), and TikTok Shop CSV (`/feeds/tiktok-shop.csv`) with multi-warehouse stock aggregation and formatted BDT pricing.
+- **Customer Self-Service Order Tracking Portal & Storefront UX (`App\Modules\Customer`, `App\Modules\Order`)**:
+  - Frictionless public self-service order tracking portal (`TrackOrderAction`, `OrderTrackingController`, `Storefront/OrderTracking.vue`, `/track-order`) accessible with Order Number and Mobile Phone without forced account registration.
+  - Interactive Milestone Stepper timeline with bilingual labels (Order Placed $\rightarrow$ Confirmed $\rightarrow$ Picked & Packed $\rightarrow$ Handed to Courier $\rightarrow$ Out for Delivery $\rightarrow$ Delivered), masked customer phone privacy, live courier tracking URL links (Steadfast, Pathao, RedX), and statutory Mushak 6.3 invoice badges.
+- **Back-Office Omnichannel & Communication Management UI (`App\Modules\Admin`, `App\Modules\Communication`, `App\Modules\Marketing`)**:
+  - Full-featured back-office administrative portals (`CommunicationAdminController`) for SMTP Mail Settings (`MailSettings.vue`), SMS Gateways & Balance Management (`SmsSettings.vue`), AI Voice Calling Settings & Call Logs (`VoiceCallingSettings.vue`), and Abandoned Cart Recovery Funnel Analytics (`CartRecovery.vue`).
 
 ---
 
