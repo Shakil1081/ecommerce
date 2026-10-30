@@ -377,4 +377,3 @@ final class TradingPnLAnalyticsTest extends TestCase
         $this->assertTrue((float) $pnl->netOperatingProfitBdt < 0);
     }
 }
-
