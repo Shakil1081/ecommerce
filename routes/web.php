@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Modules\Admin\Http\Controllers\AiAdminController;
+use App\Modules\Admin\Http\Controllers\AuditLogAdminController;
 use App\Modules\Admin\Http\Controllers\BotSecuritySettingsController;
 use App\Modules\Admin\Http\Controllers\CatalogController;
 use App\Modules\Admin\Http\Controllers\CommunicationAdminController;
@@ -15,6 +17,7 @@ use App\Modules\Admin\Http\Controllers\RoleController;
 use App\Modules\Admin\Http\Controllers\StaffUserController;
 use App\Modules\Admin\Http\Controllers\SystemInfoController;
 use App\Modules\Admin\Http\Controllers\TaxComplianceAdminController;
+use App\Modules\Admin\Http\Controllers\TradingPnLAdminController;
 use App\Modules\Cart\Http\Controllers\CartController;
 use App\Modules\Communication\Http\Controllers\SocialCommerceFeedController;
 use App\Modules\Communication\Http\Controllers\VoiceCallWebhookController;
@@ -204,5 +207,22 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/mushak-6-6', [TaxComplianceAdminController::class, 'mushak66Index'])->name('mushak-6-6.index');
         Route::get('/rma', [TaxComplianceAdminController::class, 'rmaIndex'])->name('rma.index');
         Route::get('/registers', [TaxComplianceAdminController::class, 'registers'])->name('registers.index');
+    });
+
+    // AI Intelligence Engine Settings
+    Route::prefix('ai-settings')->name('ai.')->group(function () {
+        Route::get('/', [AiAdminController::class, 'index'])->name('index');
+        Route::post('/test', [AiAdminController::class, 'test'])->name('test');
+        Route::post('/{setting}', [AiAdminController::class, 'update'])->name('update');
+    });
+
+    // Executive Trading Profit & Loss (P&L) Analytics
+    Route::prefix('analytics')->name('analytics.')->group(function () {
+        Route::get('/trading-pnl', [TradingPnLAdminController::class, 'index'])->name('pnl');
+    });
+
+    // Immutable Enterprise Audit Trail
+    Route::prefix('audit-logs')->name('audit.')->group(function () {
+        Route::get('/', [AuditLogAdminController::class, 'index'])->name('index');
     });
 });
