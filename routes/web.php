@@ -107,6 +107,9 @@ Route::prefix('webhooks/voice')->name('webhooks.voice.')->group(function () {
 });
 
 Route::prefix('admin')->name('admin.')->group(function () {
+    Route::redirect('/', '/admin/analytics/trading-pnl');
+    Route::redirect('/dashboard', '/admin/analytics/trading-pnl')->name('dashboard');
+
     Route::resource('roles', RoleController::class);
     Route::resource('staff', StaffUserController::class);
 

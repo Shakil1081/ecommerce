@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -13,11 +15,30 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // 1. Seed Roles & Granular Permissions
+        $this->call(RolesAndPermissionsSeeder::class);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // 2. Create Default Super Admin Account
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@ecommerce.test'],
+            [
+                'name' => 'Super Administrator',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        if (method_exists($admin, 'assignRole')) {
+            $admin->assignRole('Super Admin');
+        }
+
+        // 3. Seed Master Geo & Logistics & AI Configurations
+        $this->call([
+            BangladeshGeoLocationsSeeder::class,
+            ShippingZoneSeeder::class,
+            CourierGatewaySeeder::class,
+            SmsGatewaySeeder::class,
+            AiModelSettingSeeder::class,
         ]);
     }
 }
