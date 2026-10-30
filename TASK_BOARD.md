@@ -1148,7 +1148,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 | Ticket ID | Task Name / User Story | Module | Git Branch | Status | Verification Command |
 |---|---|---|---|---|---|
-| `P10-T01` | Dynamic Multi-Provider AI Engine & Credentials Architecture | `AI`, `Admin` | `feat/p10-t01-ai-provider-engine` | `[ ] TODO` | `php artisan test --filter=AiIntelligenceTest` |
+| `P10-T01` | Dynamic Multi-Provider AI Engine & Credentials Architecture | `AI`, `Admin` | `feat/p10-t01-ai-provider-engine` | `[x] DONE` | `php artisan test --filter=AiIntelligenceTest` |
 | `P10-T02` | AI Catalog Enrichment, Restocking Insights & Dispute Assistant Facilities | `AI`, `Catalog`, `Procurement` | `feat/p10-t02-ai-facilities` | `[ ] TODO` | `php artisan test --filter=AiFacilitiesTest` |
 | `P10-T03` | Executive Trading Profit & Loss (P&L) Analytics Engine | `Admin`, `Order`, `Procurement` | `feat/p10-t03-trading-pnl-analytics` | `[ ] TODO` | `php artisan test --filter=TradingPnLAnalyticsTest` |
 | `P10-T04` | Immutable Enterprise Audit Logging Engine | `Admin` | `feat/p10-t04-audit-trail-engine` | `[ ] TODO` | `php artisan test --filter=AuditLogTest` |
@@ -1180,10 +1180,10 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/AI/Providers/AiServiceProvider.php`
   - `tests/Feature/AiIntelligenceTest.php`
 - **Acceptance Criteria**:
-  - [ ] Schema stores provider settings (`gemini`, `openai`, `claude`, `ollama`) with encrypted credentials array.
-  - [ ] Schema logs token usage (prompt tokens, completion tokens, estimated cost USD/BDT).
-  - [ ] Pre-flight `TestAiConnectionAction` tests outbound API connectivity and returns latency.
-  - [ ] Feature tests pass with mocked HTTP responses, Pint PSR-12 clean.
+  - [x] Schema stores provider settings (`gemini`, `openai`, `claude`, `ollama`) with encrypted credentials array.
+  - [x] Schema logs token usage (prompt tokens, completion tokens, estimated cost USD/BDT).
+  - [x] Pre-flight `TestAiConnectionAction` tests outbound API connectivity and returns latency.
+  - [x] Feature tests pass with mocked HTTP responses, Pint PSR-12 clean.
 
 #### `P10-T02`: AI Catalog Enrichment, Restocking Insights & Dispute Assistant Facilities
 - **Objective**: High-value AI facilities powered by the unified AI manager:
