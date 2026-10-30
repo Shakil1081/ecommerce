@@ -121,4 +121,3 @@ class GeminiProviderAdapter implements AiProviderContract
         }
     }
 }
-

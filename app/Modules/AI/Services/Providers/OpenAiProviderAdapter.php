@@ -121,4 +121,3 @@ class OpenAiProviderAdapter implements AiProviderContract
         }
     }
 }
-

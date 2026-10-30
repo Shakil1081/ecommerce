@@ -26,4 +26,3 @@ interface AiProviderContract
      */
     public function testConnection(AiModelSetting $setting): AiConnectionTestResultDto;
 }
-
