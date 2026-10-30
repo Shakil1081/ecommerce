@@ -53,6 +53,19 @@ const toggleLocale = () => {
           >
         </div>
 
+        <!-- Main Storefront Nav Links -->
+        <nav class="header-nav-links">
+          <Link href="/shop" class="header-nav-link">
+            <span>🛍️</span> {{ currentLocale === 'bn' ? 'শপ' : 'Shop Catalog' }}
+          </Link>
+          <Link href="/track-order" class="header-nav-link">
+            <span>🚚</span> {{ currentLocale === 'bn' ? 'অর্ডার ট্র্যাকিং' : 'Track Order' }}
+          </Link>
+          <Link href="/admin" class="header-nav-link admin-pill-link">
+            <span>⚡</span> {{ currentLocale === 'bn' ? 'অ্যাডমিন হাব' : 'Admin Hub' }}
+          </Link>
+        </nav>
+
         <!-- Navigation Actions -->
         <nav class="header-nav-actions">
           <button type="button" class="header-action-btn cart-btn" @click="cartStore.openDrawer">
@@ -60,10 +73,6 @@ const toggleLocale = () => {
             <span class="action-label">{{ currentLocale === 'bn' ? 'কার্ট' : 'Cart' }}</span>
             <span v-if="cartStore.totalItemsCount > 0" class="cart-badge-count">{{ cartStore.totalItemsCount }}</span>
           </button>
-          <Link href="/login" class="header-action-btn">
-            <span class="action-icon">👤</span>
-            <span class="action-label">{{ currentLocale === 'bn' ? 'লগইন' : 'Account' }}</span>
-          </Link>
         </nav>
       </div>
     </header>
@@ -166,7 +175,7 @@ const toggleLocale = () => {
 
   .search-container {
     flex: 1;
-    max-width: 580px;
+    max-width: 380px;
 
     .header-search-input {
       width: 100%;
@@ -177,6 +186,44 @@ const toggleLocale = () => {
       background-color: $color-neutral-50;
       font-size: $fs-sm;
       @include focus-ring($color-primary-500);
+    }
+  }
+
+  .header-nav-links {
+    display: flex;
+    align-items: center;
+    gap: $space-4;
+
+    @media (max-width: 900px) {
+      display: none;
+    }
+
+    .header-nav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: $space-2;
+      font-size: $fs-sm;
+      font-weight: $fw-bold;
+      color: $color-neutral-700;
+      text-decoration: none;
+      transition: color $transition-fast;
+
+      &:hover {
+        color: $color-primary-600;
+      }
+
+      &.admin-pill-link {
+        padding: 4px $space-3;
+        border-radius: $radius-full;
+        background: $color-neutral-100;
+        color: $color-primary-700;
+        border: 1px solid $color-neutral-300;
+
+        &:hover {
+          background: $color-primary-50;
+          border-color: $color-primary-300;
+        }
+      }
     }
   }
 

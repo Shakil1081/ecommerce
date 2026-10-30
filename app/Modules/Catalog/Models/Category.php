@@ -68,6 +68,14 @@ class Category extends Model implements HasMedia
     }
 
     /**
+     * Products belonging to this category.
+     */
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class, 'category_id');
+    }
+
+    /**
      * Scope active categories.
      */
     public function scopeActive(Builder $query): Builder

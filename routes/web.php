@@ -19,6 +19,7 @@ use App\Modules\Admin\Http\Controllers\SystemInfoController;
 use App\Modules\Admin\Http\Controllers\TaxComplianceAdminController;
 use App\Modules\Admin\Http\Controllers\TradingPnLAdminController;
 use App\Modules\Cart\Http\Controllers\CartController;
+use App\Modules\Catalog\Http\Controllers\StorefrontController;
 use App\Modules\Communication\Http\Controllers\SocialCommerceFeedController;
 use App\Modules\Communication\Http\Controllers\VoiceCallWebhookController;
 use App\Modules\Communication\Http\Controllers\WhatsAppWebhookController;
@@ -31,16 +32,13 @@ use App\Modules\Payment\Http\Controllers\NagadCallbackController;
 use App\Modules\Payment\Http\Controllers\ProcessAdvanceDeliveryPaymentController;
 use App\Modules\Payment\Http\Controllers\SslcommerzCallbackController;
 use App\Modules\Seo\Http\Controllers\SitemapController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+// Customer-Facing Storefront & Shop Catalog
+Route::get('/', [StorefrontController::class, 'index'])->name('storefront.home');
+Route::get('/shop', [StorefrontController::class, 'index'])->name('storefront.shop');
+Route::get('/products/{slug}', [StorefrontController::class, 'show'])->name('storefront.product.show');
 
 // Shopping Cart & Slide-Out Drawer Endpoints
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
