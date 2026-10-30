@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\AI\Providers\AiServiceProvider;
 use App\Modules\Cart\Providers\CartServiceProvider;
 use App\Modules\Common\Providers\CommonServiceProvider;
 use App\Modules\Communication\Providers\CommunicationServiceProvider;
@@ -22,4 +23,5 @@ return [
     CommunicationServiceProvider::class,
     MarketingServiceProvider::class,
     TaxComplianceServiceProvider::class,
+    AiServiceProvider::class,
 ];
