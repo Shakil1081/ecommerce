@@ -126,6 +126,22 @@ const toggleSidebar = () => {
           <span v-if="!sidebarCollapsed">Mushak 6.1 / 6.2</span>
         </Link>
 
+        <div class="nav-section-title" v-if="!sidebarCollapsed">AI INTELLIGENCE</div>
+        <Link href="/admin/ai-settings" class="nav-item">
+          <span class="nav-icon">🤖</span>
+          <span v-if="!sidebarCollapsed">AI Engine Settings</span>
+        </Link>
+
+        <div class="nav-section-title" v-if="!sidebarCollapsed">ANALYTICS & AUDIT</div>
+        <Link href="/admin/analytics/trading-pnl" class="nav-item">
+          <span class="nav-icon">📈</span>
+          <span v-if="!sidebarCollapsed">Trading P&L</span>
+        </Link>
+        <Link href="/admin/audit-logs" class="nav-item">
+          <span class="nav-icon">📋</span>
+          <span v-if="!sidebarCollapsed">Audit Trail</span>
+        </Link>
+
         <div class="nav-section-title" v-if="!sidebarCollapsed">ADMINISTRATION</div>
         <Link href="/admin/roles" class="nav-item">
           <span class="nav-icon">🛡️</span>
