@@ -1149,7 +1149,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 | Ticket ID | Task Name / User Story | Module | Git Branch | Status | Verification Command |
 |---|---|---|---|---|---|
 | `P10-T01` | Dynamic Multi-Provider AI Engine & Credentials Architecture | `AI`, `Admin` | `feat/p10-t01-ai-provider-engine` | `[x] DONE` | `php artisan test --filter=AiIntelligenceTest` |
-| `P10-T02` | AI Catalog Enrichment, Restocking Insights & Dispute Assistant Facilities | `AI`, `Catalog`, `Procurement` | `feat/p10-t02-ai-facilities` | `[ ] TODO` | `php artisan test --filter=AiFacilitiesTest` |
+| `P10-T02` | AI Catalog Enrichment, Restocking Insights & Dispute Assistant Facilities | `AI`, `Catalog`, `Procurement` | `feat/p10-t02-ai-facilities` | `[x] DONE` | `php artisan test --filter=AiFacilitiesTest` |
 | `P10-T03` | Executive Trading Profit & Loss (P&L) Analytics Engine | `Admin`, `Order`, `Procurement` | `feat/p10-t03-trading-pnl-analytics` | `[ ] TODO` | `php artisan test --filter=TradingPnLAnalyticsTest` |
 | `P10-T04` | Immutable Enterprise Audit Logging Engine | `Admin` | `feat/p10-t04-audit-trail-engine` | `[ ] TODO` | `php artisan test --filter=AuditLogTest` |
 | `P10-T05` | Back-Office AI, Trading P&L Analytics & Audit Trail UI Portal | `Admin`, `AI` | `feat/p10-t05-ai-analytics-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=AdminAiAndAnalyticsTest` |
@@ -1200,11 +1200,11 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/AI/DTOs/RestockInsightDto.php`
   - `tests/Feature/AiFacilitiesTest.php`
 - **Acceptance Criteria**:
-  - [ ] Catalog enrichment generates structured SEO titles, descriptions, and feature bullet points.
-  - [ ] Restocking insights action computes suggested PO order quantity considering inventory on hand and safety stock.
-  - [ ] Customer dispute assistant drafts contextual replies based on RMA condition and policy.
-  - [ ] Tax anomaly detection identifies abnormal credit note ratios.
-  - [ ] Feature tests pass, Pint PSR-12 clean.
+  - [x] Catalog enrichment generates structured SEO titles, descriptions, and feature bullet points.
+  - [x] Restocking insights action computes suggested PO order quantity considering inventory on hand and safety stock.
+  - [x] Customer dispute assistant drafts contextual replies based on RMA condition and policy.
+  - [x] Tax anomaly detection identifies abnormal credit note ratios.
+  - [x] Feature tests pass, Pint PSR-12 clean.
 
 #### `P10-T03`: Executive Trading Profit & Loss (P&L) Analytics Engine
 - **Objective**: Executive Trading Profit & Loss (P&L) Analytics engine calculating true commercial trading profitability in Bangladeshi Taka (৳ BDT) across import and local sourcing:
