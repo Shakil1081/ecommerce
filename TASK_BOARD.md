@@ -1150,7 +1150,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 |---|---|---|---|---|---|
 | `P10-T01` | Dynamic Multi-Provider AI Engine & Credentials Architecture | `AI`, `Admin` | `feat/p10-t01-ai-provider-engine` | `[x] DONE` | `php artisan test --filter=AiIntelligenceTest` |
 | `P10-T02` | AI Catalog Enrichment, Restocking Insights & Dispute Assistant Facilities | `AI`, `Catalog`, `Procurement` | `feat/p10-t02-ai-facilities` | `[x] DONE` | `php artisan test --filter=AiFacilitiesTest` |
-| `P10-T03` | Executive Trading Profit & Loss (P&L) Analytics Engine | `Admin`, `Order`, `Procurement` | `feat/p10-t03-trading-pnl-analytics` | `[ ] TODO` | `php artisan test --filter=TradingPnLAnalyticsTest` |
+| `P10-T03` | Executive Trading Profit & Loss (P&L) Analytics Engine | `Admin`, `Order`, `Procurement` | `feat/p10-t03-trading-pnl-analytics` | `[x] DONE` | `php artisan test --filter=TradingPnLAnalyticsTest` |
 | `P10-T04` | Immutable Enterprise Audit Logging Engine | `Admin` | `feat/p10-t04-audit-trail-engine` | `[ ] TODO` | `php artisan test --filter=AuditLogTest` |
 | `P10-T05` | Back-Office AI, Trading P&L Analytics & Audit Trail UI Portal | `Admin`, `AI` | `feat/p10-t05-ai-analytics-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=AdminAiAndAnalyticsTest` |
 | `P10-T06` | Full System Regression, Production SSR Verification & Release `v1.0.0` | `All Modules` | `feat/p10-t06-full-regression-v1` | `[ ] TODO` | `./vendor/bin/pint --test && npx vue-tsc --noEmit && npm run build:ssr && php artisan test` |
@@ -1222,10 +1222,10 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Admin/DTOs/TradingPnLSummaryDto.php`
   - `tests/Feature/TradingPnLAnalyticsTest.php`
 - **Acceptance Criteria**:
-  - [ ] Calculates accurate Gross Revenue, Net Revenue, COGS, Gross Profit, and Gross Margin %.
-  - [ ] Deducts payment processing fees, shipping variances, and scrapped RMA losses to determine Net Trading Profit.
-  - [ ] Breaks down profitability by product category and top SKUs.
-  - [ ] Feature tests pass, Pint PSR-12 clean.
+  - [x] Calculates accurate Gross Revenue, Net Revenue, COGS, Gross Profit, and Gross Margin %.
+  - [x] Deducts payment processing fees, shipping variances, and scrapped RMA losses to determine Net Trading Profit.
+  - [x] Breaks down profitability by product category and top SKUs.
+  - [x] Feature tests pass, Pint PSR-12 clean.
 
 #### `P10-T04`: Immutable Enterprise Audit Logging Engine
 - **Objective**: Tamper-proof enterprise audit log system recording critical operational events across the trading platform:
