@@ -9,13 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Planned
-- **Phase 10: Backend AI Intelligence, Trading P&L Analytics, Audit Trail & Automated QA**:
-  - Multi-provider AI Intelligence engine (Gemini, OpenAI, Claude, Local LLMs) with token metrics and dynamic credential management.
-  - Automated AI catalog SEO enrichment from imported manufacturer specs.
-  - Smart restocking & procurement demand forecasting.
-  - Executive Trading Profit & Loss (P&L) dashboard with true landed COGS in BDT (৳).
-  - Tamper-proof audit logging and end-to-end regression validation.
+---
+
+## [1.0.0] - 2026-10-30
+
+### Added
+- **Multi-Provider AI Intelligence Engine Architecture (`App\Modules\AI`)**:
+  - Pluggable AI engine supporting **Google Gemini**, **OpenAI**, **Anthropic Claude**, and **Ollama / Local LLMs** (`AiManager`, `AiProviderContract`, `GeminiProviderAdapter`, `OpenAiProviderAdapter`, `ClaudeProviderAdapter`, `OllamaProviderAdapter`).
+  - Dynamic encrypted provider credentials (`ai_model_settings`), temperature, max tokens, runtime feature mapping, and pre-flight connection verification (`TestAiConnectionAction`).
+  - Automated token usage metering (`ai_usage_logs`, `RecordAiUsageAction`) calculating prompt/completion tokens, latency (ms), and dual-currency cost tracking in USD ($) and BDT (৳).
+- **Automated AI Operational Capabilities (`App\Modules\AI`, `App\Modules\Catalog`, `App\Modules\Procurement`, `App\Modules\TaxCompliance`)**:
+  - **1-Click Catalog SEO Enrichment**: Extracts technical specifications from overseas supplier invoices and generates bilingual titles, SEO meta tags, and structured bullet points (`EnrichProductSeoAction`).
+  - **Smart Restocking & Demand Forecasting**: Analyzes historical sales velocity, supplier lead time, and safety stock days to compute recommended replenishment quantities and business rationale (`GenerateRestockInsightsAction`).
+  - **Contextual Customer Dispute / RMA Support Assistant**: Generates customer-centric bilingual support responses based on return reason, courier tracking, and statutory replacement policies (`DraftCustomerSupportReplyAction`).
+  - **Statutory Tax & Return Anomaly Detection**: Proactively flags return rate spikes, excessive credit notes exceeding sales thresholds, and VAT discrepancies prior to statutory Mushak 9.1 return filings (`DetectTaxAnomaliesAction`).
+- **Executive Trading Profit & Loss (P&L) Analytics Engine (`App\Modules\Admin`, `App\Modules\Order`, `App\Modules\Procurement`)**:
+  - True Landed COGS consolidation in BDT (৳) across both global commercial importation (converted at bank settlement rates + customs tariffs) and local procurement (purchase price + domestic freight) (`CalculateTradingPnLAction`, `TradingPnLSummaryDto`).
+  - Complete executive financial waterfall: Gross Sales Turnover, Item Discounts, Net Sales Revenue, Statutory Output VAT, Total Landed COGS, Gross Trading Profit, Gross Margin %, Courier Delivery Economics (Collected vs Courier Bill Variance), Payment Gateway Merchant Fees, RMA Scrap Write-off Losses, Net Operating Profit, and Net Operating Margin %.
+  - Breakdown by Product Category, Top-Performing SKUs by Net Margin, and Daily Revenue/Profit Trend.
+- **Immutable Enterprise Audit Logging Engine (`App\Modules\Admin`)**:
+  - Tamper-proof audit trail ledger (`audit_logs`, `AuditLog`, `LogAuditTrailAction`) capturing actor user ID, name, email, IP address, user agent, and JSON diffs of `old_values` vs `new_values`.
+  - Comprehensive event hooks: Product Price Updates, Warehouse Stock Adjustments, Order State Transitions, Statutory Mushak Invoices & Credit Notes, Anti-Fraud Directory Whitelist/Blacklist Changes, Security/Captcha Settings, and Spatie RBAC Role Modifications.
+- **Back-Office AI, Analytics & Audit Trail UI Portal (`resources/js/Pages/Admin/`)**:
+  - **AI Model Settings & Token Dashboard (`AiSettings.vue`)**: Provider cards with live active/inactive toggles, feature checkboxes, masked API keys, one-click "Test AI Connection" modal, and token usage log table.
+  - **Executive Trading P&L Dashboard (`TradingPnL.vue`)**: Period filters (Today, This Week, This Month, This Quarter, Custom Range), financial summary cards, logistics variance badges, and category/SKU margin breakdown tables.
+  - **Enterprise Audit Trail Inspector (`AuditLogIndex.vue`)**: Full-text search, event filters, date range selection, and interactive old-vs-new JSON diff inspector modal.
+  - Sidebar navigation updates in `AdminLayout.vue` under `AI INTELLIGENCE` and `ANALYTICS & AUDIT`.
 
 ---
 
