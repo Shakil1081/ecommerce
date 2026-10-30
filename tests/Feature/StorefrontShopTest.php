@@ -89,3 +89,4 @@ final class StorefrontShopTest extends TestCase
         $response->assertNotFound();
     }
 }
+
