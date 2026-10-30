@@ -1151,7 +1151,7 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 | `P10-T01` | Dynamic Multi-Provider AI Engine & Credentials Architecture | `AI`, `Admin` | `feat/p10-t01-ai-provider-engine` | `[x] DONE` | `php artisan test --filter=AiIntelligenceTest` |
 | `P10-T02` | AI Catalog Enrichment, Restocking Insights & Dispute Assistant Facilities | `AI`, `Catalog`, `Procurement` | `feat/p10-t02-ai-facilities` | `[x] DONE` | `php artisan test --filter=AiFacilitiesTest` |
 | `P10-T03` | Executive Trading Profit & Loss (P&L) Analytics Engine | `Admin`, `Order`, `Procurement` | `feat/p10-t03-trading-pnl-analytics` | `[x] DONE` | `php artisan test --filter=TradingPnLAnalyticsTest` |
-| `P10-T04` | Immutable Enterprise Audit Logging Engine | `Admin` | `feat/p10-t04-audit-trail-engine` | `[ ] TODO` | `php artisan test --filter=AuditLogTest` |
+| `P10-T04` | Immutable Enterprise Audit Logging Engine | `Admin` | `feat/p10-t04-audit-trail-engine` | `[x] DONE` | `php artisan test --filter=AuditLogTest` |
 | `P10-T05` | Back-Office AI, Trading P&L Analytics & Audit Trail UI Portal | `Admin`, `AI` | `feat/p10-t05-ai-analytics-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=AdminAiAndAnalyticsTest` |
 | `P10-T06` | Full System Regression, Production SSR Verification & Release `v1.0.0` | `All Modules` | `feat/p10-t06-full-regression-v1` | `[ ] TODO` | `./vendor/bin/pint --test && npx vue-tsc --noEmit && npm run build:ssr && php artisan test` |
 
@@ -1240,9 +1240,9 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/Admin/Actions/LogAuditTrailAction.php`
   - `tests/Feature/AuditLogTest.php`
 - **Acceptance Criteria**:
-  - [ ] Schema captures user, IP address, user agent, event, auditable type/ID, old values JSON, and new values JSON.
-  - [ ] Service records mutations atomically without interrupting business transactions.
-  - [ ] Feature tests pass, Pint PSR-12 clean.
+  - [x] Schema captures user, IP address, user agent, event, auditable type/ID, old values JSON, and new values JSON.
+  - [x] Service records mutations atomically without interrupting business transactions.
+  - [x] Feature tests pass, Pint PSR-12 clean.
 
 #### `P10-T05`: Back-Office AI, Trading P&L Analytics & Audit Trail UI Portal
 - **Objective**: Vue 3 Inertia back-office administration interfaces:
