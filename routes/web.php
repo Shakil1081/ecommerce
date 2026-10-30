@@ -14,6 +14,7 @@ use App\Modules\Admin\Http\Controllers\ProcurementController;
 use App\Modules\Admin\Http\Controllers\RoleController;
 use App\Modules\Admin\Http\Controllers\StaffUserController;
 use App\Modules\Admin\Http\Controllers\SystemInfoController;
+use App\Modules\Admin\Http\Controllers\TaxComplianceAdminController;
 use App\Modules\Cart\Http\Controllers\CartController;
 use App\Modules\Communication\Http\Controllers\SocialCommerceFeedController;
 use App\Modules\Communication\Http\Controllers\VoiceCallWebhookController;
@@ -190,5 +191,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::prefix('marketing')->name('marketing.')->group(function () {
         Route::get('/cart-recovery', [CommunicationAdminController::class, 'cartRecoveryIndex'])->name('cart-recovery');
         Route::post('/cart-recovery/trigger', [CommunicationAdminController::class, 'triggerManualRecovery'])->name('cart-recovery.trigger');
+    });
+
+    // Tax & NBR Statutory Compliance
+    Route::prefix('tax-compliance')->name('tax-compliance.')->group(function () {
+        Route::get('/', [TaxComplianceAdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/mushak-6-3', [TaxComplianceAdminController::class, 'mushak63Index'])->name('mushak-6-3.index');
+        Route::get('/mushak-6-3/{invoice}', [TaxComplianceAdminController::class, 'mushak63Show'])->name('mushak-6-3.show');
+        Route::get('/mushak-9-1', [TaxComplianceAdminController::class, 'mushak91Index'])->name('mushak-9-1.index');
+        Route::post('/mushak-9-1/compile', [TaxComplianceAdminController::class, 'mushak91Compile'])->name('mushak-9-1.compile');
+        Route::post('/mushak-9-1/{return}/submit', [TaxComplianceAdminController::class, 'mushak91Submit'])->name('mushak-9-1.submit');
+        Route::get('/mushak-6-6', [TaxComplianceAdminController::class, 'mushak66Index'])->name('mushak-6-6.index');
+        Route::get('/rma', [TaxComplianceAdminController::class, 'rmaIndex'])->name('rma.index');
+        Route::get('/registers', [TaxComplianceAdminController::class, 'registers'])->name('registers.index');
     });
 });

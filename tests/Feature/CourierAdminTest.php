@@ -178,7 +178,7 @@ class CourierAdminTest extends TestCase
         $response->assertJson([
             'success' => true,
         ]);
-        $this->assertStringContainsStringIgnoringCase('connected', $response->json('message'));
+        $this->assertStringContainsString('Connected', $response->json('message'));
     }
 
     public function test_admin_can_view_shipping_zones_page(): void

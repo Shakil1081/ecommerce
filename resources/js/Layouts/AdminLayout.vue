@@ -100,6 +100,32 @@ const toggleSidebar = () => {
           <span v-if="!sidebarCollapsed">Cart Recovery Sequencer</span>
         </Link>
 
+        <div class="nav-section-title" v-if="!sidebarCollapsed">TAX & NBR COMPLIANCE</div>
+        <Link href="/admin/tax-compliance" class="nav-item">
+          <span class="nav-icon">🏛️</span>
+          <span v-if="!sidebarCollapsed">Tax Overview</span>
+        </Link>
+        <Link href="/admin/tax-compliance/mushak-6-3" class="nav-item">
+          <span class="nav-icon">🧾</span>
+          <span v-if="!sidebarCollapsed">Mushak 6.3 (Invoices)</span>
+        </Link>
+        <Link href="/admin/tax-compliance/mushak-9-1" class="nav-item">
+          <span class="nav-icon">📊</span>
+          <span v-if="!sidebarCollapsed">Mushak 9.1 (Returns)</span>
+        </Link>
+        <Link href="/admin/tax-compliance/mushak-6-6" class="nav-item">
+          <span class="nav-icon">📑</span>
+          <span v-if="!sidebarCollapsed">Mushak 6.6 (VDS)</span>
+        </Link>
+        <Link href="/admin/tax-compliance/rma" class="nav-item">
+          <span class="nav-icon">🔄</span>
+          <span v-if="!sidebarCollapsed">RMA & Credit Notes</span>
+        </Link>
+        <Link href="/admin/tax-compliance/registers" class="nav-item">
+          <span class="nav-icon">📖</span>
+          <span v-if="!sidebarCollapsed">Mushak 6.1 / 6.2</span>
+        </Link>
+
         <div class="nav-section-title" v-if="!sidebarCollapsed">ADMINISTRATION</div>
         <Link href="/admin/roles" class="nav-item">
           <span class="nav-icon">🛡️</span>
