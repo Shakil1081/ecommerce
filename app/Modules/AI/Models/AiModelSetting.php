@@ -113,4 +113,3 @@ class AiModelSetting extends Model
         return $masked;
     }
 }
-

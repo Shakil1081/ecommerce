@@ -107,4 +107,3 @@ class OllamaProviderAdapter implements AiProviderContract
         }
     }
 }
-

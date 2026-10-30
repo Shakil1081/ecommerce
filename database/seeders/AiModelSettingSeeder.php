@@ -82,4 +82,3 @@ class AiModelSettingSeeder extends Seeder
         }
     }
 }
-

@@ -124,4 +124,3 @@ class ClaudeProviderAdapter implements AiProviderContract
         }
     }
 }
-
