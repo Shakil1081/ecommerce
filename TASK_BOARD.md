@@ -1130,17 +1130,146 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
 
 ---
 
-## 10. Product Backlog (Upcoming Sprints)
+---
 
-| Sprint / Phase | Phase Name | Primary Domain Modules | Estimated Tickets |
-|---|---|---|---|
-| **Sprint 2 (Phase 2)** | Core Catalog, Matrix Variants, Multi-Warehouse Inventory & Reviews | `Catalog`, `Inventory`, `Pricing` | 8 Tickets |
-| **Sprint 3 (Phase 3)** | Dual Sourcing Procurement (Import & Local) & Landed Cost Engine | `Procurement`, `TaxCompliance` | 6 Tickets |
-| **Sprint 4 (Phase 4)** | Cart Engine, Coupons, Order State Machine & Atomic Stock Reservation | `Cart`, `Order`, `Marketing` | 6 Tickets |
-| **Sprint 5 (Phase 5)** | 7-Layer Anti-Fraud, Fake Order Defense & Dynamic Bot Security Settings | `Order`, `Customer`, `Admin` | 6 Tickets |
-| **Sprint 6 (Phase 6)** | Dynamic Payment Gateway Module & Advance COD Delivery Engine | `Payment` | 5 Tickets |
-| **Sprint 7 (Phase 7)** | Automated Courier Logistics, Dynamic Delivery Pricing & Payout Reconciliation | `Logistics` | 6 Tickets |
-| **Sprint 8 (Phase 8)** | Omnichannel Messaging, Voice AI Verification, Social Commerce & Customer Portal | `Communication`, `Customer`, `Marketing` | 8 Tickets |
-| **Sprint 9 (Phase 9)** | Comprehensive NBR VAT, Full Statutory Tax Compliance & RMA Return Engine | `TaxCompliance`, `Order` | 6 Tickets |
-| **Sprint 10 (Phase 10)** | Backend AI Intelligence, Trading P&L Analytics, Audit Trail & Automated QA | `AI`, `Admin` | 5 Tickets |
+## 10. Active Sprint: Sprint 10 (Phase 10 — Backend AI Intelligence, Trading P&L Analytics, Audit Trail & Final QA)
+
+- **Target Phase**: **Phase 10: Backend AI Intelligence, Trading P&L Analytics, Audit Trail & Final Automated QA** (`app/Modules/AI/`, `app/Modules/Admin/`)
+- **Sprint Goal**: Implement an enterprise backend AI intelligence engine and executive analytics system for the hybrid trading platform:
+  1. Multi-provider AI Intelligence engine with dynamic settings (`ai_model_settings`) and encrypted API keys supporting Google Gemini, OpenAI, Anthropic Claude, and Ollama/Local LLMs with pre-flight connection verification and token usage logging (`ai_usage_logs`).
+  2. Automated AI operational capabilities: 1-click catalog SEO enrichment from imported specs, smart restocking demand forecasting & reorder points, customer dispute/RMA support reply drafting, and statutory tax/return anomaly detection.
+  3. Executive Trading Profit & Loss (P&L) Analytics engine aggregating dual-sourcing landed COGS in BDT (৳), gross sales turnover, VAT offsets, shipping loss/gain, payment gateway fees, and net trading margins.
+  4. Immutable enterprise Audit Logging engine (`audit_logs`) tracking price changes, stock adjustments, order state changes, and statutory tax entries with JSON diffs and admin inspector.
+  5. Back-Office Admin UI: AI Provider Configuration & Feature Assignment (`AiSettings.vue`), Executive Trading P&L Analytics Dashboard (`TradingPnL.vue`), and Audit Trail Inspector (`AuditLogIndex.vue`).
+  6. End-to-end integration, 100% green full test regression, zero TypeScript diagnostics, clean production/SSR builds, and official Release `v1.0.0` milestone tagging.
+- **Sprint Status**: `[ ⚙️ IN PROGRESS ] (0 of 6 Tickets Completed)`
+
+### Sprint 10 Ticket Breakdown
+
+| Ticket ID | Task Name / User Story | Module | Git Branch | Status | Verification Command |
+|---|---|---|---|---|---|
+| `P10-T01` | Dynamic Multi-Provider AI Engine & Credentials Architecture | `AI`, `Admin` | `feat/p10-t01-ai-provider-engine` | `[ ] TODO` | `php artisan test --filter=AiIntelligenceTest` |
+| `P10-T02` | AI Catalog Enrichment, Restocking Insights & Dispute Assistant Facilities | `AI`, `Catalog`, `Procurement` | `feat/p10-t02-ai-facilities` | `[ ] TODO` | `php artisan test --filter=AiFacilitiesTest` |
+| `P10-T03` | Executive Trading Profit & Loss (P&L) Analytics Engine | `Admin`, `Order`, `Procurement` | `feat/p10-t03-trading-pnl-analytics` | `[ ] TODO` | `php artisan test --filter=TradingPnLAnalyticsTest` |
+| `P10-T04` | Immutable Enterprise Audit Logging Engine | `Admin` | `feat/p10-t04-audit-trail-engine` | `[ ] TODO` | `php artisan test --filter=AuditLogTest` |
+| `P10-T05` | Back-Office AI, Trading P&L Analytics & Audit Trail UI Portal | `Admin`, `AI` | `feat/p10-t05-ai-analytics-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=AdminAiAndAnalyticsTest` |
+| `P10-T06` | Full System Regression, Production SSR Verification & Release `v1.0.0` | `All Modules` | `feat/p10-t06-full-regression-v1` | `[ ] TODO` | `./vendor/bin/pint --test && npx vue-tsc --noEmit && npm run build:ssr && php artisan test` |
+
+---
+
+### Detailed Ticket Specifications (Sprint 10)
+
+#### `P10-T01`: Dynamic Multi-Provider AI Engine & Credentials Architecture
+- **Objective**: Pluggable AI engine supporting Google Gemini, OpenAI, Claude, and Ollama with encrypted credentials (`ai_model_settings`), pre-flight API test connection handshake, token usage metering (`ai_usage_logs`), and runtime feature assignment.
+- **Files**:
+  - `database/migrations/2026_10_30_100101_create_ai_model_settings_table.php`
+  - `database/migrations/2026_10_30_100102_create_ai_usage_logs_table.php`
+  - `app/Modules/AI/Models/AiModelSetting.php`
+  - `app/Modules/AI/Models/AiUsageLog.php`
+  - `app/Modules/AI/Contracts/AiProviderContract.php`
+  - `app/Modules/AI/Services/AiManager.php`
+  - `app/Modules/AI/Services/Providers/GeminiProviderAdapter.php`
+  - `app/Modules/AI/Services/Providers/OpenAiProviderAdapter.php`
+  - `app/Modules/AI/Services/Providers/ClaudeProviderAdapter.php`
+  - `app/Modules/AI/Services/Providers/OllamaProviderAdapter.php`
+  - `app/Modules/AI/DTOs/AiPromptRequestDto.php`
+  - `app/Modules/AI/DTOs/AiResponseDto.php`
+  - `app/Modules/AI/DTOs/AiConnectionTestResultDto.php`
+  - `app/Modules/AI/Actions/TestAiConnectionAction.php`
+  - `app/Modules/AI/Actions/RecordAiUsageAction.php`
+  - `app/Modules/AI/Providers/AiServiceProvider.php`
+  - `tests/Feature/AiIntelligenceTest.php`
+- **Acceptance Criteria**:
+  - [ ] Schema stores provider settings (`gemini`, `openai`, `claude`, `ollama`) with encrypted credentials array.
+  - [ ] Schema logs token usage (prompt tokens, completion tokens, estimated cost USD/BDT).
+  - [ ] Pre-flight `TestAiConnectionAction` tests outbound API connectivity and returns latency.
+  - [ ] Feature tests pass with mocked HTTP responses, Pint PSR-12 clean.
+
+#### `P10-T02`: AI Catalog Enrichment, Restocking Insights & Dispute Assistant Facilities
+- **Objective**: High-value AI facilities powered by the unified AI manager:
+  1. Product Catalog & SEO Enrichment: Generates meta title, description, keywords, bullet points, and extracted specifications from raw import spec sheets.
+  2. Smart Restocking & Demand Forecasting: Analyzes sales velocity, lead times, safety stock, and calculates suggested reorder quantities.
+  3. Customer Support & Dispute Assistant: Formulates professional, empathetic bilingual replies for RMA return requests and dispute resolution.
+  4. Statutory Tax & Return Anomaly Detection: Detects unusual spikes in Mushak 6.7 Credit Notes or tax variances.
+- **Files**:
+  - `app/Modules/AI/Actions/EnrichProductSeoAction.php`
+  - `app/Modules/AI/Actions/GenerateRestockInsightsAction.php`
+  - `app/Modules/AI/Actions/DraftCustomerSupportReplyAction.php`
+  - `app/Modules/AI/Actions/DetectTaxAnomaliesAction.php`
+  - `app/Modules/AI/DTOs/ProductSeoEnrichmentDto.php`
+  - `app/Modules/AI/DTOs/RestockInsightDto.php`
+  - `tests/Feature/AiFacilitiesTest.php`
+- **Acceptance Criteria**:
+  - [ ] Catalog enrichment generates structured SEO titles, descriptions, and feature bullet points.
+  - [ ] Restocking insights action computes suggested PO order quantity considering inventory on hand and safety stock.
+  - [ ] Customer dispute assistant drafts contextual replies based on RMA condition and policy.
+  - [ ] Tax anomaly detection identifies abnormal credit note ratios.
+  - [ ] Feature tests pass, Pint PSR-12 clean.
+
+#### `P10-T03`: Executive Trading Profit & Loss (P&L) Analytics Engine
+- **Objective**: Executive Trading Profit & Loss (P&L) Analytics engine calculating true commercial trading profitability in Bangladeshi Taka (৳ BDT) across import and local sourcing:
+  - Gross Sales Turnover (B2C + B2B)
+  - Output VAT & Net Revenue
+  - True Landed Cost of Goods Sold (COGS in BDT from landed cost allocation)
+  - Gross Trading Margin (BDT and %)
+  - Logistics Cost vs Delivery Fees Collected (Shipping Gain/Loss)
+  - Payment Gateway Fees & MFS surcharges
+  - RMA Damaged Scrap Losses
+  - Net Operating Margin (BDT and %)
+  - Category and Top-Performing Variant margin rankings
+- **Files**:
+  - `app/Modules/Admin/Actions/CalculateTradingPnLAction.php`
+  - `app/Modules/Admin/DTOs/TradingPnLSummaryDto.php`
+  - `tests/Feature/TradingPnLAnalyticsTest.php`
+- **Acceptance Criteria**:
+  - [ ] Calculates accurate Gross Revenue, Net Revenue, COGS, Gross Profit, and Gross Margin %.
+  - [ ] Deducts payment processing fees, shipping variances, and scrapped RMA losses to determine Net Trading Profit.
+  - [ ] Breaks down profitability by product category and top SKUs.
+  - [ ] Feature tests pass, Pint PSR-12 clean.
+
+#### `P10-T04`: Immutable Enterprise Audit Logging Engine
+- **Objective**: Tamper-proof enterprise audit log system recording critical operational events across the trading platform:
+  - Price modifications (base price, variant selling price, wholesale tier pricing)
+  - Physical inventory stock adjustments and discrepancies
+  - Order state transitions and manual cancellations
+  - Statutory NBR VAT document creations and adjustments
+  - Merchant fraud blacklist/whitelist additions
+- **Files**:
+  - `database/migrations/2026_10_30_100401_create_audit_logs_table.php`
+  - `app/Modules/Admin/Models/AuditLog.php`
+  - `app/Modules/Admin/Actions/LogAuditTrailAction.php`
+  - `tests/Feature/AuditLogTest.php`
+- **Acceptance Criteria**:
+  - [ ] Schema captures user, IP address, user agent, event, auditable type/ID, old values JSON, and new values JSON.
+  - [ ] Service records mutations atomically without interrupting business transactions.
+  - [ ] Feature tests pass, Pint PSR-12 clean.
+
+#### `P10-T05`: Back-Office AI, Trading P&L Analytics & Audit Trail UI Portal
+- **Objective**: Vue 3 Inertia back-office administration interfaces:
+  1. AI Settings Portal (`AiSettings.vue`): Multi-provider configuration, API key encryption, feature-to-model mapping, pre-flight test connection button, and usage token log table.
+  2. Trading P&L Analytics Dashboard (`TradingPnL.vue`): Period selectors (Today, This Week, Month, Quarter, Custom), executive metric summary cards, margin waterfall charts, and category profitability table.
+  3. Audit Trail Inspector (`AuditLogIndex.vue`): Searchable audit trail with event filters, date range filters, and visual old-vs-new JSON diff inspector.
+- **Files**:
+  - `app/Modules/Admin/Http/Controllers/AiAdminController.php`
+  - `app/Modules/Admin/Http/Controllers/TradingPnLAdminController.php`
+  - `app/Modules/Admin/Http/Controllers/AuditLogAdminController.php`
+  - `resources/js/Pages/Admin/AI/AiSettings.vue`
+  - `resources/js/Pages/Admin/Analytics/TradingPnL.vue`
+  - `resources/js/Pages/Admin/Audit/AuditLogIndex.vue`
+  - `resources/js/Layouts/AdminLayout.vue`
+  - `routes/web.php`
+  - `tests/Feature/AdminAiAndAnalyticsTest.php`
+- **Acceptance Criteria**:
+  - [ ] Responsive Vue 3 Inertia views styled with Sass (`<style lang="scss" scoped>`).
+  - [ ] Admin sidebar contains navigation links for AI Engine, Trading P&L, and Audit Trails.
+  - [ ] Controllers deliver verified data; tests pass, TypeScript passes (`vue-tsc --noEmit`), Vite compiles cleanly.
+
+#### `P10-T06`: Full System Regression, Production SSR Verification & Release `v1.0.0`
+- **Objective**: Final enterprise production verification across all 10 phases. Full automated regression suite execution, PSR-12 compliance check, TypeScript verification, production client and SSR asset compilation, and official Release `v1.0.0` tagging.
+- **Acceptance Criteria**:
+  - [ ] 100% test pass rate across the complete application test suite (~340+ tests).
+  - [ ] Zero Pint style errors (`./vendor/bin/pint --test`).
+  - [ ] Zero TypeScript errors (`npx vue-tsc --noEmit`).
+  - [ ] Production Vite build (`npm run build`) and SSR build (`npm run build:ssr`) compile with zero warnings or errors.
+  - [ ] Merge to `main` branch, update `TASK_BOARD.md` and `CHANGELOG.md`, and tag `v1.0.0`.
 
