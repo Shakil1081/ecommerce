@@ -50,36 +50,40 @@ const toggleSidebar = () => {
           <span v-if="!sidebarCollapsed">Inward GRN Receiving</span>
         </Link>
 
-        <div class="nav-section-title" v-if="!sidebarCollapsed">OPERATIONS</div>
-        <Link href="/admin/dashboard" class="nav-item">
-          <span class="nav-icon">📊</span>
-          <span v-if="!sidebarCollapsed">Dashboard</span>
-        </Link>
-        <Link href="/admin/catalog/products" class="nav-item">
+        <div class="nav-section-title" v-if="!sidebarCollapsed">OPERATIONS & CATALOG</div>
+        <Link href="/admin/products" class="nav-item">
           <span class="nav-icon">📦</span>
-          <span v-if="!sidebarCollapsed">Catalog & Matrix</span>
+          <span v-if="!sidebarCollapsed">Product Catalog</span>
         </Link>
-        <Link href="/admin/inventory/stocks" class="nav-item">
-          <span class="nav-icon">🏭</span>
-          <span v-if="!sidebarCollapsed">Warehouse Inventory</span>
+        <Link href="/admin/products/create" class="nav-item nav-item-highlight">
+          <span class="nav-icon">➕</span>
+          <span v-if="!sidebarCollapsed">Add New Product</span>
         </Link>
         <Link href="/admin/orders" class="nav-item">
           <span class="nav-icon">🛍️</span>
           <span v-if="!sidebarCollapsed">Orders & Anti-Fraud</span>
         </Link>
-        <Link href="/admin/logistics/couriers" class="nav-item">
+        <Link href="/admin/settings/couriers" class="nav-item">
           <span class="nav-icon">🚚</span>
           <span v-if="!sidebarCollapsed">Couriers & Logistics</span>
         </Link>
 
-        <div class="nav-section-title" v-if="!sidebarCollapsed">FINANCE & TAX</div>
-        <Link href="/admin/tax/mushak-6-3" class="nav-item">
-          <span class="nav-icon">🧾</span>
-          <span v-if="!sidebarCollapsed">NBR VAT Mushak 6.3</span>
-        </Link>
-        <Link href="/admin/payment/gateways" class="nav-item">
+        <div class="nav-section-title" v-if="!sidebarCollapsed">PAYMENTS & SETTINGS</div>
+        <Link href="/admin/settings/payment-gateways" class="nav-item">
           <span class="nav-icon">💳</span>
           <span v-if="!sidebarCollapsed">Payment Gateways</span>
+        </Link>
+        <Link href="/admin/settings/bot-security" class="nav-item">
+          <span class="nav-icon">🛡️</span>
+          <span v-if="!sidebarCollapsed">Bot Security & Captcha</span>
+        </Link>
+        <Link href="/admin/roles" class="nav-item">
+          <span class="nav-icon">👥</span>
+          <span v-if="!sidebarCollapsed">Roles & Permissions</span>
+        </Link>
+        <Link href="/admin/staff" class="nav-item">
+          <span class="nav-icon">👤</span>
+          <span v-if="!sidebarCollapsed">Staff Management</span>
         </Link>
 
         <div class="nav-section-title" v-if="!sidebarCollapsed">COMMUNICATION & MARKETING</div>
@@ -237,6 +241,17 @@ const toggleSidebar = () => {
         background-color: $color-neutral-800;
         color: $color-neutral-0;
       }
+
+      &.nav-item-highlight {
+        color: $color-primary-400;
+        background-color: rgba($color-primary-500, 0.12);
+        font-weight: $fw-semibold;
+
+        &:hover {
+          background-color: rgba($color-primary-500, 0.22);
+          color: $color-primary-300;
+        }
+      }
     }
   }
 
@@ -272,6 +287,17 @@ const toggleSidebar = () => {
       &:hover {
         background-color: $color-neutral-800;
         color: $color-neutral-0;
+      }
+
+      &.nav-item-highlight {
+        color: $color-primary-400;
+        background-color: rgba($color-primary-500, 0.12);
+        font-weight: $fw-semibold;
+
+        &:hover {
+          background-color: rgba($color-primary-500, 0.22);
+          color: $color-primary-300;
+        }
       }
     }
   }

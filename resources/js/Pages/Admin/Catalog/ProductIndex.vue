@@ -123,8 +123,17 @@ const deleteProduct = (product: ProductItem) => {
                 </td>
               </tr>
               <tr v-if="products.length === 0">
-                <td colspan="6" class="empty-state">
-                  No products found in the catalog. Click "Add New Product" to get started.
+                <td colspan="6" class="empty-state-cell">
+                  <div class="empty-catalog-box">
+                    <span class="empty-catalog-icon">📦</span>
+                    <h3 class="empty-catalog-title">No products found in the catalog</h3>
+                    <p class="empty-catalog-desc">
+                      Get started by adding your first commercial product with HS tariffs, origin details, and matrix variants.
+                    </p>
+                    <Link href="/admin/products/create" class="btn btn-primary btn-lg">
+                      <span>➕</span> Add New Product
+                    </Link>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -269,11 +278,43 @@ const deleteProduct = (product: ProductItem) => {
   gap: $spacing-2;
 }
 
-.empty-state {
+.empty-state-cell {
   text-align: center;
-  padding: $spacing-8;
-  color: $color-text-muted;
-  font-style: italic;
+  padding: $spacing-12 $spacing-4;
+
+  .empty-catalog-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $spacing-3;
+    max-width: 440px;
+    margin: 0 auto;
+
+    .empty-catalog-icon {
+      font-size: 3rem;
+      opacity: 0.7;
+    }
+
+    .empty-catalog-title {
+      font-size: $font-size-lg;
+      font-weight: 700;
+      color: $color-text-main;
+      margin: 0;
+    }
+
+    .empty-catalog-desc {
+      font-size: $font-size-sm;
+      color: $color-text-muted;
+      margin: 0 0 $spacing-2;
+      line-height: 1.5;
+    }
+
+    .btn-lg {
+      padding: $spacing-3 $spacing-6;
+      font-size: $font-size-base;
+      font-weight: 600;
+    }
+  }
 }
 
 .badge {

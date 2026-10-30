@@ -574,3 +574,4 @@ const getShortEntityName = (fullType: string | null) => {
   justify-content: flex-end;
 }
 </style>
+

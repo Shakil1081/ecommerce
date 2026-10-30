@@ -32,8 +32,9 @@ class DatabaseSeeder extends Seeder
             $admin->assignRole('Super Admin');
         }
 
-        // 3. Seed Master Geo & Logistics & AI Configurations
+        // 3. Seed Master Geo & Logistics & AI Configurations & Catalog
         $this->call([
+            CatalogSeeder::class,
             BangladeshGeoLocationsSeeder::class,
             ShippingZoneSeeder::class,
             CourierGatewaySeeder::class,
