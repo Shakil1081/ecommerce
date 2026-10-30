@@ -993,18 +993,18 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   4. Inter-depot stock transfers via statutory Mushak 6.5 Transfer Challans (`M6.5-YYYYMM-XXXXXX`) with transport carrier details and multi-warehouse integrity.
   5. Customer Sales Return (RMA) lifecycle with statutory Mushak 6.7 Credit Notes (বিক্রয় ফেরত চালানপত্র - হ্রাসকারী সমন্বয় দলিল), COGS inventory restock reversal, and automated decreasing tax adjustment ledger entries.
   6. Vendor Purchase Returns via Mushak 6.8 Debit Notes (ক্রয় ফেরত চালানপত্র - বৃদ্ধিকারী সমন্বয় দলিল), statutory NBR registers (Mushak 6.1 Purchase Register & Mushak 6.2/6.2.1 Sales Register), and back-office Tax Compliance Administration portal with printable official NBR document layouts.
-- **Sprint Status**: `[ ⚙️ IN PROGRESS ] (0 of 6 Tickets Completed)`
+- **Sprint Status**: `[ ✅ COMPLETED ] (6 of 6 Tickets Passed & 100% Green)`
 
 ### Sprint 9 Ticket Breakdown
 
 | Ticket ID | Task Name / User Story | Module | Git Branch | Status | Verification Command |
 |---|---|---|---|---|---|
-| `P9-T01` | Statutory Mushak 6.3 Tax Invoice Generation with Atomic Serial Locks | `TaxCompliance`, `Order` | `feat/p9-t01-mushak-6-3-invoice` | `[ ] TODO` | `php artisan test --filter=Mushak63InvoiceTest` |
-| `P9-T02` | Monthly VAT Return (Mushak 9.1) & Automated Input Tax Credit (রেয়াত) Engine | `TaxCompliance`, `Procurement` | `feat/p9-t02-mushak-9-1-vat-return` | `[ ] TODO` | `php artisan test --filter=Mushak91VatReturnTest` |
-| `P9-T03` | Statutory Withholding Tax (VDS) & Automated Mushak 6.6 Certificates | `TaxCompliance`, `Procurement` | `feat/p9-t03-mushak-6-6-vds` | `[ ] TODO` | `php artisan test --filter=Mushak66VdsTest` |
-| `P9-T04` | Inter-Depot Stock Transfers via Statutory Mushak 6.5 Challans | `TaxCompliance`, `Inventory` | `feat/p9-t04-mushak-6-5-transfer-challan` | `[ ] TODO` | `php artisan test --filter=Mushak65TransferChallanTest` |
-| `P9-T05` | Sales Returns (RMA), Statutory Credit Notes (Mushak 6.7) & Decreasing Tax Adjustments | `TaxCompliance`, `Order`, `Inventory` | `feat/p9-t05-mushak-6-7-credit-notes` | `[ ] TODO` | `php artisan test --filter=RmaCreditNoteTest` |
-| `P9-T06` | Vendor Purchase Returns (Mushak 6.8), Statutory Registers (6.1/6.2) & Admin Tax Portal | `TaxCompliance`, `Admin` | `feat/p9-t06-mushak-registers-admin-ui` | `[ ] TODO` | `npm run build && php artisan test --filter=TaxComplianceAdminTest` |
+| `P9-T01` | Statutory Mushak 6.3 Tax Invoice Generation with Atomic Serial Locks | `TaxCompliance`, `Order` | `feat/p9-t01-mushak-6-3-invoice` | `[x] DONE` | `php artisan test --filter=Mushak63InvoiceTest` |
+| `P9-T02` | Monthly VAT Return (Mushak 9.1) & Automated Input Tax Credit (রেয়াত) Engine | `TaxCompliance`, `Procurement` | `feat/p9-t02-mushak-9-1-vat-return` | `[x] DONE` | `php artisan test --filter=Mushak91VatReturnTest` |
+| `P9-T03` | Statutory Withholding Tax (VDS) & Automated Mushak 6.6 Certificates | `TaxCompliance`, `Procurement` | `feat/p9-t03-mushak-6-6-vds` | `[x] DONE` | `php artisan test --filter=Mushak66VdsTest` |
+| `P9-T04` | Inter-Depot Stock Transfers via Statutory Mushak 6.5 Challans | `TaxCompliance`, `Inventory` | `feat/p9-t04-mushak-6-5-transfer-challan` | `[x] DONE` | `php artisan test --filter=Mushak65TransferChallanTest` |
+| `P9-T05` | Sales Returns (RMA), Statutory Credit Notes (Mushak 6.7) & Decreasing Tax Adjustments | `TaxCompliance`, `Order`, `Inventory` | `feat/p9-t05-mushak-6-7-credit-notes` | `[x] DONE` | `php artisan test --filter=RmaCreditNoteTest` |
+| `P9-T06` | Vendor Purchase Returns (Mushak 6.8), Statutory Registers (6.1/6.2) & Admin Tax Portal | `TaxCompliance`, `Admin` | `feat/p9-t06-mushak-registers-admin-ui` | `[x] DONE` | `npm run build && php artisan test --filter=TaxComplianceAdminTest` |
 
 ---
 
@@ -1028,11 +1028,11 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `bootstrap/providers.php`
   - `tests/Feature/Mushak63InvoiceTest.php`
 - **Acceptance Criteria**:
-  - [ ] Generates sequential `M6.3-YYYYMM-XXXXXX` invoice serial without gaps under atomic row lock (`lockForUpdate`).
-  - [ ] Computes line-by-line VAT (15% standard or 5% retail trader), SD, and exempt categories.
-  - [ ] Generates SHA-256 integrity hash snapshot that can be verified against tampering.
-  - [ ] Automatically links generated Mushak 6.3 invoice to the parent Order.
-  - [ ] Feature tests pass, Pint PSR-12 clean.
+  - [x] Generates sequential `M6.3-YYYYMM-XXXXXX` invoice serial without gaps under atomic row lock (`lockForUpdate`).
+  - [x] Computes line-by-line VAT (15% standard or 5% retail trader), SD, and exempt categories.
+  - [x] Generates SHA-256 integrity hash snapshot that can be verified against tampering.
+  - [x] Automatically links generated Mushak 6.3 invoice to the parent Order.
+  - [x] Feature tests pass (5 passed, 33 assertions), Pint PSR-12 clean.
 
 #### `P9-T02`: Monthly VAT Return (Mushak 9.1) & Automated Input Tax Credit (রেয়াত) Engine
 - **Objective**: Automated compiler for Bangladesh NBR Monthly VAT Return (Mushak 9.1). Aggregates outward sales VAT from `mushak_6_3_invoices`, Import Advance Tax (AT - 5%) from `bills_of_entry`, and Local Supplier Input VAT from verified `local_purchase_orders` / vendor Mushak 6.3 invoices as rebatable input credits to compute net tax payable / refundable carry-forward balance.
@@ -1044,12 +1044,12 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/TaxCompliance/Actions/SubmitMushak91ReturnAction.php`
   - `tests/Feature/Mushak91VatReturnTest.php`
 - **Acceptance Criteria**:
-  - [ ] Compiles Part 3 (Outward Supplies / Output VAT) from all Mushak 6.3 invoices in the tax period.
-  - [ ] Compiles Part 4 (Input Tax Credit / রেয়াত) combining Import Advance Tax (AT) and Local Supplier VAT.
-  - [ ] Compiles Part 5 (Adjustments: decreasing adjustments from returns, increasing adjustments from debit notes).
-  - [ ] Computes Part 6 (Net Payable VAT or Refundable Carry-Forward).
-  - [ ] Allows locking / submitting the return with reference code and submission date.
-  - [ ] Feature tests pass, Pint PSR-12 clean.
+  - [x] Compiles Part 3 (Outward Supplies / Output VAT) from all Mushak 6.3 invoices in the tax period.
+  - [x] Compiles Part 4 (Input Tax Credit / রেয়াত) combining Import Advance Tax (AT) and Local Supplier VAT.
+  - [x] Compiles Part 5 (Adjustments: decreasing adjustments from returns, increasing adjustments from debit notes).
+  - [x] Computes Part 6 (Net Payable VAT or Refundable Carry-Forward).
+  - [x] Allows locking / submitting the return with reference code and submission date.
+  - [x] Feature tests pass (3 passed, 27 assertions), Pint PSR-12 clean.
 
 #### `P9-T03`: Statutory Withholding Tax (VDS) & Automated Mushak 6.6 Certificates
 - **Objective**: Statutory withholding VAT (VDS) deduction engine for local procurement. Generates statutory Mushak 6.6 Certificates (`M6.6-YYYYMM-XXXXXX`) for domestic suppliers with verified 9/13-digit BIN, records treasury deposit challan number and date, and calculates exact VDS amounts.
@@ -1060,11 +1060,11 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/TaxCompliance/Actions/GenerateMushak66CertificateAction.php`
   - `tests/Feature/Mushak66VdsTest.php`
 - **Acceptance Criteria**:
-  - [ ] Generates sequential `M6.6-YYYYMM-XXXXXX` certificate number with atomic serial lock.
-  - [ ] Validates supplier 9 or 13 digit BIN.
-  - [ ] Links to Local Purchase Order and records supplier details, Mushak 6.3 reference, base value, VAT, and VDS withheld.
-  - [ ] Records government treasury challan deposit details.
-  - [ ] Feature tests pass, Pint PSR-12 clean.
+  - [x] Generates sequential `M6.6-YYYYMM-XXXXXX` certificate number with atomic serial lock.
+  - [x] Validates supplier 9 or 13 digit BIN.
+  - [x] Links to Local Purchase Order and records supplier details, Mushak 6.3 reference, base value, VAT, and VDS withheld.
+  - [x] Records government treasury challan deposit details.
+  - [x] Feature tests pass (6 passed, 29 assertions), Pint PSR-12 clean.
 
 #### `P9-T04`: Inter-Depot Stock Transfers via Statutory Mushak 6.5 Challans
 - **Objective**: Statutory Mushak 6.5 Goods Transfer Challan (পণ্য স্থানান্তর চালানপত্র) engine for moving trading stock between physical company warehouses. Assigns sequential challans (`M6.5-YYYYMM-XXXXXX`), records transport vehicle and driver details, item valuation, and integrates with warehouse stock dispatch and receipt.
@@ -1076,12 +1076,12 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/TaxCompliance/Actions/GenerateMushak65ChallanAction.php`
   - `tests/Feature/Mushak65TransferChallanTest.php`
 - **Acceptance Criteria**:
-  - [ ] Generates sequential `M6.5-YYYYMM-XXXXXX` challan serial.
-  - [ ] Records source warehouse BIN/address and destination warehouse BIN/address.
-  - [ ] Records carrier vehicle registration number, driver name, and phone.
-  - [ ] Freezes item quantities, unit cost valuation, and total transferred value.
-  - [ ] Interlocks with `WarehouseTransfer` model.
-  - [ ] Feature tests pass, Pint PSR-12 clean.
+  - [x] Generates sequential `M6.5-YYYYMM-XXXXXX` challan serial.
+  - [x] Records source warehouse BIN/address and destination warehouse BIN/address.
+  - [x] Records carrier vehicle registration number, driver name, and phone.
+  - [x] Freezes item quantities, unit cost valuation, and total transferred value.
+  - [x] Interlocks with `WarehouseTransfer` model.
+  - [x] Feature tests pass (4 passed, 29 assertions), Pint PSR-12 clean.
 
 #### `P9-T05`: Sales Returns (RMA), Statutory Credit Notes (Mushak 6.7) & Decreasing Tax Adjustments
 - **Objective**: Complete Return Merchandise Authorization (RMA) workflow and statutory Mushak 6.7 Credit Note (বিক্রয় ফেরত চালানপত্র - হ্রাসকারী সমন্বয় দলিল) engine. Reverses COGS into warehouse inventory, links directly to parent Mushak 6.3 invoice, logs statutory decreasing tax adjustment in VAT ledger, and executes customer refund.
@@ -1096,12 +1096,12 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `app/Modules/TaxCompliance/Actions/IssueMushak67CreditNoteAction.php`
   - `tests/Feature/RmaCreditNoteTest.php`
 - **Acceptance Criteria**:
-  - [ ] RMA state machine: `requested` -> `approved` -> `inspected` -> `restocked` -> `refunded` / `rejected`.
-  - [ ] Mushak 6.7 Credit Note generated with sequential `M6.7-YYYYMM-XXXXXX` number, linking to original Mushak 6.3 invoice serial.
-  - [ ] Computes decreasing tax adjustment (হ্রাসকারী সমন্বয়) and marks credit note for Mushak 9.1 reporting.
-  - [ ] Restocks approved items atomically to warehouse inventory (reversing COGS) or marks as damaged quarantine stock.
-  - [ ] Disburses customer refund with audit transaction log.
-  - [ ] Feature tests pass, Pint PSR-12 clean.
+  - [x] RMA state machine: `requested` -> `approved` -> `inspected` -> `restocked` -> `refunded` / `rejected`.
+  - [x] Mushak 6.7 Credit Note generated with sequential `M6.7-YYYYMM-XXXXXX` number, linking to original Mushak 6.3 invoice serial.
+  - [x] Computes decreasing tax adjustment (হ্রাসকারী সমন্বয়) and marks credit note for Mushak 9.1 reporting.
+  - [x] Restocks approved items atomically to warehouse inventory (reversing COGS) or marks as damaged quarantine stock.
+  - [x] Disburses customer refund with audit transaction log.
+  - [x] Feature tests pass (5 passed, 34 assertions), Pint PSR-12 clean.
 
 #### `P9-T06`: Vendor Purchase Returns (Mushak 6.8), Statutory Registers (6.1/6.2) & Admin Tax Portal
 - **Objective**: Vendor purchase returns via statutory Mushak 6.8 Debit Notes (ক্রয় ফেরত চালানপত্র - বৃদ্ধিকারী সমন্বয় দলিল) with increasing tax adjustment, NBR statutory registers (Mushak 6.1 Purchase Register & Mushak 6.2/6.2.1 Sales Register), and comprehensive Vue 3 Inertia back-office tax compliance admin portal with printable official NBR forms.
@@ -1122,11 +1122,11 @@ This living document tracks the day-to-day sprint execution, tickets, branch nam
   - `routes/web.php`
   - `tests/Feature/TaxComplianceAdminTest.php`
 - **Acceptance Criteria**:
-  - [ ] Mushak 6.8 Debit Note generated with sequential `M6.8-YYYYMM-XXXXXX` serial, linking to vendor invoice/PO.
-  - [ ] Mushak 6.1 Purchase Register generates opening, inward receipts (imports + local), issues, and closing balances.
-  - [ ] Mushak 6.2 Sales Register generates outward sales ledger with VAT and SD breakdown.
-  - [ ] Back-office admin views render with printable official bilingual NBR headers, BIN, tax circles, and statutory tables.
-  - [ ] TypeScript passes (`npx vue-tsc --noEmit`), Vite production/SSR builds pass cleanly, feature tests pass.
+  - [x] Mushak 6.8 Debit Note generated with sequential `M6.8-YYYYMM-XXXXXX` serial, linking to vendor invoice/PO.
+  - [x] Mushak 6.1 Purchase Register generates opening, inward receipts (imports + local), issues, and closing balances.
+  - [x] Mushak 6.2 Sales Register generates outward sales ledger with VAT and SD breakdown.
+  - [x] Back-office admin views render with printable official bilingual NBR headers, BIN, tax circles, and statutory tables.
+  - [x] TypeScript passes (`npx vue-tsc --noEmit`), Vite production/SSR builds pass cleanly, feature tests pass (8 passed, 102 assertions).
 
 ---
 

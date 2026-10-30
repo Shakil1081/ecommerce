@@ -29,6 +29,10 @@ final class Mushak91VatReturnTest extends TestCase
 {
     use RefreshDatabase;
 
+    private BangladeshDivision $division;
+
+    private BangladeshDistrict $district;
+
     private Product $product;
 
     private ProductVariant $variant;
@@ -41,14 +45,14 @@ final class Mushak91VatReturnTest extends TestCase
     {
         parent::setUp();
 
-        $division = BangladeshDivision::create([
+        $this->division = BangladeshDivision::create([
             'name_en' => 'Dhaka',
             'name_bn' => 'ঢাকা',
             'code' => 'DHA',
         ]);
 
-        $district = BangladeshDistrict::create([
-            'division_id' => $division->id,
+        $this->district = BangladeshDistrict::create([
+            'division_id' => $this->division->id,
             'name_en' => 'Dhaka',
             'name_bn' => 'ঢাকা',
             'code' => 'DHA-D',
@@ -119,8 +123,8 @@ final class Mushak91VatReturnTest extends TestCase
             'customer_phone' => '01812345678',
             'delivery_zone' => 'inside_dhaka',
             'delivery_address' => 'Banani, Dhaka',
-            'division_id' => 1,
-            'district_id' => 1,
+            'division_id' => $this->division->id,
+            'district_id' => $this->district->id,
             'subtotal_bdt' => '46000.0000',
             'discount_amount_bdt' => '0.0000',
             'shipping_fee_bdt' => '0.0000',

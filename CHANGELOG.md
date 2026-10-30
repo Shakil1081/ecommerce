@@ -10,14 +10,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
-- **Phase 9: Comprehensive NBR VAT, Full Statutory Tax Compliance & RMA Return Engine**:
-  - Statutory Mushak 6.3 Tax Invoices with non-gap atomic serial locks for local retail and wholesale trade.
-  - Statutory Input Tax Credit (রেয়াত) claiming both Import Advance Tax (AT - 5%) and Local Supplier Input VAT on monthly Mushak 9.1 returns.
-  - Automated Mushak 6.6 VDS (VAT Deducted at Source) certificates for procurement.
-  - Mushak 6.7 Credit Notes for sales returns, refund adjustments, and decreasing tax adjustments.
-  - Mushak 6.8 Debit Notes for supplier purchase returns.
-  - Mushak 6.5 Transfer Challans for inter-depot multi-warehouse stock movements.
-  - Mushak 6.1, 6.2, and 6.2.1 statutory registers & TDS/AIT tracking under the Income Tax Act 2023.
+- **Phase 10: Backend AI Intelligence, Trading P&L Analytics, Audit Trail & Automated QA**:
+  - Multi-provider AI Intelligence engine (Gemini, OpenAI, Claude, Local LLMs) with token metrics and dynamic credential management.
+  - Automated AI catalog SEO enrichment from imported manufacturer specs.
+  - Smart restocking & procurement demand forecasting.
+  - Executive Trading Profit & Loss (P&L) dashboard with true landed COGS in BDT (৳).
+  - Tamper-proof audit logging and end-to-end regression validation.
+
+---
+
+## [0.9.0] - 2026-10-30
+
+### Added
+- **Statutory Mushak 6.3 Tax Invoice Generation with Atomic Serial Locks (`App\Modules\TaxCompliance`, `App\Modules\Order`)**:
+  - Mutex row-level locking on `mushak_sequences` table guaranteeing non-gap sequential numbering formatted as `M6.3-YYYYMM-XXXXXX` (`MushakSequenceService`, `GenerateMushak63InvoiceAction`).
+  - Line-by-line statutory VAT computation (15% Standard, 5% Retail Trader, Supplementary Duty, Exempt) with SHA-256 historical cryptographic integrity hash and tamper verification (`VerifyMushak63IntegrityAction`).
+  - Back-office administration and official printable government format (`Mushak63Show.vue`, `Mushak63Index.vue`) adhering to NBR statutory standards.
+- **Monthly VAT Return (Mushak 9.1) & Automated Input Tax Credit (রেয়াত) Engine (`App\Modules\TaxCompliance`, `App\Modules\Procurement`)**:
+  - Automated compilation of monthly NBR Mushak 9.1 VAT Returns (`GenerateMushak91ReturnAction`, `SubmitMushak91ReturnAction`, `Mushak91Return`).
+  - Aggregation of Part 3 Outward Supplies (Output VAT), Part 4 Rebatable Input Tax Credit (claiming both 5% Import Advance Tax from Bill of Entry and Local Supplier VAT from verified vendor Mushak 6.3 invoices), Part 5 Increasing/Decreasing Adjustments, and Part 6 Net VAT Payable or Refundable Credit Carry-Forward.
+  - Back-office return management, recalculation triggers, and treasury challan deposit recording (`Mushak91Index.vue`).
+- **Statutory Withholding Tax (VDS) & Mushak 6.6 Certificates (`App\Modules\TaxCompliance`, `App\Modules\Procurement`)**:
+  - Automated statutory Mushak 6.6 Withholding Certificates (`GenerateMushak66CertificateAction`, `Mushak66Certificate`) for local procurement from domestic vendors with 9/13-digit BIN verification.
+  - Treasury deposit tracking, withholding tax ledger, and administrative directory (`Mushak66Index.vue`).
+- **Inter-Depot Stock Transfers via Mushak 6.5 Transfer Challans (`App\Modules\TaxCompliance`, `App\Modules\Inventory`)**:
+  - Statutory Mushak 6.5 Goods Transfer Challan engine (`GenerateMushak65ChallanAction`, `Mushak65Challan`, `Mushak65Item`) for inter-depot movements between physical company warehouse hubs.
+  - Transport carrier registration, driver identity details, and frozen inventory valuation across depots.
+- **Customer Sales Returns (RMA) & Mushak 6.7 Credit Notes (`App\Modules\TaxCompliance`, `App\Modules\Order`, `App\Modules\Inventory`)**:
+  - Complete Return Merchandise Authorization (RMA) state machine (`CreateRmaRequestAction`, `ProcessRmaInspectionAction`, `ReturnMerchandiseAuthorization`, `RmaIndex.vue`).
+  - Statutory Mushak 6.7 Credit Notes (`IssueMushak67CreditNoteAction`, `Mushak67CreditNote`) logging statutory decreasing tax adjustments (হ্রাসকারী সমন্বয়) for Mushak 9.1 reporting and reversing COGS inventory into warehouse stock.
+- **Vendor Purchase Returns (Mushak 6.8) & Statutory NBR Registers (6.1 & 6.2) (`App\Modules\TaxCompliance`, `App\Modules\Admin`)**:
+  - Vendor purchase returns via statutory Mushak 6.8 Debit Notes (`IssueMushak68DebitNoteAction`, `Mushak68DebitNote`) with increasing tax adjustments (বৃদ্ধিকারী সমন্বয়).
+  - NBR statutory registers: Mushak 6.1 Purchase Register (ক্রয় হিসাব পুস্তক) and Mushak 6.2/6.2.1 Sales Register (বিক্রয় হিসাব পুস্তক) (`GenerateMushak61RegisterAction`, `GenerateMushak62RegisterAction`, `MushakRegisters.vue`).
+  - Unified Tax & NBR Compliance Administration Portal (`TaxComplianceAdminController`, `TaxComplianceDashboard.vue`, `AdminLayout.vue`).
 
 ---
 
