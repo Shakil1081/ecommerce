@@ -215,7 +215,7 @@ class CatalogController extends Controller
                 'is_featured' => $product->is_featured,
                 'seo_title' => $product->seo_title,
                 'seo_description' => $product->seo_description,
-                'image_url' => $product->getFirstMediaUrl('products') ?: $product->getFirstMediaUrl('thumbnail'),
+                'image_url' => $product->getFirstMediaUrl('products') ?: ($product->getFirstMediaUrl('thumbnail') ?: ($product->specifications['image_url'] ?? '')),
                 'default_selling_price' => $defaultVariant ? (float) $defaultVariant->selling_price_bdt : 0,
                 'default_purchase_cost' => $defaultVariant ? (float) $defaultVariant->purchase_cost_bdt : 0,
                 'compare_at_price' => $defaultVariant ? (float) ($defaultVariant->compare_at_price_bdt ?? 0) : 0,

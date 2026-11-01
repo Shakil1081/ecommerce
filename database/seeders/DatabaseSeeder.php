@@ -35,6 +35,7 @@ class DatabaseSeeder extends Seeder
         // 3. Seed Master Geo & Logistics & AI Configurations & Catalog
         $this->call([
             CatalogSeeder::class,
+            LadiesBagsSeeder::class,
             BangladeshGeoLocationsSeeder::class,
             ShippingZoneSeeder::class,
             CourierGatewaySeeder::class,

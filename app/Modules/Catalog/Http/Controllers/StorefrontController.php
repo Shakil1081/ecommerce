@@ -180,8 +180,22 @@ class StorefrontController extends Controller
                     'full' => $media->getUrl('gallery_1200') ?: $media->getUrl(),
                 ];
             }
+        } elseif (! empty($product->specifications['image_url'])) {
+            $gallery[] = [
+                'thumb' => $product->specifications['image_url'],
+                'full' => $product->specifications['image_url'],
+            ];
+            if (! empty($product->specifications['gallery_urls']) && is_array($product->specifications['gallery_urls'])) {
+                foreach ($product->specifications['gallery_urls'] as $gUrl) {
+                    $gallery[] = [
+                        'thumb' => $gUrl,
+                        'full' => $gUrl,
+                    ];
+                }
+            }
         } else {
             $defaultThumb = match ($product->category?->slug) {
+                'ladies-bags', 'womens-bags', 'fashion-lifestyle' => 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=1200&auto=format&fit=crop&q=80',
                 'smartphones-mobile-accessories' => 'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=1200&auto=format&fit=crop&q=80',
                 'consumer-electronics' => 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&auto=format&fit=crop&q=80',
                 'computers-office-it' => 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=1200&auto=format&fit=crop&q=80',
@@ -263,6 +277,7 @@ class StorefrontController extends Controller
         }
 
         $defaultThumb = match ($p->category?->slug) {
+            'ladies-bags', 'womens-bags', 'fashion-lifestyle' => 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&auto=format&fit=crop&q=80',
             'smartphones-mobile-accessories' => 'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=600&auto=format&fit=crop&q=80',
             'consumer-electronics' => 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80',
             'computers-office-it' => 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&auto=format&fit=crop&q=80',
@@ -272,7 +287,7 @@ class StorefrontController extends Controller
 
         $imageUrl = $p->getFirstMediaUrl('products', 'card_600');
         if (empty($imageUrl)) {
-            $imageUrl = $p->getFirstMediaUrl('products') ?: $defaultThumb;
+            $imageUrl = $p->getFirstMediaUrl('products') ?: ($p->specifications['image_url'] ?? $defaultThumb);
         }
 
         $totalStock = $variants->sum(fn ($v) => $v->available_quantity);
