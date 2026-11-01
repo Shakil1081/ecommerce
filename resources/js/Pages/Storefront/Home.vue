@@ -1343,3 +1343,4 @@ const formatPrice = (amount: number): string => {
   }
 }
 </style>
+

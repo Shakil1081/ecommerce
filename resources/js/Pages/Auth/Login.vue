@@ -1,7 +1,19 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import type { SharedProps } from '@/types';
+
+interface BotSecurityProps {
+  enabled: boolean;
+  provider: 'recaptcha_v2' | 'recaptcha_v3' | 'turnstile';
+  site_key: string;
+}
+
+const props = defineProps<{
+  botSecurity?: BotSecurityProps;
+  timingToken?: string;
+  honeypotField?: string;
+}>();
 
 const page = usePage<SharedProps>();
 
@@ -9,9 +21,16 @@ const form = useForm({
   email: '',
   password: '',
   remember: false,
+  user_company_fax: '', // Invisible Honeypot trap
+  _form_timing_token: props.timingToken || '',
+  'g-recaptcha-response': '',
+  captcha_token: '',
+  captcha: '',
 });
 
 const showPassword = ref(false);
+const recaptchaWidgetId = ref<number | null>(null);
+const isScriptLoaded = ref(false);
 
 const fillDemoAdmin = () => {
   form.email = 'admin@ecommerce.test';
@@ -19,27 +38,124 @@ const fillDemoAdmin = () => {
   form.remember = true;
 };
 
-const submit = () => {
+// Dynamically load Google reCAPTCHA or Turnstile script when enabled
+onMounted(() => {
+  if (props.botSecurity?.enabled && props.botSecurity.site_key) {
+    if (props.botSecurity.provider === 'turnstile') {
+      const script = document.createElement('script');
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        isScriptLoaded.value = true;
+        // @ts-expect-error Turnstile global
+        if (window.turnstile) {
+          // @ts-expect-error Turnstile global
+          window.turnstile.render('#turnstile-widget', {
+            sitekey: props.botSecurity?.site_key,
+            callback: (token: string) => {
+              form.captcha_token = token;
+              form['g-recaptcha-response'] = token;
+            },
+          });
+        }
+      };
+      document.head.appendChild(script);
+    } else if (props.botSecurity.provider === 'recaptcha_v2') {
+      const script = document.createElement('script');
+      script.src = 'https://www.google.com/recaptcha/api.js?onload=onGoogleRecaptchaLoaded&render=explicit';
+      script.async = true;
+      script.defer = true;
+      // @ts-expect-error Window callback
+      window.onGoogleRecaptchaLoaded = () => {
+        isScriptLoaded.value = true;
+        // @ts-expect-error grecaptcha global
+        if (window.grecaptcha) {
+          // @ts-expect-error grecaptcha global
+          recaptchaWidgetId.value = window.grecaptcha.render('recaptcha-v2-container', {
+            sitekey: props.botSecurity?.site_key,
+            callback: (response: string) => {
+              form['g-recaptcha-response'] = response;
+              form.captcha_token = response;
+            },
+          });
+        }
+      };
+      document.head.appendChild(script);
+    } else if (props.botSecurity.provider === 'recaptcha_v3') {
+      const script = document.createElement('script');
+      script.src = `https://www.google.com/recaptcha/api.js?render=${props.botSecurity.site_key}`;
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        isScriptLoaded.value = true;
+      };
+      document.head.appendChild(script);
+    }
+  }
+});
+
+const submit = async () => {
+  // Execute reCAPTCHA v3 invisible execution if applicable
+  if (
+    props.botSecurity?.enabled &&
+    props.botSecurity.provider === 'recaptcha_v3' &&
+    props.botSecurity.site_key
+  ) {
+    // @ts-expect-error grecaptcha global
+    if (window.grecaptcha) {
+      try {
+        // @ts-expect-error grecaptcha global
+        const token = await window.grecaptcha.execute(props.botSecurity.site_key, { action: 'admin_login' });
+        form['g-recaptcha-response'] = token;
+        form.captcha_token = token;
+      } catch (err) {
+        console.warn('reCAPTCHA execution fallback:', err);
+      }
+    }
+  }
+
   form.post('/login', {
-    onFinish: () => form.reset('password'),
+    onFinish: () => {
+      form.reset('password');
+      // Reset v2 widget if exists
+      // @ts-expect-error grecaptcha global
+      if (recaptchaWidgetId.value !== null && window.grecaptcha) {
+        // @ts-expect-error grecaptcha global
+        window.grecaptcha.reset(recaptchaWidgetId.value);
+      }
+    },
   });
 };
 </script>
 
 <template>
   <div class="login-page">
-    <Head title="Sign In - Admin Hub" />
+    <Head title="Secure Sign In - Admin Portal" />
 
     <div class="login-card-container">
+      <!-- Security Badge Strip -->
+      <div class="security-shield-bar">
+        <span class="shield-tag">
+          <span class="shield-dot" /> 256-Bit TLS Encrypted
+        </span>
+        <span v-if="botSecurity?.enabled" class="shield-tag badge-captcha">
+          <span>🤖</span> reCAPTCHA Protected
+        </span>
+        <span class="shield-tag">
+          <span>🛡️</span> Anti-Brute Force
+        </span>
+      </div>
+
       <!-- Brand & Header -->
       <div class="login-header">
         <Link href="/" class="brand-link">
           <span class="brand-badge">⚡</span>
           <span class="brand-title">Trading<span class="title-accent">Hub</span></span>
         </Link>
-        <h1 class="login-title">Sign In to Admin Portal</h1>
+        <h1 class="login-title">Secure Admin Sign In</h1>
         <p class="login-subtitle">
-          Manage sourcing, inventory, dispatch logistics and tax compliance.
+          Protected commercial back-office gateway for procurement, inventory, logistics, and NBR tax operations.
         </p>
       </div>
 
@@ -69,8 +185,27 @@ const submit = () => {
 
       <!-- Login Form -->
       <form class="login-form" @submit.prevent="submit">
+        <!-- 🛡️ Invisible Spambot Honeypot Field -->
+        <input
+          v-model="form.user_company_fax"
+          type="text"
+          name="user_company_fax"
+          class="invisible-honeypot"
+          tabindex="-1"
+          autocomplete="off"
+          aria-hidden="true"
+        >
+
+        <!-- 🛡️ Form Submission Timing Token -->
+        <input
+          v-model="form._form_timing_token"
+          type="hidden"
+          name="_form_timing_token"
+        >
+
+        <!-- Email Field -->
         <div class="form-group">
-          <label for="email" class="form-label">Email Address</label>
+          <label for="email" class="form-label">Authorized Email Address</label>
           <div class="input-wrapper">
             <span class="input-icon">✉️</span>
             <input
@@ -79,17 +214,19 @@ const submit = () => {
               type="email"
               class="form-input"
               :class="{ 'is-invalid': form.errors.email }"
-              placeholder="name@company.com"
+              placeholder="admin@ecommerce.test"
               required
+              autocomplete="email"
               autofocus
             >
           </div>
           <span v-if="form.errors.email" class="form-error">{{ form.errors.email }}</span>
         </div>
 
+        <!-- Password Field -->
         <div class="form-group">
           <div class="password-label-row">
-            <label for="password" class="form-label">Password</label>
+            <label for="password" class="form-label">Master Password</label>
             <button
               type="button"
               class="toggle-pwd-btn"
@@ -108,11 +245,36 @@ const submit = () => {
               :class="{ 'is-invalid': form.errors.password }"
               placeholder="••••••••"
               required
+              autocomplete="current-password"
             >
           </div>
           <span v-if="form.errors.password" class="form-error">{{ form.errors.password }}</span>
         </div>
 
+        <!-- Google reCAPTCHA v2 Checkbox Container -->
+        <div
+          v-if="botSecurity?.enabled && botSecurity.provider === 'recaptcha_v2'"
+          class="captcha-wrapper"
+        >
+          <div id="recaptcha-v2-container" />
+          <span v-if="form.errors.captcha" class="form-error">{{ form.errors.captcha }}</span>
+        </div>
+
+        <!-- Cloudflare Turnstile Container -->
+        <div
+          v-if="botSecurity?.enabled && botSecurity.provider === 'turnstile'"
+          class="captcha-wrapper"
+        >
+          <div id="turnstile-widget" />
+          <span v-if="form.errors.captcha" class="form-error">{{ form.errors.captcha }}</span>
+        </div>
+
+        <!-- CAPTCHA Error Display for v3 -->
+        <div v-if="form.errors.captcha" class="form-error text-center">
+          {{ form.errors.captcha }}
+        </div>
+
+        <!-- Remember Me Checkbox -->
         <div class="form-options-row">
           <label class="remember-label">
             <input
@@ -120,19 +282,28 @@ const submit = () => {
               type="checkbox"
               class="remember-checkbox"
             >
-            <span>Keep me signed in</span>
+            <span>Maintain secure 30-day session</span>
           </label>
         </div>
 
+        <!-- Submit Button -->
         <button
           type="submit"
           class="btn-submit"
           :disabled="form.processing"
         >
-          <span v-if="form.processing">Signing in...</span>
-          <span v-else>Sign In to Dashboard →</span>
+          <span v-if="form.processing">Verifying Credentials...</span>
+          <span v-else>🛡️ Authenticate & Sign In →</span>
         </button>
       </form>
+
+      <!-- Security Notice Footer -->
+      <div class="security-audit-notice">
+        <span class="lock-icon">🔒</span>
+        <span class="notice-text">
+          Access attempts are logged with client IP address, timestamp and browser fingerprint for compliance audit. Unauthorized access is prohibited.
+        </span>
+      </div>
 
       <!-- Footer Return Link -->
       <div class="login-footer">
@@ -150,21 +321,57 @@ const submit = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, $color-neutral-900 0%, #1a0812 50%, $color-neutral-900 100%);
+  background: linear-gradient(135deg, $color-neutral-900 0%, #1c0813 50%, $color-neutral-900 100%);
   padding: $space-6 $space-4;
 }
 
 .login-card-container {
   width: 100%;
-  max-width: 440px;
+  max-width: 460px;
   background: $color-neutral-0;
   border-radius: $radius-2xl;
   padding: $space-8 $space-6;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba($color-primary-300, 0.2);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba($color-primary-300, 0.25);
 
   @media (max-width: 480px) {
     padding: $space-6 $space-4;
+  }
+}
+
+.security-shield-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: $space-2;
+  margin-bottom: $space-6;
+  padding-bottom: $space-4;
+  border-bottom: 1px solid $color-neutral-200;
+
+  .shield-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: $fs-2xs;
+    font-weight: $fw-bold;
+    color: $color-neutral-600;
+    background: $color-neutral-100;
+    padding: 2px $space-2;
+    border-radius: $radius-sm;
+
+    .shield-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: $color-success;
+    }
+
+    &.badge-captcha {
+      background: $color-primary-50;
+      color: $color-primary-700;
+      border: 1px solid $color-primary-200;
+    }
   }
 }
 
@@ -177,7 +384,7 @@ const submit = () => {
     align-items: center;
     gap: $space-2;
     text-decoration: none;
-    margin-bottom: $space-4;
+    margin-bottom: $space-3;
 
     .brand-badge {
       font-size: 1.75rem;
@@ -276,7 +483,7 @@ const submit = () => {
     font-size: $fs-2xs;
     font-weight: $fw-bold;
     background: $color-primary-600;
-    color: $color-neutral-0;
+    color: #ffffff;
     border: none;
     border-radius: $radius-md;
     cursor: pointer;
@@ -293,6 +500,16 @@ const submit = () => {
   display: flex;
   flex-direction: column;
   gap: $space-4;
+
+  .invisible-honeypot {
+    display: none !important;
+    position: absolute;
+    left: -9999px;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
 
   .form-group {
     display: flex;
@@ -363,10 +580,21 @@ const submit = () => {
     }
   }
 
+  .captcha-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: $space-2 0;
+  }
+
   .form-error {
     font-size: $fs-2xs;
     color: $color-danger;
-    font-weight: $fw-medium;
+    font-weight: $fw-semibold;
+
+    &.text-center {
+      text-align: center;
+    }
   }
 
   .form-options-row {
@@ -394,7 +622,7 @@ const submit = () => {
   .btn-submit {
     height: 46px;
     background: $color-primary-600;
-    color: $color-neutral-0;
+    color: #ffffff;
     border: none;
     border-radius: $radius-xl;
     font-size: $fs-sm;
@@ -417,8 +645,29 @@ const submit = () => {
   }
 }
 
-.login-footer {
+.security-audit-notice {
   margin-top: $space-6;
+  padding: $space-3 $space-4;
+  border-radius: $radius-lg;
+  background: $color-neutral-100;
+  display: flex;
+  align-items: flex-start;
+  gap: $space-2;
+
+  .lock-icon {
+    font-size: $fs-sm;
+    flex-shrink: 0;
+  }
+
+  .notice-text {
+    font-size: $fs-2xs;
+    color: $color-neutral-600;
+    line-height: 1.4;
+  }
+}
+
+.login-footer {
+  margin-top: $space-4;
   padding-top: $space-4;
   border-top: 1px solid $color-neutral-200;
   text-align: center;
