@@ -70,7 +70,7 @@ const form = useForm({
   name: props.product ? props.product.name : '',
   slug: props.product ? (props.product.slug || '') : '',
   category_id: props.product ? props.product.category_id : (props.categories[0]?.id || ''),
-  brand_id: props.product ? props.product.brand_id : '',
+  brand_id: (props.product ? props.product.brand_id : null) as number | null,
   hs_code: props.product ? props.product.hs_code : '8517.62.90',
   origin_country: props.product ? props.product.origin_country : 'Bangladesh',
   warranty_policy: props.product ? props.product.warranty_policy : '1 Year Official Brand Warranty',
@@ -213,8 +213,19 @@ const submit = (overridePublished?: boolean) => {
   });
   form.specifications = specsMap;
 
+  // Fallback category if empty
+  if (!form.category_id && props.categories.length > 0) {
+    form.category_id = props.categories[0].id;
+  }
+
+  // Ensure brand_id is null if falsey or empty string
+  if (!form.brand_id) {
+    form.brand_id = null;
+  }
+
+  const hasFile = form.image instanceof File;
   if (isEditing && props.product) {
-    if (form.image) {
+    if (hasFile) {
       form.transform((data) => ({ ...data, _method: 'put' })).post(`/admin/products/${props.product.id}`, {
         forceFormData: true,
       });
@@ -222,9 +233,13 @@ const submit = (overridePublished?: boolean) => {
       form.put(`/admin/products/${props.product.id}`);
     }
   } else {
-    form.post('/admin/products', {
-      forceFormData: true,
-    });
+    if (hasFile) {
+      form.post('/admin/products', {
+        forceFormData: true,
+      });
+    } else {
+      form.post('/admin/products');
+    }
   }
 };
 </script>
@@ -307,6 +322,7 @@ const submit = (overridePublished?: boolean) => {
                 </label>
                 <input
                   id="prod-name"
+                  name="name"
                   v-model="form.name"
                   type="text"
                   class="field-input field-input-lg"
@@ -336,6 +352,7 @@ const submit = (overridePublished?: boolean) => {
                   <span class="input-prefix">/products/</span>
                   <input
                     id="prod-slug"
+                    name="slug"
                     v-model="form.slug"
                     type="text"
                     class="field-input prefix-input"
@@ -361,6 +378,7 @@ const submit = (overridePublished?: boolean) => {
                 </div>
                 <textarea
                   id="prod-desc"
+                  name="description"
                   v-model="form.description"
                   rows="6"
                   class="field-textarea"
@@ -478,6 +496,7 @@ const submit = (overridePublished?: boolean) => {
                   </div>
                   <input
                     id="sku-code"
+                    name="sku"
                     v-model="form.sku"
                     type="text"
                     class="field-input uppercase-text"
@@ -491,6 +510,7 @@ const submit = (overridePublished?: boolean) => {
                   <label class="field-label" for="barcode-ean">Barcode / EAN-13</label>
                   <input
                     id="barcode-ean"
+                    name="barcode_ean"
                     v-model="form.barcode_ean"
                     type="text"
                     class="field-input"
@@ -503,6 +523,7 @@ const submit = (overridePublished?: boolean) => {
                   <label class="field-label" for="stock-qty">Initial Stock (Units)</label>
                   <input
                     id="stock-qty"
+                    name="stock_quantity"
                     v-model.number="form.stock_quantity"
                     type="number"
                     min="0"
@@ -523,6 +544,7 @@ const submit = (overridePublished?: boolean) => {
                   <div class="input-suffix-wrap">
                     <input
                       id="weight-kg"
+                      name="weight_kg"
                       v-model.number="form.weight_kg"
                       type="number"
                       min="0.01"
@@ -539,6 +561,7 @@ const submit = (overridePublished?: boolean) => {
                   <label class="field-label" for="prod-warranty">Commercial Warranty Policy</label>
                   <input
                     id="prod-warranty"
+                    name="warranty_policy"
                     v-model="form.warranty_policy"
                     type="text"
                     class="field-input"
@@ -638,6 +661,7 @@ const submit = (overridePublished?: boolean) => {
                 </div>
                 <input
                   id="seo-title"
+                  name="seo_title"
                   v-model="form.seo_title"
                   type="text"
                   class="field-input"
@@ -655,6 +679,7 @@ const submit = (overridePublished?: boolean) => {
                 </div>
                 <textarea
                   id="seo-desc"
+                  name="seo_description"
                   v-model="form.seo_description"
                   rows="3"
                   class="field-textarea"
@@ -703,6 +728,7 @@ const submit = (overridePublished?: boolean) => {
                   <span class="currency-symbol">৳</span>
                   <input
                     id="selling-price"
+                    name="default_selling_price"
                     v-model.number="form.default_selling_price"
                     type="number"
                     min="0"
@@ -726,6 +752,7 @@ const submit = (overridePublished?: boolean) => {
                   <span class="currency-symbol">৳</span>
                   <input
                     id="compare-price"
+                    name="compare_at_price"
                     v-model.number="form.compare_at_price"
                     type="number"
                     min="0"
@@ -744,6 +771,7 @@ const submit = (overridePublished?: boolean) => {
                   <span class="currency-symbol">৳</span>
                   <input
                     id="purchase-cost"
+                    name="default_purchase_cost"
                     v-model.number="form.default_purchase_cost"
                     type="number"
                     min="0"
@@ -794,8 +822,14 @@ const submit = (overridePublished?: boolean) => {
                 <label class="field-label" for="prod-cat">
                   Category <span class="required-mark">*</span>
                 </label>
-                <select id="prod-cat" v-model="form.category_id" class="field-select" required>
-                  <option value="" disabled>Select Primary Category</option>
+                <select
+                  id="prod-cat"
+                  name="category_id"
+                  v-model="form.category_id"
+                  class="field-select"
+                  required
+                >
+                  <option value="">-- Select Primary Category --</option>
                   <option v-for="cat in categories" :key="cat.id" :value="cat.id">
                     {{ cat.name }}
                   </option>
@@ -808,8 +842,13 @@ const submit = (overridePublished?: boolean) => {
               <!-- Brand Select -->
               <div class="form-field">
                 <label class="field-label" for="prod-brand">Brand / Manufacturer</label>
-                <select id="prod-brand" v-model="form.brand_id" class="field-select">
-                  <option value="">Generic / No Brand</option>
+                <select
+                  id="prod-brand"
+                  name="brand_id"
+                  v-model="form.brand_id"
+                  class="field-select"
+                >
+                  <option :value="null">Generic / No Brand</option>
                   <option v-for="b in brands" :key="b.id" :value="b.id">
                     {{ b.name }} ({{ b.origin_country }})
                   </option>
@@ -834,7 +873,13 @@ const submit = (overridePublished?: boolean) => {
                 <label class="field-label" for="prod-country">
                   Country of Origin <span class="required-mark">*</span>
                 </label>
-                <select id="prod-country" v-model="form.origin_country" class="field-select" required>
+                <select
+                  id="prod-country"
+                  name="origin_country"
+                  v-model="form.origin_country"
+                  class="field-select"
+                  required
+                >
                   <option v-for="c in countries" :key="c" :value="c">
                     {{ c }}
                   </option>
@@ -848,6 +893,7 @@ const submit = (overridePublished?: boolean) => {
                 </label>
                 <input
                   id="prod-hs"
+                  name="hs_code"
                   v-model="form.hs_code"
                   type="text"
                   class="field-input"
@@ -886,6 +932,7 @@ const submit = (overridePublished?: boolean) => {
                   </div>
                   <input
                     id="toggle-publish"
+                    name="is_published"
                     type="checkbox"
                     v-model="form.is_published"
                     class="custom-toggle-input"
@@ -901,6 +948,7 @@ const submit = (overridePublished?: boolean) => {
                   </div>
                   <input
                     id="toggle-featured"
+                    name="is_featured"
                     type="checkbox"
                     v-model="form.is_featured"
                     class="custom-toggle-input"

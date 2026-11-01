@@ -52,6 +52,21 @@ class CatalogController extends Controller
      */
     public function create(): Response
     {
+        if (Category::count() === 0) {
+            Category::firstOrCreate(
+                ['slug' => 'general'],
+                ['name' => 'General Merchandise', 'is_active' => true, 'sort_order' => 1]
+            );
+            Category::firstOrCreate(
+                ['slug' => 'smartphones-mobile-accessories'],
+                ['name' => 'Smartphones & Mobile Accessories', 'is_active' => true, 'sort_order' => 2]
+            );
+            Category::firstOrCreate(
+                ['slug' => 'consumer-electronics'],
+                ['name' => 'Consumer Electronics', 'is_active' => true, 'sort_order' => 3]
+            );
+        }
+
         return Inertia::render('Admin/Catalog/ProductForm', [
             'product' => null,
             'categories' => Category::active()->orderBy('name')->get(['id', 'name']),
@@ -65,6 +80,21 @@ class CatalogController extends Controller
      */
     public function store(Request $request, GenerateProductVariantsAction $generateAction): RedirectResponse
     {
+        if ($request->input('brand_id') === '' || $request->input('brand_id') === '0' || $request->input('brand_id') === 0) {
+            $request->merge(['brand_id' => null]);
+        }
+        if ($request->input('hs_code') === '') {
+            $request->merge(['hs_code' => null]);
+        }
+        if ($request->input('warranty_policy') === '') {
+            $request->merge(['warranty_policy' => null]);
+        }
+        if ($request->input('description') === '') {
+            $request->merge(['description' => null]);
+        }
+        if ($request->input('slug') === '') {
+            $request->merge(['slug' => null]);
+        }
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255'],
@@ -213,6 +243,22 @@ class CatalogController extends Controller
      */
     public function update(Request $request, Product $product): RedirectResponse
     {
+        if ($request->input('brand_id') === '' || $request->input('brand_id') === '0' || $request->input('brand_id') === 0) {
+            $request->merge(['brand_id' => null]);
+        }
+        if ($request->input('hs_code') === '') {
+            $request->merge(['hs_code' => null]);
+        }
+        if ($request->input('warranty_policy') === '') {
+            $request->merge(['warranty_policy' => null]);
+        }
+        if ($request->input('description') === '') {
+            $request->merge(['description' => null]);
+        }
+        if ($request->input('slug') === '') {
+            $request->merge(['slug' => null]);
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255'],
