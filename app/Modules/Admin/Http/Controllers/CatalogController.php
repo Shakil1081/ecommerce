@@ -9,6 +9,9 @@ use App\Modules\Catalog\Actions\GenerateProductVariantsAction;
 use App\Modules\Catalog\Models\Brand;
 use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Models\Product;
+use App\Modules\Catalog\Models\ProductVariant;
+use App\Modules\Inventory\Models\InventoryStock;
+use App\Modules\Inventory\Models\Warehouse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -21,7 +24,7 @@ class CatalogController extends Controller
      */
     public function index(): Response
     {
-        $products = Product::with(['category', 'brand', 'variants'])
+        $products = Product::with(['category', 'brand', 'variants.stocks'])
             ->withCount('variants')
             ->orderBy('created_at', 'desc')
             ->get()
@@ -37,6 +40,7 @@ class CatalogController extends Controller
                 'variants_count' => $p->variants_count,
                 'min_price_bdt' => $p->min_price_bdt,
                 'max_price_bdt' => $p->max_price_bdt,
+                'total_stock' => (int) $p->variants->sum(fn ($v) => $v->available_quantity),
                 'is_published' => $p->is_published,
                 'is_featured' => $p->is_featured,
                 'created_at' => $p->created_at?->format('Y-m-d H:i'),
@@ -175,25 +179,9 @@ class CatalogController extends Controller
                 $baseVariant->update($variantUpdates);
             }
 
-            // Assign initial stock to primary warehouse if quantity provided
-            $initialStock = (int) ($validated['stock_quantity'] ?? 0);
-            if ($initialStock > 0) {
-                $primaryWarehouse = \App\Modules\Inventory\Models\Warehouse::where('is_primary', true)->first()
-                    ?? \App\Modules\Inventory\Models\Warehouse::first();
-                if ($primaryWarehouse) {
-                    \App\Modules\Inventory\Models\InventoryStock::updateOrCreate(
-                        [
-                            'warehouse_id' => $primaryWarehouse->id,
-                            'product_variant_id' => $baseVariant->id,
-                        ],
-                        [
-                            'physical_quantity' => $initialStock,
-                            'reserved_quantity' => 0,
-                            'bin_location' => 'MAIN-01',
-                        ]
-                    );
-                }
-            }
+            // Assign initial stock to primary warehouse (supports 0 or any positive integer)
+            $initialStock = isset($validated['stock_quantity']) ? (int) $validated['stock_quantity'] : 0;
+            $this->syncVariantStock($baseVariant, $initialStock);
         }
 
         return redirect()->route('admin.products.index')
@@ -205,7 +193,10 @@ class CatalogController extends Controller
      */
     public function edit(Product $product): Response
     {
-        $defaultVariant = $product->defaultVariant;
+        $defaultVariant = $product->defaultVariant ?? $product->variants()->first();
+        if ($defaultVariant) {
+            $defaultVariant->loadMissing('stocks');
+        }
 
         return Inertia::render('Admin/Catalog/ProductForm', [
             'product' => [
@@ -280,6 +271,7 @@ class CatalogController extends Controller
             'sku' => ['nullable', 'string', 'max:100'],
             'barcode_ean' => ['nullable', 'string', 'max:100'],
             'weight_kg' => ['nullable', 'numeric', 'min:0'],
+            'stock_quantity' => ['nullable', 'integer', 'min:0'],
         ]);
 
         if (!empty($validated['slug'])) {
@@ -300,8 +292,8 @@ class CatalogController extends Controller
             }
         }
 
-        // Update default variant if prices or sku changed
-        $defaultVariant = $product->defaultVariant;
+        // Update default variant if prices, sku, or stock quantity changed
+        $defaultVariant = $product->defaultVariant ?? $product->variants()->first();
         if ($defaultVariant) {
             $vUpdates = [];
             if (isset($validated['default_selling_price'])) {
@@ -324,6 +316,11 @@ class CatalogController extends Controller
             }
             if (!empty($vUpdates)) {
                 $defaultVariant->update($vUpdates);
+            }
+
+            // Sync inventory stock quantity
+            if (isset($validated['stock_quantity'])) {
+                $this->syncVariantStock($defaultVariant, (int) $validated['stock_quantity']);
             }
         }
 
@@ -397,6 +394,43 @@ class CatalogController extends Controller
 
         return redirect()->route('admin.products.matrix', $product)
             ->with('success', 'Product variants generated successfully.');
+    }
+
+    /**
+     * Retrieve or automatically initialize the primary central fulfillment warehouse.
+     */
+    private function getOrCreatePrimaryWarehouse(): Warehouse
+    {
+        return Warehouse::where('is_primary', true)->first()
+            ?? Warehouse::first()
+            ?? Warehouse::create([
+                'code' => 'DHK-CENTRAL',
+                'name' => 'Dhaka Central Distribution Hub (Tejgaon)',
+                'address' => 'Plot 42, Tejgaon Industrial Area, Dhaka-1208',
+                'contact_number' => '+8801711000000',
+                'is_primary' => true,
+                'is_active' => true,
+            ]);
+    }
+
+    /**
+     * Synchronize inventory stock quantity for a variant in the primary warehouse.
+     */
+    private function syncVariantStock(ProductVariant $variant, int $quantity): void
+    {
+        $primaryWarehouse = $this->getOrCreatePrimaryWarehouse();
+
+        InventoryStock::updateOrCreate(
+            [
+                'warehouse_id' => $primaryWarehouse->id,
+                'product_variant_id' => $variant->id,
+            ],
+            [
+                'physical_quantity' => max(0, $quantity),
+                'reserved_quantity' => 0,
+                'bin_location' => 'MAIN-01',
+            ]
+        );
     }
 
     /**

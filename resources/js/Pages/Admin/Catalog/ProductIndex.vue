@@ -14,6 +14,7 @@ interface ProductItem {
   variants_count: number;
   min_price_bdt: number;
   max_price_bdt: number;
+  total_stock: number;
   is_published: boolean;
   is_featured: boolean;
   created_at: string;
@@ -127,9 +128,17 @@ const deleteProduct = (product: ProductItem) => {
                         - ৳{{ product.max_price_bdt.toLocaleString() }}
                       </span>
                     </span>
-                    <span class="badge badge-neutral">
-                      {{ product.variants_count }} {{ product.variants_count === 1 ? 'Variant' : 'Variants' }}
-                    </span>
+                    <div class="price-badges">
+                      <span class="badge badge-neutral">
+                        {{ product.variants_count }} {{ product.variants_count === 1 ? 'Variant' : 'Variants' }}
+                      </span>
+                      <span
+                        class="badge"
+                        :class="product.total_stock > 0 ? 'badge-stock-in' : 'badge-stock-out'"
+                      >
+                        {{ product.total_stock > 0 ? `${product.total_stock} in stock` : '0 in stock' }}
+                      </span>
+                    </div>
                   </div>
                 </td>
                 <td>
@@ -420,6 +429,13 @@ const deleteProduct = (product: ProductItem) => {
     color: $color-primary-600;
     font-size: $font-size-sm;
   }
+
+  .price-badges {
+    display: flex;
+    align-items: center;
+    gap: $spacing-1;
+    flex-wrap: wrap;
+  }
 }
 
 .actions-cell {
@@ -516,6 +532,18 @@ const deleteProduct = (product: ProductItem) => {
   &.badge-success {
     background: hsla(142, 71%, 45%, 0.12);
     color: $color-success;
+  }
+
+  &.badge-stock-in {
+    background: hsla(142, 71%, 45%, 0.12);
+    color: $color-success;
+    border: 1px solid hsla(142, 71%, 45%, 0.25);
+  }
+
+  &.badge-stock-out {
+    background: hsla(0, 84%, 60%, 0.12);
+    color: $color-danger;
+    border: 1px solid hsla(0, 84%, 60%, 0.25);
   }
 }
 </style>

@@ -81,7 +81,7 @@ const form = useForm({
   sku: props.product?.sku ?? '',
   barcode_ean: props.product?.barcode_ean ?? '',
   weight_kg: props.product?.weight_kg ?? 0.35,
-  stock_quantity: props.product?.stock_quantity ?? 50,
+  stock_quantity: props.product ? (props.product.stock_quantity ?? 0) : 50,
   specifications: {} as Record<string, string>,
   is_published: props.product ? props.product.is_published : true,
   is_featured: props.product ? props.product.is_featured : false,
@@ -222,6 +222,10 @@ const submit = (overridePublished?: boolean) => {
   if (!form.brand_id) {
     form.brand_id = null;
   }
+
+  // Ensure stock_quantity is an integer >= 0
+  const parsedStock = parseInt(String(form.stock_quantity), 10);
+  form.stock_quantity = !isNaN(parsedStock) ? Math.max(0, parsedStock) : 0;
 
   const hasFile = form.image instanceof File;
   if (isEditing && props.product) {
@@ -518,19 +522,25 @@ const submit = (overridePublished?: boolean) => {
                   />
                 </div>
 
-                <!-- Initial Physical Stock Quantity -->
+                <!-- Initial / Physical Stock Quantity -->
                 <div class="form-field">
-                  <label class="field-label" for="stock-qty">Initial Stock (Units)</label>
-                  <input
-                    id="stock-qty"
-                    name="stock_quantity"
-                    v-model.number="form.stock_quantity"
-                    type="number"
-                    min="0"
-                    step="1"
-                    class="field-input"
-                    placeholder="50"
-                  />
+                  <label class="field-label" for="stock-qty">
+                    {{ isEditing ? 'Physical Stock Quantity' : 'Initial Stock Quantity' }}
+                    <span class="field-subtext">(Stored in Central Warehouse)</span>
+                  </label>
+                  <div class="input-suffix-wrap">
+                    <input
+                      id="stock-qty"
+                      name="stock_quantity"
+                      v-model.number="form.stock_quantity"
+                      type="number"
+                      min="0"
+                      step="1"
+                      class="field-input"
+                      placeholder="50"
+                    />
+                    <span class="input-suffix">units</span>
+                  </div>
                 </div>
               </div>
 

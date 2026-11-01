@@ -72,6 +72,70 @@ class CatalogAdminTest extends TestCase
         $this->assertDatabaseHas('product_variants', ['product_id' => $product->id]);
     }
 
+    public function test_can_create_product_with_initial_stock_saved_to_inventory(): void
+    {
+        $payload = [
+            'name' => 'Sony WH-1000XM5',
+            'category_id' => $this->category->id,
+            'origin_country' => 'Japan',
+            'default_selling_price' => 38000.00,
+            'default_purchase_cost' => 31000.00,
+            'stock_quantity' => 75,
+            'is_published' => true,
+        ];
+
+        $response = $this->post(route('admin.products.store'), $payload);
+
+        $response->assertRedirect(route('admin.products.index'));
+
+        $product = Product::where('name', 'Sony WH-1000XM5')->first();
+        $this->assertNotNull($product);
+
+        $variant = $product->defaultVariant;
+        $this->assertNotNull($variant);
+        $this->assertEquals(75, $variant->available_quantity);
+
+        $this->assertDatabaseHas('inventory_stocks', [
+            'product_variant_id' => $variant->id,
+            'physical_quantity' => 75,
+        ]);
+    }
+
+    public function test_can_update_product_and_change_stock_quantity(): void
+    {
+        $payload = [
+            'name' => 'DJI Osmo Pocket 3',
+            'category_id' => $this->category->id,
+            'origin_country' => 'China',
+            'default_selling_price' => 62000.00,
+            'stock_quantity' => 30,
+            'is_published' => true,
+        ];
+
+        $this->post(route('admin.products.store'), $payload);
+
+        $product = Product::where('name', 'DJI Osmo Pocket 3')->firstOrFail();
+        $this->assertEquals(30, $product->defaultVariant->available_quantity);
+
+        // Update stock to 125
+        $updatePayload = [
+            'name' => 'DJI Osmo Pocket 3 Updated',
+            'category_id' => $this->category->id,
+            'origin_country' => 'China',
+            'default_selling_price' => 64000.00,
+            'stock_quantity' => 125,
+            'is_published' => true,
+        ];
+
+        $response = $this->put(route('admin.products.update', $product), $updatePayload);
+
+        $response->assertRedirect(route('admin.products.index'));
+
+        $product->refresh();
+        $this->assertEquals('DJI Osmo Pocket 3 Updated', $product->name);
+        $this->assertEquals(125, $product->defaultVariant->available_quantity);
+    }
+
     public function test_matrix_generator_endpoint_creates_variants(): void
     {
         $product = Product::create([
