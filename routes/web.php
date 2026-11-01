@@ -28,6 +28,7 @@ use App\Modules\Customer\Http\Controllers\OrderTrackingController;
 use App\Modules\Logistics\Http\Controllers\PathaoWebhookController;
 use App\Modules\Logistics\Http\Controllers\ShippingLabelController;
 use App\Modules\Logistics\Http\Controllers\SteadfastWebhookController;
+use App\Modules\Order\Http\Controllers\CheckoutController;
 use App\Modules\Order\Http\Controllers\DirectOrderController;
 use App\Modules\Order\Models\Order;
 use App\Modules\Payment\Http\Controllers\BkashCallbackController;
@@ -75,10 +76,8 @@ Route::get('/track-order', [OrderTrackingController::class, 'index'])->name('sto
 Route::post('/track-order', [OrderTrackingController::class, 'search'])->name('storefront.order-tracking.search');
 
 // Storefront Checkout & Fast Funnel Order
-Route::get('/checkout', function () {
-    return Inertia::render('Storefront/Checkout');
-})->name('storefront.checkout');
-
+Route::get('/checkout', [CheckoutController::class, 'index'])->name('storefront.checkout');
+Route::post('/checkout', [CheckoutController::class, 'store'])->name('storefront.checkout.store');
 Route::post('/checkout/fast-order', [DirectOrderController::class, 'store'])->name('storefront.fast-order');
 
 Route::get('/orders/confirmed/{order}', function (string $order) {
