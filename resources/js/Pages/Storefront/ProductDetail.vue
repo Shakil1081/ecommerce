@@ -283,8 +283,6 @@ const scrollToOrderForm = () => {
 
               <div class="image-floating-badges">
                 <span class="badge badge-origin">🌍 Origin: {{ product.origin_country }}</span>
-                <span v-if="product.warranty_policy" class="badge badge-warranty">🛡️ {{ product.warranty_policy }}</span>
-                <span class="badge badge-tax">🧾 Mushak 6.3 Included</span>
               </div>
             </div>
 
@@ -302,83 +300,90 @@ const scrollToOrderForm = () => {
             </div>
           </div>
 
-          <!-- Right: Product Information & Variant Selector -->
+          <!-- Right: Product Information & Purchase Actions -->
           <div class="info-column">
             <!-- Brand & Category -->
             <div class="brand-category-header">
               <span class="brand-name">{{ product.brand_name || 'Direct Import' }}</span>
-              <span class="cat-pill">{{ product.category_name }}</span>
+              <span class="header-sep">/</span>
+              <span class="cat-name">{{ product.category_name }}</span>
             </div>
 
             <!-- Title -->
             <h1 class="pdp-title">{{ product.name }}</h1>
 
-            <!-- Ratings & Quick Stats -->
+            <!-- Ratings & Inline Stock Indicator -->
             <div class="pdp-meta-row">
               <div class="rating-stars">
                 <span class="stars">★★★★★</span>
                 <span class="rating-num">5.0</span>
-                <span class="reviews-count">({{ product.review_count || 12 }} customer reviews)</span>
+                <span class="reviews-count">({{ product.review_count || 18 }} reviews)</span>
               </div>
               <span class="meta-sep">•</span>
-              <span class="sku-indicator">SKU: <span class="font-mono">{{ selectedVariant?.sku || 'N/A' }}</span></span>
+              <div class="inline-stock-pill" :class="{ 'in-stock': isCurrentVariantInStock, 'out-of-stock': !isCurrentVariantInStock }">
+                <span class="stock-dot"></span>
+                <span>{{ isCurrentVariantInStock ? 'ইন স্টক (In Stock)' : 'স্টক আউট (Out of Stock)' }}</span>
+              </div>
             </div>
 
-            <!-- Price Block -->
-            <div class="price-display-box">
-              <div class="main-price">
-                {{ formatPrice(selectedVariant?.selling_price_bdt || product.min_price_bdt) }}
-              </div>
-              <div
-                v-if="selectedVariant?.compare_at_price_bdt && selectedVariant.compare_at_price_bdt > selectedVariant.selling_price_bdt"
-                class="compare-price-wrap"
-              >
-                <span class="old-price">{{ formatPrice(selectedVariant.compare_at_price_bdt) }}</span>
-                <span class="discount-badge">
+            <!-- Clean, Unboxed Price Section -->
+            <div class="clean-price-section">
+              <div class="price-row">
+                <span class="main-price">
+                  {{ formatPrice(selectedVariant?.selling_price_bdt || product.min_price_bdt) }}
+                </span>
+                <span
+                  v-if="selectedVariant?.compare_at_price_bdt && selectedVariant.compare_at_price_bdt > selectedVariant.selling_price_bdt"
+                  class="old-price"
+                >
+                  {{ formatPrice(selectedVariant.compare_at_price_bdt) }}
+                </span>
+                <span
+                  v-if="selectedVariant?.compare_at_price_bdt && selectedVariant.compare_at_price_bdt > selectedVariant.selling_price_bdt"
+                  class="discount-tag"
+                >
                   Save {{ Math.round(((selectedVariant.compare_at_price_bdt - selectedVariant.selling_price_bdt) / selectedVariant.compare_at_price_bdt) * 100) }}%
                 </span>
               </div>
-              <div class="tax-hint">Inclusive of all Bangladesh statutory VAT & Tariffs (NBR Mushak 6.3)</div>
+              <div class="vat-tag">ভ্যাট অন্তর্ভুক্ত (VAT Included)</div>
             </div>
 
-            <!-- Stock Availability Badge -->
-            <div class="stock-status-banner" :class="{ 'in-stock': isCurrentVariantInStock, 'out-of-stock': !isCurrentVariantInStock }">
-              <span class="status-icon">{{ isCurrentVariantInStock ? '✅' : '❌' }}</span>
-              <div class="status-text">
-                <span class="status-title">{{ isCurrentVariantInStock ? 'In Stock — Ready for Dispatch' : 'Currently Out of Stock' }}</span>
-                <span class="status-sub" v-if="isCurrentVariantInStock">
-                  Ships from Dhaka Central Fulfillment Hub within 24 hours.
-                </span>
-              </div>
-            </div>
-
-            <!-- Matrix Variant Selectors (Color, Size, Storage, etc.) -->
-            <div class="variant-matrix-section">
+            <!-- Matrix Variant Selectors (Color, Size, etc.) -->
+            <div class="variant-matrix-section" v-if="Object.keys(optionGroups).length > 0">
               <div
                 v-for="(options, optionName) in optionGroups"
                 :key="optionName"
                 class="option-group"
               >
-                <div class="option-header">
-                  <span class="option-name">{{ optionName }}:</span>
-                  <span class="selected-value">{{ selectedAttributes[optionName] }}</span>
-                </div>
+                <!-- If multiple choices: show stylish, clean pills -->
+                <template v-if="options.length > 1">
+                  <div class="option-header">
+                    <span class="option-name">{{ optionName }}:</span>
+                    <span class="selected-value">{{ selectedAttributes[optionName] }}</span>
+                  </div>
 
-                <div class="option-values-row">
-                  <button
-                    v-for="optVal in options"
-                    :key="optVal"
-                    class="option-val-btn"
-                    :class="{ active: selectedAttributes[optionName] === optVal }"
-                    @click="selectAttributeValue(optionName, optVal)"
-                  >
-                    {{ optVal }}
-                  </button>
+                  <div class="option-values-row">
+                    <button
+                      v-for="optVal in options"
+                      :key="optVal"
+                      class="option-val-btn"
+                      :class="{ active: selectedAttributes[optionName] === optVal }"
+                      @click="selectAttributeValue(optionName, optVal)"
+                    >
+                      {{ optVal }}
+                    </button>
+                  </div>
+                </template>
+
+                <!-- If only 1 option: show clean subtle line rather than redundant button -->
+                <div v-else class="single-option-line">
+                  <span class="opt-label">{{ optionName }}:</span>
+                  <span class="opt-val">{{ options[0] }}</span>
                 </div>
               </div>
             </div>
 
-            <!-- Quantity & Fast Funnel Order Actions -->
+            <!-- Quantity & Actions Box -->
             <div class="purchase-actions-box">
               <div class="quantity-selector">
                 <span class="qty-label">Quantity (পরিমাণ):</span>
@@ -393,7 +398,7 @@ const scrollToOrderForm = () => {
                 </div>
               </div>
 
-              <!-- Quick Action Buttons for Top Viewport -->
+              <!-- Top Action Buttons -->
               <div class="top-action-buttons">
                 <button
                   type="button"
@@ -409,8 +414,8 @@ const scrollToOrderForm = () => {
                   :disabled="!isCurrentVariantInStock || isAddingToCart"
                   @click="handleAddToCart"
                 >
-                  <span v-if="isAddingToCart">⏳ ব্যাগে যোগ হচ্ছে...</span>
-                  <span v-else>🛒 কার্টে যোগ করুন (Add to Cart)</span>
+                  <span v-if="isAddingToCart">⏳ যোগ হচ্ছে...</span>
+                  <span v-else>🛒 ব্যাগে যোগ করুন</span>
                 </button>
               </div>
             </div>
@@ -955,30 +960,32 @@ const scrollToOrderForm = () => {
     align-items: center;
     gap: $space-2;
     margin-bottom: $space-2;
+    font-size: $fs-xs;
+    font-weight: $fw-semibold;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: $color-neutral-400;
 
     .brand-name {
-      font-size: $fs-sm;
-      font-weight: $fw-bold;
       color: $color-primary-600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      font-weight: $fw-bold;
     }
 
-    .cat-pill {
-      font-size: $fs-2xs;
-      background: $color-neutral-200;
-      color: $color-neutral-700;
-      padding: 2px $space-2;
-      border-radius: $radius-full;
+    .header-sep {
+      opacity: 0.4;
+    }
+
+    .cat-name {
+      color: $color-neutral-600;
     }
   }
 
   .pdp-title {
-    font-size: $fs-3xl;
+    font-size: 1.85rem;
     font-weight: $fw-extrabold;
     color: $color-neutral-900;
     line-height: 1.25;
-    margin-bottom: $space-3;
+    margin-bottom: $space-2;
 
     @media (max-width: 768px) {
       font-size: $fs-2xl;
@@ -988,52 +995,91 @@ const scrollToOrderForm = () => {
   .pdp-meta-row {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: $space-3;
     font-size: $fs-sm;
     color: $color-neutral-600;
-    margin-bottom: $space-6;
+    margin-bottom: $space-4;
 
     .rating-stars {
       display: flex;
       align-items: center;
-      gap: $space-1;
+      gap: 4px;
 
       .stars {
         color: $color-warning;
-        font-size: $fs-base;
+        font-size: $fs-sm;
       }
 
       .rating-num {
         font-weight: $fw-bold;
         color: $color-neutral-900;
       }
+
+      .reviews-count {
+        color: $color-neutral-500;
+        font-size: $fs-xs;
+      }
     }
 
     .meta-sep {
-      opacity: 0.4;
+      opacity: 0.3;
+    }
+
+    .inline-stock-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: $fw-semibold;
+      padding: 3px 10px;
+      border-radius: $radius-full;
+
+      .stock-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+      }
+
+      &.in-stock {
+        background: hsla(142, 71%, 45%, 0.1);
+        color: hsl(142, 71%, 32%);
+
+        .stock-dot {
+          background: hsl(142, 71%, 45%);
+          box-shadow: 0 0 0 2px hsla(142, 71%, 45%, 0.25);
+        }
+      }
+
+      &.out-of-stock {
+        background: hsla(0, 84%, 60%, 0.1);
+        color: $color-danger;
+
+        .stock-dot {
+          background: $color-danger;
+        }
+      }
     }
   }
 
-  .price-display-box {
-    background: $color-neutral-0;
-    border-radius: $radius-xl;
-    padding: $space-4 $space-6;
-    border: 1px solid $color-neutral-200;
-    margin-bottom: $space-6;
+  .clean-price-section {
+    margin-bottom: $space-5;
+    padding-bottom: $space-4;
+    border-bottom: 1px solid $color-neutral-200;
 
-    .main-price {
-      font-size: $fs-4xl;
-      font-weight: $fw-extrabold;
-      color: $color-primary-700;
-      line-height: 1;
-      margin-bottom: $space-1;
-    }
-
-    .compare-price-wrap {
+    .price-row {
       display: flex;
-      align-items: center;
-      gap: $space-2;
-      margin-top: $space-2;
+      align-items: baseline;
+      gap: $space-3;
+      flex-wrap: wrap;
+
+      .main-price {
+        font-size: 2.1rem;
+        font-weight: $fw-extrabold;
+        color: $color-primary-700;
+        letter-spacing: -0.02em;
+        line-height: 1;
+      }
 
       .old-price {
         font-size: $fs-base;
@@ -1041,76 +1087,45 @@ const scrollToOrderForm = () => {
         text-decoration: line-through;
       }
 
-      .discount-badge {
+      .discount-tag {
         font-size: $fs-xs;
         font-weight: $fw-bold;
-        background: hsla(0, 84%, 60%, 0.15);
+        background: hsla(0, 84%, 60%, 0.12);
         color: $color-danger;
-        padding: 2px $space-2;
-        border-radius: $radius-sm;
+        padding: 2px 8px;
+        border-radius: $radius-md;
       }
     }
 
-    .tax-hint {
-      font-size: $fs-xs;
-      color: $color-neutral-500;
-      margin-top: $space-2;
-    }
-  }
-
-  .stock-status-banner {
-    display: flex;
-    align-items: center;
-    gap: $space-3;
-    padding: $space-3 $space-4;
-    border-radius: $radius-lg;
-    margin-bottom: $space-6;
-
-    &.in-stock {
-      background: hsla(142, 71%, 45%, 0.12);
-      border: 1px solid hsla(142, 71%, 45%, 0.3);
-      color: $color-success;
-    }
-
-    &.out-of-stock {
-      background: hsla(0, 84%, 60%, 0.12);
-      border: 1px solid hsla(0, 84%, 60%, 0.3);
-      color: $color-danger;
-    }
-
-    .status-title {
-      font-weight: $fw-bold;
-      font-size: $fs-sm;
-      display: block;
-    }
-
-    .status-sub {
-      font-size: $fs-xs;
-      opacity: 0.85;
+    .vat-tag {
+      font-size: 11.5px;
+      color: $color-neutral-400;
+      margin-top: 4px;
     }
   }
 
   .variant-matrix-section {
     display: flex;
     flex-direction: column;
-    gap: $space-4;
-    margin-bottom: $space-8;
+    gap: $space-3;
+    margin-bottom: $space-5;
 
     .option-group {
       .option-header {
         display: flex;
+        align-items: center;
         gap: $space-2;
         margin-bottom: $space-2;
         font-size: $fs-sm;
 
         .option-name {
-          font-weight: $fw-bold;
-          color: $color-neutral-800;
+          font-weight: $fw-semibold;
+          color: $color-neutral-700;
         }
 
         .selected-value {
           color: $color-primary-600;
-          font-weight: $fw-semibold;
+          font-weight: $fw-bold;
         }
       }
 
@@ -1120,18 +1135,18 @@ const scrollToOrderForm = () => {
         gap: $space-2;
 
         .option-val-btn {
-          padding: $space-2 $space-4;
-          border-radius: $radius-lg;
-          border: 1.5px solid $color-neutral-300;
+          padding: 6px 14px;
+          border-radius: $radius-full;
+          border: 1px solid $color-neutral-300;
           background: $color-neutral-0;
-          font-size: $fs-sm;
+          font-size: 13px;
           font-weight: $fw-medium;
           color: $color-neutral-800;
           cursor: pointer;
           transition: all $transition-fast;
 
           &:hover {
-            border-color: $color-neutral-400;
+            border-color: $color-neutral-500;
           }
 
           &.active {
@@ -1139,8 +1154,23 @@ const scrollToOrderForm = () => {
             background: $color-primary-50;
             color: $color-primary-700;
             font-weight: $fw-bold;
-            box-shadow: 0 2px 8px rgba(235, 40, 108, 0.2);
           }
+        }
+      }
+
+      .single-option-line {
+        display: flex;
+        align-items: center;
+        gap: $space-2;
+        font-size: $fs-sm;
+
+        .opt-label {
+          color: $color-neutral-500;
+        }
+
+        .opt-val {
+          color: $color-neutral-800;
+          font-weight: $fw-semibold;
         }
       }
     }
@@ -1149,8 +1179,8 @@ const scrollToOrderForm = () => {
   .purchase-actions-box {
     display: flex;
     flex-direction: column;
-    gap: $space-4;
-    margin-bottom: $space-8;
+    gap: $space-3;
+    margin-bottom: $space-6;
 
     .quantity-selector {
       display: flex;
@@ -1158,8 +1188,8 @@ const scrollToOrderForm = () => {
       gap: $space-3;
 
       .qty-label {
-        font-size: $fs-sm;
-        font-weight: $fw-bold;
+        font-size: 13.5px;
+        font-weight: $fw-semibold;
         color: $color-neutral-700;
       }
 
@@ -1172,11 +1202,11 @@ const scrollToOrderForm = () => {
         overflow: hidden;
 
         .qty-btn {
-          width: 36px;
-          height: 36px;
+          width: 32px;
+          height: 32px;
           background: $color-neutral-100;
           border: none;
-          font-size: $fs-lg;
+          font-size: 15px;
           font-weight: $fw-bold;
           color: $color-neutral-800;
           cursor: pointer;
@@ -1192,41 +1222,45 @@ const scrollToOrderForm = () => {
         }
 
         .qty-display {
-          width: 48px;
+          width: 40px;
           text-align: center;
           font-weight: $fw-bold;
-          font-size: $fs-base;
+          font-size: 14px;
         }
       }
     }
 
     .top-action-buttons {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
       gap: $space-3;
-      margin-top: $space-2;
+      margin-top: $space-1;
+
+      @media (max-width: 600px) {
+        grid-template-columns: 1fr;
+      }
 
       .btn-order-now-jump {
-        width: 100%;
-        padding: 14px 20px;
+        padding: 12px 16px;
         border-radius: $radius-xl;
         background: linear-gradient(135deg, $color-primary-500 0%, $color-primary-600 100%);
         color: #ffffff;
         border: none;
-        font-size: 16px;
+        font-size: 14.5px;
         font-weight: $fw-bold;
         font-family: inherit;
         cursor: pointer;
-        box-shadow: 0 4px 16px rgba(235, 40, 108, 0.35);
+        box-shadow: 0 4px 14px rgba(235, 40, 108, 0.3);
         transition: all $transition-base;
         display: flex;
         align-items: center;
         justify-content: center;
+        white-space: nowrap;
 
         &:hover:not(:disabled) {
           background: linear-gradient(135deg, $color-primary-400 0%, $color-primary-600 100%);
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(235, 40, 108, 0.45);
+          transform: translateY(-1px);
+          box-shadow: 0 6px 18px rgba(235, 40, 108, 0.4);
         }
 
         &:disabled {
@@ -1237,13 +1271,12 @@ const scrollToOrderForm = () => {
       }
 
       .btn-top-add-cart {
-        width: 100%;
-        padding: 12px 20px;
+        padding: 12px 16px;
         border-radius: $radius-xl;
         background: $color-neutral-0;
         color: $color-primary-600;
-        border: 2px solid $color-primary-600;
-        font-size: 15px;
+        border: 1.5px solid $color-primary-600;
+        font-size: 14px;
         font-weight: $fw-bold;
         font-family: inherit;
         cursor: pointer;
@@ -1251,6 +1284,7 @@ const scrollToOrderForm = () => {
         display: flex;
         align-items: center;
         justify-content: center;
+        white-space: nowrap;
 
         &:hover:not(:disabled) {
           background: $color-primary-50;
