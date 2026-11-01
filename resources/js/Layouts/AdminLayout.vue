@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import type { SharedProps } from '@/types';
 
@@ -10,6 +10,158 @@ defineProps<{
 const page = usePage<SharedProps>();
 const sidebarCollapsed = ref(false);
 const isLoggingOut = ref(false);
+
+interface SubMenuItem {
+  title: string;
+  href: string;
+  icon?: string;
+  highlight?: boolean;
+}
+
+interface MenuGroup {
+  id: string;
+  title: string;
+  icon: string;
+  items: SubMenuItem[];
+}
+
+const menuGroups: MenuGroup[] = [
+  {
+    id: 'procurement',
+    title: 'Procurement & Sourcing',
+    icon: '🏢',
+    items: [
+      { title: 'Suppliers Directory', href: '/admin/procurement/suppliers', icon: '📋' },
+      { title: 'Global Import Orders', href: '/admin/procurement/import-orders', icon: '🚢' },
+      { title: 'Local Purchase Orders', href: '/admin/procurement/local-pos', icon: '🧾' },
+      { title: 'Inward GRN Receiving', href: '/admin/procurement/grn', icon: '📥' },
+    ],
+  },
+  {
+    id: 'catalog',
+    title: 'Operations & Catalog',
+    icon: '📦',
+    items: [
+      { title: 'Product Catalog', href: '/admin/products', icon: '🏷️' },
+      { title: 'Add New Product', href: '/admin/products/create', icon: '➕', highlight: true },
+      { title: 'Orders & Anti-Fraud', href: '/admin/orders', icon: '🛍️' },
+      { title: 'Fraud Directory', href: '/admin/fraud-directory', icon: '🛡️' },
+    ],
+  },
+  {
+    id: 'logistics',
+    title: 'Couriers & Logistics',
+    icon: '🚚',
+    items: [
+      { title: 'Courier Gateways', href: '/admin/settings/couriers', icon: '⚙️' },
+      { title: 'Delivery Zones & Rates', href: '/admin/logistics/zones', icon: '🗺️' },
+      { title: 'COD Reconciliation', href: '/admin/logistics/cod-reconciliation', icon: '💰' },
+    ],
+  },
+  {
+    id: 'payments',
+    title: 'Payments & Security',
+    icon: '💳',
+    items: [
+      { title: 'Payment Gateways', href: '/admin/settings/payment-gateways', icon: '💳' },
+      { title: 'Bot Security & Captcha', href: '/admin/settings/bot-security', icon: '🛡️' },
+      { title: 'Roles & Permissions', href: '/admin/roles', icon: '👥' },
+      { title: 'Staff Management', href: '/admin/staff', icon: '👤' },
+    ],
+  },
+  {
+    id: 'communication',
+    title: 'Communication & Marketing',
+    icon: '💬',
+    items: [
+      { title: 'SMTP Mail Settings', href: '/admin/communication/mail-settings', icon: '📧' },
+      { title: 'SMS Gateways & OTP', href: '/admin/communication/sms-settings', icon: '📱' },
+      { title: 'AI Voice Verification', href: '/admin/communication/voice-settings', icon: '📞' },
+      { title: 'Cart Recovery Sequencer', href: '/admin/marketing/cart-recovery', icon: '🛒' },
+    ],
+  },
+  {
+    id: 'tax',
+    title: 'Tax & NBR Compliance',
+    icon: '🏛️',
+    items: [
+      { title: 'Tax Overview', href: '/admin/tax-compliance', icon: '📊' },
+      { title: 'Mushak 6.3 (Invoices)', href: '/admin/tax-compliance/mushak-6-3', icon: '🧾' },
+      { title: 'Mushak 9.1 (Returns)', href: '/admin/tax-compliance/mushak-9-1', icon: '📈' },
+      { title: 'Mushak 6.6 (VDS)', href: '/admin/tax-compliance/mushak-6-6', icon: '📑' },
+      { title: 'RMA & Credit Notes', href: '/admin/tax-compliance/rma', icon: '🔄' },
+      { title: 'Mushak 6.1 / 6.2', href: '/admin/tax-compliance/registers', icon: '📖' },
+    ],
+  },
+  {
+    id: 'analytics',
+    title: 'Analytics & Audit',
+    icon: '📈',
+    items: [
+      { title: 'Trading P&L', href: '/admin/analytics/trading-pnl', icon: '💹' },
+      { title: 'Audit Trail', href: '/admin/audit-logs', icon: '📋' },
+    ],
+  },
+  {
+    id: 'system',
+    title: 'System & AI Settings',
+    icon: '⚙️',
+    items: [
+      { title: 'AI Engine Settings', href: '/admin/ai-settings', icon: '🤖' },
+      { title: 'Multi-Cloud Storage', href: '/admin/settings/media-storage', icon: '☁️' },
+      { title: 'System Info & Updates', href: '/admin/settings/system', icon: 'ℹ️' },
+    ],
+  },
+];
+
+const normalizeUrl = (url: string) => {
+  if (!url) return '';
+  return url.split('?')[0].replace(/\/+$/, '');
+};
+
+const isPathActive = (href: string) => {
+  const current = normalizeUrl(page.url);
+  const target = normalizeUrl(href);
+  if (target === '/admin' || target === '/admin/dashboard') {
+    return current === '/admin' || current === '/admin/dashboard';
+  }
+  return current === target || current.startsWith(target + '/');
+};
+
+const isGroupActive = (group: MenuGroup) => {
+  return group.items.some((item) => isPathActive(item.href));
+};
+
+// Open accordion groups dictionary
+const openGroups = ref<Record<string, boolean>>({});
+
+const syncActiveGroup = () => {
+  menuGroups.forEach((group) => {
+    if (isGroupActive(group)) {
+      openGroups.value[group.id] = true;
+    }
+  });
+};
+
+onMounted(() => {
+  syncActiveGroup();
+});
+
+watch(
+  () => page.url,
+  () => {
+    syncActiveGroup();
+  }
+);
+
+const toggleGroup = (groupId: string) => {
+  if (sidebarCollapsed.value) {
+    sidebarCollapsed.value = false;
+    openGroups.value[groupId] = true;
+    return;
+  }
+  openGroups.value[groupId] = !openGroups.value[groupId];
+};
 
 const toggleSidebar = () => {
   sidebarCollapsed.value = !sidebarCollapsed.value;
@@ -37,139 +189,96 @@ const handleLogout = () => {
           <span class="brand-badge">⚡</span>
           <span v-if="!sidebarCollapsed" class="brand-name">TradingHub</span>
         </Link>
-        <button class="sidebar-toggle-btn" @click="toggleSidebar">
+        <button
+          type="button"
+          class="sidebar-toggle-btn"
+          :title="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+          @click="toggleSidebar"
+        >
           {{ sidebarCollapsed ? '→' : '←' }}
         </button>
       </div>
 
       <nav class="sidebar-nav">
-        <div class="nav-section-title" v-if="!sidebarCollapsed">PROCUREMENT & SOURCING</div>
-        <Link href="/admin/procurement/suppliers" class="nav-item">
-          <span class="nav-icon">🏢</span>
-          <span v-if="!sidebarCollapsed">Suppliers Directory</span>
-        </Link>
-        <Link href="/admin/procurement/import-orders" class="nav-item">
-          <span class="nav-icon">🚢</span>
-          <span v-if="!sidebarCollapsed">Global Import Orders</span>
-        </Link>
-        <Link href="/admin/procurement/local-pos" class="nav-item">
-          <span class="nav-icon">🧾</span>
-          <span v-if="!sidebarCollapsed">Local Purchase Orders</span>
-        </Link>
-        <Link href="/admin/procurement/grn" class="nav-item">
-          <span class="nav-icon">📥</span>
-          <span v-if="!sidebarCollapsed">Inward GRN Receiving</span>
-        </Link>
-
-        <div class="nav-section-title" v-if="!sidebarCollapsed">OPERATIONS & CATALOG</div>
-        <Link href="/admin/products" class="nav-item">
-          <span class="nav-icon">📦</span>
-          <span v-if="!sidebarCollapsed">Product Catalog</span>
-        </Link>
-        <Link href="/admin/products/create" class="nav-item nav-item-highlight">
-          <span class="nav-icon">➕</span>
-          <span v-if="!sidebarCollapsed">Add New Product</span>
-        </Link>
-        <Link href="/admin/orders" class="nav-item">
-          <span class="nav-icon">🛍️</span>
-          <span v-if="!sidebarCollapsed">Orders & Anti-Fraud</span>
-        </Link>
-        <Link href="/admin/settings/couriers" class="nav-item">
-          <span class="nav-icon">🚚</span>
-          <span v-if="!sidebarCollapsed">Couriers & Logistics</span>
-        </Link>
-
-        <div class="nav-section-title" v-if="!sidebarCollapsed">PAYMENTS & SETTINGS</div>
-        <Link href="/admin/settings/payment-gateways" class="nav-item">
-          <span class="nav-icon">💳</span>
-          <span v-if="!sidebarCollapsed">Payment Gateways</span>
-        </Link>
-        <Link href="/admin/settings/bot-security" class="nav-item">
-          <span class="nav-icon">🛡️</span>
-          <span v-if="!sidebarCollapsed">Bot Security & Captcha</span>
-        </Link>
-        <Link href="/admin/roles" class="nav-item">
-          <span class="nav-icon">👥</span>
-          <span v-if="!sidebarCollapsed">Roles & Permissions</span>
-        </Link>
-        <Link href="/admin/staff" class="nav-item">
-          <span class="nav-icon">👤</span>
-          <span v-if="!sidebarCollapsed">Staff Management</span>
-        </Link>
-
-        <div class="nav-section-title" v-if="!sidebarCollapsed">COMMUNICATION & MARKETING</div>
-        <Link href="/admin/communication/mail-settings" class="nav-item">
-          <span class="nav-icon">📧</span>
-          <span v-if="!sidebarCollapsed">SMTP Mail Settings</span>
-        </Link>
-        <Link href="/admin/communication/sms-settings" class="nav-item">
-          <span class="nav-icon">📱</span>
-          <span v-if="!sidebarCollapsed">SMS Gateways & OTP</span>
-        </Link>
-        <Link href="/admin/communication/voice-settings" class="nav-item">
-          <span class="nav-icon">📞</span>
-          <span v-if="!sidebarCollapsed">AI Voice Verification</span>
-        </Link>
-        <Link href="/admin/marketing/cart-recovery" class="nav-item">
-          <span class="nav-icon">🛒</span>
-          <span v-if="!sidebarCollapsed">Cart Recovery Sequencer</span>
-        </Link>
-
-        <div class="nav-section-title" v-if="!sidebarCollapsed">TAX & NBR COMPLIANCE</div>
-        <Link href="/admin/tax-compliance" class="nav-item">
-          <span class="nav-icon">🏛️</span>
-          <span v-if="!sidebarCollapsed">Tax Overview</span>
-        </Link>
-        <Link href="/admin/tax-compliance/mushak-6-3" class="nav-item">
-          <span class="nav-icon">🧾</span>
-          <span v-if="!sidebarCollapsed">Mushak 6.3 (Invoices)</span>
-        </Link>
-        <Link href="/admin/tax-compliance/mushak-9-1" class="nav-item">
+        <!-- Direct Dashboard Link -->
+        <Link
+          href="/admin/dashboard"
+          class="nav-dashboard-link"
+          :class="{ 'is-active': isPathActive('/admin/dashboard') || isPathActive('/admin') }"
+          :title="sidebarCollapsed ? 'Dashboard & P&L' : undefined"
+        >
           <span class="nav-icon">📊</span>
-          <span v-if="!sidebarCollapsed">Mushak 9.1 (Returns)</span>
-        </Link>
-        <Link href="/admin/tax-compliance/mushak-6-6" class="nav-item">
-          <span class="nav-icon">📑</span>
-          <span v-if="!sidebarCollapsed">Mushak 6.6 (VDS)</span>
-        </Link>
-        <Link href="/admin/tax-compliance/rma" class="nav-item">
-          <span class="nav-icon">🔄</span>
-          <span v-if="!sidebarCollapsed">RMA & Credit Notes</span>
-        </Link>
-        <Link href="/admin/tax-compliance/registers" class="nav-item">
-          <span class="nav-icon">📖</span>
-          <span v-if="!sidebarCollapsed">Mushak 6.1 / 6.2</span>
+          <span v-if="!sidebarCollapsed" class="nav-label">Dashboard</span>
         </Link>
 
-        <div class="nav-section-title" v-if="!sidebarCollapsed">AI INTELLIGENCE</div>
-        <Link href="/admin/ai-settings" class="nav-item">
-          <span class="nav-icon">🤖</span>
-          <span v-if="!sidebarCollapsed">AI Engine Settings</span>
-        </Link>
+        <!-- Collapsible Accordion Groups -->
+        <div
+          v-for="group in menuGroups"
+          :key="group.id"
+          class="nav-group"
+          :class="{ 'is-expanded': openGroups[group.id] && !sidebarCollapsed }"
+        >
+          <!-- Parent Group Header Button -->
+          <button
+            type="button"
+            class="nav-group-header"
+            :class="{
+              'is-active': isGroupActive(group),
+              'is-open': openGroups[group.id] && !sidebarCollapsed,
+            }"
+            :title="sidebarCollapsed ? group.title : undefined"
+            @click="toggleGroup(group.id)"
+          >
+            <div class="header-main">
+              <span class="nav-icon">{{ group.icon }}</span>
+              <span v-if="!sidebarCollapsed" class="nav-group-title">{{ group.title }}</span>
+            </div>
 
-        <div class="nav-section-title" v-if="!sidebarCollapsed">ANALYTICS & AUDIT</div>
-        <Link href="/admin/analytics/trading-pnl" class="nav-item">
-          <span class="nav-icon">📈</span>
-          <span v-if="!sidebarCollapsed">Trading P&L</span>
-        </Link>
-        <Link href="/admin/audit-logs" class="nav-item">
-          <span class="nav-icon">📋</span>
-          <span v-if="!sidebarCollapsed">Audit Trail</span>
-        </Link>
+            <div v-if="!sidebarCollapsed" class="header-meta">
+              <span
+                v-if="isGroupActive(group) && !openGroups[group.id]"
+                class="active-dot"
+                title="Active section"
+              />
+              <svg
+                class="chevron-icon"
+                :class="{ 'is-rotated': openGroups[group.id] }"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </div>
+          </button>
 
-        <div class="nav-section-title" v-if="!sidebarCollapsed">ADMINISTRATION</div>
-        <Link href="/admin/roles" class="nav-item">
-          <span class="nav-icon">🛡️</span>
-          <span v-if="!sidebarCollapsed">Roles & Staff RBAC</span>
-        </Link>
-        <Link href="/admin/settings/media-storage" class="nav-item">
-          <span class="nav-icon">☁️</span>
-          <span v-if="!sidebarCollapsed">Multi-Cloud Storage</span>
-        </Link>
-        <Link href="/admin/settings/system" class="nav-item">
-          <span class="nav-icon">⚙️</span>
-          <span v-if="!sidebarCollapsed">System Info & Updates</span>
-        </Link>
+          <!-- Collapsible Sub-menu -->
+          <transition name="menu-expand">
+            <div
+              v-show="openGroups[group.id] && !sidebarCollapsed"
+              class="nav-sub-items"
+            >
+              <Link
+                v-for="item in group.items"
+                :key="item.href"
+                :href="item.href"
+                class="nav-sub-item"
+                :class="{
+                  'is-active': isPathActive(item.href),
+                  'is-highlight': item.highlight,
+                }"
+              >
+                <span class="sub-item-icon">{{ item.icon || '•' }}</span>
+                <span class="sub-item-title">{{ item.title }}</span>
+                <span v-if="item.highlight" class="sub-item-badge">New</span>
+              </Link>
+            </div>
+          </transition>
+        </div>
       </nav>
 
       <!-- Sidebar User Profile & Logout -->
@@ -283,52 +392,52 @@ const handleLogout = () => {
       font-size: $fs-sm;
       padding: $space-1 $space-2;
       border-radius: $radius-sm;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all $transition-fast;
 
       &:hover {
         background-color: $color-neutral-800;
         color: $color-neutral-0;
-      }
-
-      &.nav-item-highlight {
-        color: $color-primary-400;
-        background-color: rgba($color-primary-500, 0.12);
-        font-weight: $fw-semibold;
-
-        &:hover {
-          background-color: rgba($color-primary-500, 0.22);
-          color: $color-primary-300;
-        }
       }
     }
   }
 
   .sidebar-nav {
-    padding: $space-4 $space-3;
+    padding: $space-3 $space-2;
     display: flex;
     flex-direction: column;
-    gap: $space-1;
+    gap: 3px;
     overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: $color-neutral-700 transparent;
 
-    .nav-section-title {
-      font-size: $fs-2xs;
-      font-weight: $fw-bold;
-      color: $color-neutral-500;
-      letter-spacing: 0.08em;
-      padding: $space-3 $space-3 $space-1;
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: $color-neutral-700;
+      border-radius: 4px;
     }
 
-    .nav-item {
+    .nav-dashboard-link {
       @include flex-start;
       gap: $space-3;
-      padding: $space-2 $space-3;
+      padding: 10px 12px;
       border-radius: $radius-lg;
       font-size: $fs-sm;
-      font-weight: $fw-medium;
-      color: $color-neutral-300;
+      font-weight: $fw-semibold;
+      color: $color-neutral-200;
+      text-decoration: none;
       transition: all $transition-fast;
+      margin-bottom: $space-2;
+      border: 1px solid transparent;
 
       .nav-icon {
         font-size: $fs-base;
+        flex-shrink: 0;
       }
 
       &:hover {
@@ -336,17 +445,191 @@ const handleLogout = () => {
         color: $color-neutral-0;
       }
 
-      &.nav-item-highlight {
-        color: $color-primary-400;
-        background-color: rgba($color-primary-500, 0.12);
-        font-weight: $fw-semibold;
+      &.is-active {
+        background-color: rgba($color-primary-500, 0.16);
+        color: $color-primary-300;
+        border-color: rgba($color-primary-500, 0.35);
+      }
+    }
+
+    .nav-group {
+      display: flex;
+      flex-direction: column;
+
+      .nav-group-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: 9px 12px;
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: $radius-lg;
+        color: $color-neutral-300;
+        font-size: $fs-sm;
+        font-weight: $fw-medium;
+        cursor: pointer;
+        transition: all $transition-fast;
+        text-align: left;
+
+        .header-main {
+          display: flex;
+          align-items: center;
+          gap: $space-3;
+          min-width: 0;
+
+          .nav-icon {
+            font-size: $fs-base;
+            flex-shrink: 0;
+          }
+
+          .nav-group-title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 13px;
+          }
+        }
+
+        .header-meta {
+          display: flex;
+          align-items: center;
+          gap: $space-2;
+          flex-shrink: 0;
+
+          .active-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: $color-primary-400;
+            box-shadow: 0 0 6px rgba($color-primary-400, 0.6);
+          }
+
+          .chevron-icon {
+            width: 16px;
+            height: 16px;
+            color: $color-neutral-400;
+            transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+
+            &.is-rotated {
+              transform: rotate(180deg);
+              color: $color-primary-400;
+            }
+          }
+        }
 
         &:hover {
-          background-color: rgba($color-primary-500, 0.22);
+          background-color: $color-neutral-800;
+          color: $color-neutral-0;
+
+          .chevron-icon {
+            color: $color-neutral-200;
+          }
+        }
+
+        &.is-active {
           color: $color-primary-300;
+          background-color: rgba($color-primary-500, 0.1);
+          border-color: rgba($color-primary-500, 0.2);
+
+          .nav-group-title {
+            font-weight: $fw-semibold;
+          }
+        }
+
+        &.is-open {
+          color: $color-neutral-100;
+        }
+      }
+
+      .nav-sub-items {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 4px 0 6px 14px;
+        margin: 2px 0 4px 18px;
+        border-left: 1.5px solid rgba($color-neutral-700, 0.5);
+
+        .nav-sub-item {
+          display: flex;
+          align-items: center;
+          gap: $space-2;
+          padding: 6px 10px;
+          border-radius: $radius-md;
+          font-size: 12.5px;
+          color: $color-neutral-400;
+          text-decoration: none;
+          transition: all $transition-fast;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+
+          .sub-item-icon {
+            font-size: 13px;
+            flex-shrink: 0;
+            opacity: 0.8;
+          }
+
+          .sub-item-title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+          }
+
+          .sub-item-badge {
+            font-size: 9px;
+            font-weight: $fw-bold;
+            text-transform: uppercase;
+            padding: 1px 5px;
+            border-radius: $radius-full;
+            background: rgba($color-primary-500, 0.25);
+            color: $color-primary-300;
+            letter-spacing: 0.05em;
+          }
+
+          &:hover {
+            color: $color-neutral-0;
+            background-color: rgba($color-neutral-800, 0.8);
+          }
+
+          &.is-active {
+            color: $color-primary-300;
+            background-color: rgba($color-primary-500, 0.18);
+            font-weight: $fw-semibold;
+
+            .sub-item-icon {
+              opacity: 1;
+            }
+          }
+
+          &.is-highlight {
+            color: $color-primary-400;
+            font-weight: $fw-semibold;
+          }
         }
       }
     }
+  }
+
+  // Accordion Expand Transition
+  .menu-expand-enter-active,
+  .menu-expand-leave-active {
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 450px;
+    overflow: hidden;
+    opacity: 1;
+  }
+
+  .menu-expand-enter-from,
+  .menu-expand-leave-to {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    transform: translateY(-4px);
   }
 
   .sidebar-footer {
@@ -444,6 +727,26 @@ const handleLogout = () => {
 
   .sidebar-header {
     justify-content: center;
+  }
+
+  .sidebar-nav {
+    padding: $space-3 $space-1;
+
+    .nav-dashboard-link {
+      justify-content: center;
+      padding: 10px 0;
+    }
+
+    .nav-group {
+      .nav-group-header {
+        justify-content: center;
+        padding: 10px 0;
+
+        .header-main {
+          justify-content: center;
+        }
+      }
+    }
   }
 }
 
