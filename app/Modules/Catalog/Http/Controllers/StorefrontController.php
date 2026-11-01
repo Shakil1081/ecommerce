@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Catalog\Models\Brand;
 use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Models\Product;
+use App\Modules\Catalog\Models\ProductVariant;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -99,10 +100,24 @@ class StorefrontController extends Controller
 
         switch ($sort) {
             case 'price_low':
-                $query->orderBy('created_at', 'desc');
+                $query->orderBy(
+                    ProductVariant::select('selling_price_bdt')
+                        ->whereColumn('product_variants.product_id', 'products.id')
+                        ->where('is_active', true)
+                        ->orderBy('selling_price_bdt', 'asc')
+                        ->limit(1),
+                    'asc'
+                );
                 break;
             case 'price_high':
-                $query->orderBy('created_at', 'desc');
+                $query->orderBy(
+                    ProductVariant::select('selling_price_bdt')
+                        ->whereColumn('product_variants.product_id', 'products.id')
+                        ->where('is_active', true)
+                        ->orderBy('selling_price_bdt', 'desc')
+                        ->limit(1),
+                    'desc'
+                );
                 break;
             case 'newest':
                 $query->orderBy('created_at', 'desc');
@@ -113,13 +128,10 @@ class StorefrontController extends Controller
                 break;
         }
 
-        $products = $query->get()->map(fn (Product $p) => $this->formatProductCard($p));
+        $perPage = max(1, min(50, (int) $request->input('per_page', 12)));
+        $paginated = $query->paginate($perPage)->withQueryString();
 
-        if ($sort === 'price_low') {
-            $products = $products->sortBy('min_price_bdt')->values();
-        } elseif ($sort === 'price_high') {
-            $products = $products->sortByDesc('max_price_bdt')->values();
-        }
+        $products = $paginated->getCollection()->map(fn (Product $p) => $this->formatProductCard($p))->values();
 
         $categories = Category::active()
             ->withCount(['products' => fn ($q) => $q->where('is_published', true)])
@@ -133,6 +145,18 @@ class StorefrontController extends Controller
 
         return Inertia::render('Storefront/Shop', [
             'products' => $products,
+            'pagination' => [
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+                'from' => $paginated->firstItem(),
+                'to' => $paginated->lastItem(),
+                'has_more_pages' => $paginated->hasMorePages(),
+                'prev_page_url' => $paginated->previousPageUrl(),
+                'next_page_url' => $paginated->nextPageUrl(),
+                'links' => $paginated->linkCollection()->toArray(),
+            ],
             'categories' => $categories,
             'brands' => $brands,
             'filters' => [
@@ -140,6 +164,7 @@ class StorefrontController extends Controller
                 'brand' => $brandSlug,
                 'search' => $search,
                 'sort' => $sort,
+                'page' => $paginated->currentPage(),
             ],
         ]);
     }

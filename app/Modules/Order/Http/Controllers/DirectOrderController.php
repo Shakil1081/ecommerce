@@ -7,6 +7,7 @@ namespace App\Modules\Order\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Common\Models\BangladeshDistrict;
+use App\Modules\Common\Models\BangladeshDivision;
 use App\Modules\Inventory\Actions\ReserveStockForOrderAction;
 use App\Modules\Order\Actions\CalculateOrderFraudRiskScoreAction;
 use App\Modules\Order\DTOs\OrderFraudRiskAssessmentDto;
@@ -106,14 +107,22 @@ final class DirectOrderController extends Controller
 
         // Resolve geographic district matching zone
         $district = BangladeshDistrict::where('zone_type', $zone)->where('is_active', true)->first()
-            ?? BangladeshDistrict::first()
-            ?? BangladeshDistrict::create([
-                'division_id' => 1,
+            ?? BangladeshDistrict::first();
+
+        if (! $district) {
+            $division = BangladeshDivision::firstOrCreate(
+                ['name_en' => 'Dhaka'],
+                ['name_bn' => 'ঢাকা', 'is_active' => true]
+            );
+
+            $district = BangladeshDistrict::create([
+                'division_id' => $division->id,
                 'name_en' => 'Dhaka',
                 'name_bn' => 'ঢাকা',
                 'zone_type' => 'inside_dhaka',
                 'is_active' => true,
             ]);
+        }
 
         $now = Carbon::now();
         $orderNumber = 'ORD-'.$now->format('Ymd').'-'.strtoupper(Str::random(6));

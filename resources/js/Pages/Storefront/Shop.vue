@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import StorefrontLayout from '@/Layouts/StorefrontLayout.vue';
 import { useCartStore } from '@/Stores/cartStore';
@@ -42,15 +42,36 @@ interface ProductCard {
   is_featured: boolean;
 }
 
+interface PaginationLink {
+  url: string | null;
+  label: string;
+  active: boolean;
+}
+
+interface PaginationMeta {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+  from: number | null;
+  to: number | null;
+  has_more_pages: boolean;
+  prev_page_url: string | null;
+  next_page_url: string | null;
+  links: PaginationLink[];
+}
+
 interface FilterState {
   category: string | null;
   brand: string | null;
   search: string | null;
   sort: string;
+  page?: number;
 }
 
 const props = defineProps<{
   products: ProductCard[];
+  pagination?: PaginationMeta;
   categories: CategoryItem[];
   brands: BrandItem[];
   filters: FilterState;
@@ -61,6 +82,20 @@ const searchQuery = ref(props.filters.search || '');
 const selectedBrand = ref(props.filters.brand || '');
 const selectedSort = ref(props.filters.sort || 'featured');
 const addingVariantId = ref<string | null>(null);
+
+const pageNumberLinks = computed(() => {
+  if (!props.pagination?.links || props.pagination.links.length <= 2) return [];
+  // Exclude first link ('&laquo; Previous') and last link ('Next &raquo;')
+  return props.pagination.links.slice(1, -1);
+});
+
+const goToPage = (url: string | null) => {
+  if (!url) return;
+  router.get(url, {}, {
+    preserveState: true,
+    preserveScroll: false,
+  });
+};
 
 const applyFilters = (newCategorySlug?: string | null) => {
   const cat = newCategorySlug !== undefined ? newCategorySlug : props.filters.category;
@@ -169,7 +204,7 @@ const formatPrice = (amount: number): string => {
         <!-- Filter Toolbar -->
         <div class="shop-toolbar">
           <div class="toolbar-stats">
-            Showing <span class="font-bold">{{ products.length }}</span> items
+            Showing <span class="font-bold">{{ pagination ? `${pagination.from || 0}–${pagination.to || 0} of ${pagination.total}` : products.length }}</span> items
             <span v-if="filters.category" class="filter-tag">
               in {{ categories.find(c => c.slug === filters.category)?.name }}
               <button class="remove-tag-btn" @click="applyFilters(null)">×</button>
@@ -295,6 +330,48 @@ const formatPrice = (amount: number): string => {
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div v-if="pagination && pagination.last_page > 1" class="pagination-wrapper">
+          <div class="pagination-summary">
+            Showing <span class="font-bold">{{ pagination.from }}</span> to <span class="font-bold">{{ pagination.to }}</span> of <span class="font-bold">{{ pagination.total }}</span> products
+          </div>
+
+          <nav class="pagination-nav" aria-label="Catalog pages">
+            <button
+              type="button"
+              class="page-nav-btn prev-btn"
+              :disabled="!pagination.prev_page_url"
+              @click="goToPage(pagination.prev_page_url)"
+            >
+              ← Previous
+            </button>
+
+            <div class="page-numbers-list">
+              <template v-for="(link, idx) in pageNumberLinks" :key="idx">
+                <span v-if="link.label === '...'" class="pagination-ellipsis">…</span>
+                <button
+                  v-else
+                  type="button"
+                  class="page-number-btn"
+                  :class="{ active: link.active }"
+                  :disabled="link.active || !link.url"
+                  @click="goToPage(link.url)"
+                  v-html="link.label"
+                ></button>
+              </template>
+            </div>
+
+            <button
+              type="button"
+              class="page-nav-btn next-btn"
+              :disabled="!pagination.next_page_url"
+              @click="goToPage(pagination.next_page_url)"
+            >
+              Next →
+            </button>
+          </nav>
         </div>
 
         <!-- Empty State -->
@@ -796,6 +873,124 @@ const formatPrice = (amount: number): string => {
     font-size: $fs-sm;
     margin-bottom: $space-6;
     line-height: 1.5;
+  }
+}
+
+.pagination-wrapper {
+  margin-top: $space-8;
+  padding: $space-5 $space-6;
+  background: #ffffff;
+  border-radius: $radius-2xl;
+  border: 1px solid hsl(342, 35%, 90%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: $space-4;
+  box-shadow: 0 4px 18px rgba(235, 40, 108, 0.05);
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .pagination-summary {
+    font-size: $fs-sm;
+    color: $color-neutral-600;
+
+    .font-bold {
+      font-weight: $fw-bold;
+      color: hsl(342, 45%, 18%);
+    }
+  }
+
+  .pagination-nav {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    .page-nav-btn {
+      padding: 8px 16px;
+      border: 1.5px solid hsl(342, 30%, 86%);
+      background: #ffffff;
+      color: hsl(342, 40%, 25%);
+      font-size: 13px;
+      font-weight: $fw-semibold;
+      border-radius: $radius-lg;
+      cursor: pointer;
+      transition: all $transition-fast;
+      user-select: none;
+      display: inline-flex;
+      align-items: center;
+
+      &:hover:not(:disabled) {
+        border-color: $color-primary-400;
+        color: $color-primary-600;
+        background: $color-primary-50;
+        transform: translateY(-1px);
+      }
+
+      &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        background: $color-neutral-100;
+        border-color: $color-neutral-200;
+        color: $color-neutral-400;
+      }
+    }
+
+    .page-numbers-list {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      .pagination-ellipsis {
+        padding: 0 4px;
+        color: $color-neutral-400;
+        font-weight: $fw-bold;
+        user-select: none;
+      }
+
+      .page-number-btn {
+        min-width: 38px;
+        height: 38px;
+        padding: 0 8px;
+        border: 1.5px solid hsl(342, 30%, 86%);
+        background: #ffffff;
+        color: hsl(342, 40%, 25%);
+        font-size: 13px;
+        font-weight: $fw-semibold;
+        border-radius: $radius-lg;
+        cursor: pointer;
+        transition: all $transition-fast;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover:not(:disabled):not(.active) {
+          border-color: $color-primary-400;
+          color: $color-primary-600;
+          background: $color-primary-50;
+        }
+
+        &.active {
+          background: linear-gradient(135deg, $color-primary-500 0%, $color-primary-600 100%);
+          color: #ffffff;
+          border-color: $color-primary-600;
+          font-weight: $fw-bold;
+          box-shadow: 0 3px 10px rgba(235, 40, 108, 0.35);
+          cursor: default;
+        }
+
+        &:disabled:not(.active) {
+          cursor: not-allowed;
+          opacity: 0.5;
+        }
+      }
+    }
   }
 }
 </style>
