@@ -28,6 +28,8 @@ use App\Modules\Customer\Http\Controllers\OrderTrackingController;
 use App\Modules\Logistics\Http\Controllers\PathaoWebhookController;
 use App\Modules\Logistics\Http\Controllers\ShippingLabelController;
 use App\Modules\Logistics\Http\Controllers\SteadfastWebhookController;
+use App\Modules\Order\Http\Controllers\DirectOrderController;
+use App\Modules\Order\Models\Order;
 use App\Modules\Payment\Http\Controllers\BkashCallbackController;
 use App\Modules\Payment\Http\Controllers\NagadCallbackController;
 use App\Modules\Payment\Http\Controllers\ProcessAdvanceDeliveryPaymentController;
@@ -72,13 +74,37 @@ Route::prefix('feeds')->name('feeds.')->group(function () {
 Route::get('/track-order', [OrderTrackingController::class, 'index'])->name('storefront.order-tracking');
 Route::post('/track-order', [OrderTrackingController::class, 'search'])->name('storefront.order-tracking.search');
 
-// Storefront Checkout & Order Confirmation
+// Storefront Checkout & Fast Funnel Order
 Route::get('/checkout', function () {
     return Inertia::render('Storefront/Checkout');
 })->name('storefront.checkout');
 
+Route::post('/checkout/fast-order', [DirectOrderController::class, 'store'])->name('storefront.fast-order');
+
 Route::get('/orders/confirmed/{order}', function (string $order) {
-    return Inertia::render('Storefront/OrderConfirmed', ['orderNumber' => $order]);
+    $orderModel = Order::with(['items', 'district'])->where('order_number', $order)->first();
+
+    return Inertia::render('Storefront/OrderConfirmed', [
+        'orderNumber' => $order,
+        'order' => $orderModel ? [
+            'order_number' => $orderModel->order_number,
+            'customer_name' => $orderModel->customer_name,
+            'customer_phone' => $orderModel->customer_phone,
+            'delivery_address' => $orderModel->delivery_address,
+            'delivery_zone' => $orderModel->delivery_zone,
+            'payment_method' => $orderModel->payment_method,
+            'subtotal_bdt' => (float) $orderModel->subtotal_bdt,
+            'shipping_fee_bdt' => (float) $orderModel->shipping_fee_bdt,
+            'total_bdt' => (float) $orderModel->total_bdt,
+            'items' => $orderModel->items->map(fn ($item) => [
+                'name' => $item->product_name,
+                'sku' => $item->sku,
+                'quantity' => $item->quantity,
+                'price' => (float) $item->unit_price_bdt,
+                'total' => (float) $item->subtotal_bdt,
+            ]),
+        ] : null,
+    ]);
 })->name('storefront.order-confirmed');
 
 Route::post('/orders/{order}/pay-advance', ProcessAdvanceDeliveryPaymentController::class)->name('orders.pay-advance');

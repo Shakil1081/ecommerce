@@ -139,6 +139,90 @@ const formatPrice = (amount: number): string => {
     maximumFractionDigits: 0,
   }).format(amount).replace('BDT', '৳');
 };
+
+// --- Fast Funnel Checkout State & Calculations ---
+const funnelForm = ref({
+  customer_name: '',
+  customer_phone: '',
+  delivery_address: '',
+  delivery_zone: 'inside_dhaka' as 'inside_dhaka' | 'dhaka_suburbs' | 'outside_dhaka',
+  customer_notes: '',
+  user_company_fax: '', // Invisible honeypot field
+});
+
+const isSubmittingFunnel = ref(false);
+const funnelErrors = ref<Record<string, string>>({});
+
+const deliveryFees = {
+  inside_dhaka: 60,
+  dhaka_suburbs: 100,
+  outside_dhaka: 130,
+};
+
+const currentUnitPrice = computed<number>(() => {
+  return Number(selectedVariant.value?.selling_price_bdt || props.product.min_price_bdt || 0);
+});
+
+const currentSubtotal = computed<number>(() => {
+  return currentUnitPrice.value * quantity.value;
+});
+
+const isFreeDelivery = computed<boolean>(() => {
+  return currentSubtotal.value >= 2000;
+});
+
+const currentDeliveryFee = computed<number>(() => {
+  if (isFreeDelivery.value) return 0;
+  return deliveryFees[funnelForm.value.delivery_zone] ?? 60;
+});
+
+const currentTotalAmount = computed<number>(() => {
+  return currentSubtotal.value + currentDeliveryFee.value;
+});
+
+const handleFunnelOrderSubmit = () => {
+  if (!selectedVariant.value || !isCurrentVariantInStock.value || isSubmittingFunnel.value) return;
+
+  funnelErrors.value = {};
+
+  if (!funnelForm.value.customer_name.trim()) {
+    funnelErrors.value.customer_name = 'অনুগ্রহ করে আপনার নাম লিখুন।';
+    return;
+  }
+
+  const cleanPhone = funnelForm.value.customer_phone.replace(/[^\d+]/g, '');
+  if (!cleanPhone || cleanPhone.length < 11) {
+    funnelErrors.value.customer_phone = 'সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন (যেমন: 017xxxxxxxx)';
+    return;
+  }
+
+  if (!funnelForm.value.delivery_address.trim() || funnelForm.value.delivery_address.trim().length < 5) {
+    funnelErrors.value.delivery_address = 'সম্পূর্ণ ডেলিভারি ঠিকানা লিখুন (বাসা/রোড, এলাকা, থানা ও জেলা)';
+    return;
+  }
+
+  isSubmittingFunnel.value = true;
+
+  const payload = {
+    product_variant_id: selectedVariant.value.id,
+    quantity: quantity.value,
+    customer_name: funnelForm.value.customer_name.trim(),
+    customer_phone: cleanPhone,
+    delivery_address: funnelForm.value.delivery_address.trim(),
+    delivery_zone: funnelForm.value.delivery_zone,
+    customer_notes: funnelForm.value.customer_notes.trim(),
+    user_company_fax: funnelForm.value.user_company_fax,
+  };
+
+  router.post('/checkout/fast-order', payload, {
+    onError: (errors) => {
+      funnelErrors.value = errors as Record<string, string>;
+    },
+    onFinish: () => {
+      isSubmittingFunnel.value = false;
+    },
+  });
+};
 </script>
 
 <template>
@@ -270,10 +354,10 @@ const formatPrice = (amount: number): string => {
               </div>
             </div>
 
-            <!-- Quantity & Purchase Actions -->
+            <!-- Quantity & Fast Funnel Order Actions -->
             <div class="purchase-actions-box">
               <div class="quantity-selector">
-                <span class="qty-label">Quantity:</span>
+                <span class="qty-label">Quantity (পরিমাণ):</span>
                 <div class="qty-controls">
                   <button class="qty-btn" :disabled="quantity <= 1" @click="decrementQuantity">−</button>
                   <span class="qty-display">{{ quantity }}</span>
@@ -285,25 +369,184 @@ const formatPrice = (amount: number): string => {
                 </div>
               </div>
 
-              <div class="action-buttons-grid">
-                <button
-                  type="button"
-                  class="btn btn-primary btn-add-cart"
-                  :disabled="!isCurrentVariantInStock || isAddingToCart"
-                  @click="handleAddToCart"
-                >
-                  <span v-if="isAddingToCart">⏳ Adding to Cart...</span>
-                  <span v-else>🛒 Add to Cart</span>
-                </button>
+              <!-- Direct Funnel Checkout Box -->
+              <div class="funnel-order-card">
+                <div class="funnel-badge-header">
+                  <span class="badge-icon">⚡</span>
+                  <div class="badge-text-wrap">
+                    <span class="badge-headline">অর্ডার করতে নিচের তথ্য দিন (ক্যাশ অন ডেলিভারি)</span>
+                    <span class="badge-sub">কোনো অগ্রিম পেমেন্ট লাগবে না • পণ্য হাতে পেয়ে মূল্য পরিশোধ করুন</span>
+                  </div>
+                </div>
 
-                <button
-                  type="button"
-                  class="btn btn-accent btn-buy-now"
-                  :disabled="!isCurrentVariantInStock"
-                  @click="handleBuyNow"
-                >
-                  ⚡ Buy Now (Cash on Delivery)
-                </button>
+                <form @submit.prevent="handleFunnelOrderSubmit" class="funnel-form">
+                  <!-- Invisible Honeypot Field -->
+                  <input
+                    type="text"
+                    v-model="funnelForm.user_company_fax"
+                    name="user_company_fax"
+                    class="visually-hidden"
+                    tabindex="-1"
+                    autocomplete="off"
+                  />
+
+                  <!-- Customer Name -->
+                  <div class="funnel-field">
+                    <label class="funnel-label" for="funnel-name">
+                      <span>আপনার নাম</span>
+                      <span class="required-star">*</span>
+                    </label>
+                    <input
+                      id="funnel-name"
+                      v-model="funnelForm.customer_name"
+                      type="text"
+                      class="funnel-input"
+                      :class="{ 'has-error': funnelErrors.customer_name }"
+                      placeholder="আপনার সম্পূর্ণ নাম লিখুন"
+                      required
+                    />
+                    <span v-if="funnelErrors.customer_name" class="field-error-text">
+                      {{ funnelErrors.customer_name }}
+                    </span>
+                  </div>
+
+                  <!-- Customer Phone -->
+                  <div class="funnel-field">
+                    <label class="funnel-label" for="funnel-phone">
+                      <span>মোবাইল নম্বর</span>
+                      <span class="required-star">*</span>
+                    </label>
+                    <input
+                      id="funnel-phone"
+                      v-model="funnelForm.customer_phone"
+                      type="tel"
+                      class="funnel-input"
+                      :class="{ 'has-error': funnelErrors.customer_phone }"
+                      placeholder="017xxxxxxxx"
+                      required
+                    />
+                    <span v-if="funnelErrors.customer_phone" class="field-error-text">
+                      {{ funnelErrors.customer_phone }}
+                    </span>
+                  </div>
+
+                  <!-- Delivery Address -->
+                  <div class="funnel-field">
+                    <label class="funnel-label" for="funnel-address">
+                      <span>সম্পূর্ণ ডেলিভারি ঠিকানা</span>
+                      <span class="required-star">*</span>
+                    </label>
+                    <textarea
+                      id="funnel-address"
+                      v-model="funnelForm.delivery_address"
+                      class="funnel-textarea"
+                      :class="{ 'has-error': funnelErrors.delivery_address }"
+                      rows="2"
+                      placeholder="বাসা নং, রোড নং, এলাকা, থানা ও জেলার নাম"
+                      required
+                    ></textarea>
+                    <span v-if="funnelErrors.delivery_address" class="field-error-text">
+                      {{ funnelErrors.delivery_address }}
+                    </span>
+                  </div>
+
+                  <!-- Delivery Zone / Area Radio -->
+                  <div class="funnel-field">
+                    <label class="funnel-label">
+                      <span>ডেলিভারি এরিয়া বেছে নিন</span>
+                      <span class="required-star">*</span>
+                    </label>
+                    <div class="zone-options-grid">
+                      <label
+                        class="zone-radio-card"
+                        :class="{ selected: funnelForm.delivery_zone === 'inside_dhaka' }"
+                      >
+                        <input
+                          type="radio"
+                          v-model="funnelForm.delivery_zone"
+                          value="inside_dhaka"
+                          class="zone-native-radio"
+                        />
+                        <span class="zone-name">ঢাকা সিটি</span>
+                        <span class="zone-rate">৳60</span>
+                      </label>
+
+                      <label
+                        class="zone-radio-card"
+                        :class="{ selected: funnelForm.delivery_zone === 'dhaka_suburbs' }"
+                      >
+                        <input
+                          type="radio"
+                          v-model="funnelForm.delivery_zone"
+                          value="dhaka_suburbs"
+                          class="zone-native-radio"
+                        />
+                        <span class="zone-name">ঢাকা উপশহর</span>
+                        <span class="zone-rate">৳100</span>
+                      </label>
+
+                      <label
+                        class="zone-radio-card"
+                        :class="{ selected: funnelForm.delivery_zone === 'outside_dhaka' }"
+                      >
+                        <input
+                          type="radio"
+                          v-model="funnelForm.delivery_zone"
+                          value="outside_dhaka"
+                          class="zone-native-radio"
+                        />
+                        <span class="zone-name">ঢাকার বাইরে</span>
+                        <span class="zone-rate">৳130</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Live Pricing Summary -->
+                  <div class="funnel-price-summary">
+                    <div class="calc-row">
+                      <span>পণ্যের মূল্য ({{ quantity }} টি):</span>
+                      <span>৳{{ currentSubtotal.toLocaleString() }}</span>
+                    </div>
+                    <div class="calc-row">
+                      <span>ডেলিভারি চার্জ:</span>
+                      <span v-if="isFreeDelivery" class="free-badge">ফ্রি (Free)</span>
+                      <span v-else>৳{{ currentDeliveryFee }}</span>
+                    </div>
+                    <div class="calc-row total-row">
+                      <span>সর্বমোট প্রদেয়:</span>
+                      <span class="highlight-total">৳{{ currentTotalAmount.toLocaleString() }}</span>
+                    </div>
+                    <div class="cod-tag">
+                      <span>💵 ক্যাশ অন ডেলিভারি (পণ্য হাতে পেয়ে টাকা দিন)</span>
+                    </div>
+                  </div>
+
+                  <!-- Giant High-Converting Funnel Order Button -->
+                  <button
+                    type="submit"
+                    class="btn-funnel-submit"
+                    :disabled="isSubmittingFunnel || !isCurrentVariantInStock"
+                  >
+                    <span v-if="isSubmittingFunnel">⏳ অর্ডার প্রসেস হচ্ছে...</span>
+                    <span v-else-if="!isCurrentVariantInStock">❌ স্টক আউট (Out of Stock)</span>
+                    <span v-else>
+                      👉 অর্ডার কনফার্ম করুন — ৳{{ currentTotalAmount.toLocaleString() }}
+                    </span>
+                  </button>
+                </form>
+
+                <!-- Alternative Add to Cart Option -->
+                <div class="secondary-cart-action">
+                  <button
+                    type="button"
+                    class="btn-secondary-cart"
+                    :disabled="!isCurrentVariantInStock || isAddingToCart"
+                    @click="handleAddToCart"
+                  >
+                    <span v-if="isAddingToCart">⏳ ব্যাগে যোগ হচ্ছে...</span>
+                    <span v-else>🛒 অথবা কার্টে যোগ করুন (Add to Cart)</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -834,40 +1077,281 @@ const formatPrice = (amount: number): string => {
       }
     }
 
-    .action-buttons-grid {
-      display: grid;
-      grid-template-columns: 1fr 1.3fr;
-      gap: $space-3;
+    .funnel-order-card {
+      margin-top: $space-4;
+      background: hsl(342, 60%, 98.5%);
+      border: 2px solid hsl(342, 70%, 88%);
+      border-radius: $radius-2xl;
+      padding: $space-5;
+      box-shadow: 0 8px 24px rgba(235, 40, 108, 0.08);
 
-      @media (max-width: 500px) {
-        grid-template-columns: 1fr;
-      }
+      .funnel-badge-header {
+        display: flex;
+        align-items: center;
+        gap: $space-3;
+        padding-bottom: $space-4;
+        margin-bottom: $space-4;
+        border-bottom: 1.5px dashed hsl(342, 50%, 86%);
 
-      .btn {
-        padding: $space-3 $space-6;
-        border-radius: $radius-xl;
-        font-weight: $fw-bold;
-        font-size: $fs-base;
-        text-align: center;
-      }
+        .badge-icon {
+          font-size: 1.8rem;
+          flex-shrink: 0;
+          animation: pulse-icon 1.5s infinite;
+        }
 
-      .btn-add-cart {
-        background: $color-primary-600;
-        color: $color-neutral-0;
-        border: 1px solid $color-primary-600;
+        .badge-text-wrap {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
 
-        &:hover:not(:disabled) {
-          background: $color-primary-700;
+          .badge-headline {
+            font-size: $fs-base;
+            font-weight: $fw-bold;
+            color: hsl(342, 55%, 20%);
+            font-family: $font-heading;
+          }
+
+          .badge-sub {
+            font-size: $fs-xs;
+            color: $color-primary-700;
+            font-weight: $fw-medium;
+          }
         }
       }
 
-      .btn-buy-now {
-        background: $color-secondary-900;
-        color: $color-neutral-0;
-        border: 1px solid $color-secondary-900;
+      .funnel-form {
+        display: flex;
+        flex-direction: column;
+        gap: $space-3;
+      }
+
+      .funnel-field {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+
+        .funnel-label {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 13.5px;
+          font-weight: $fw-semibold;
+          color: hsl(342, 40%, 22%);
+
+          .required-star {
+            color: $color-danger;
+            font-weight: $fw-bold;
+          }
+        }
+
+        .funnel-input,
+        .funnel-textarea {
+          width: 100%;
+          padding: 11px 14px;
+          background: #ffffff;
+          border: 1.5px solid hsl(342, 35%, 85%);
+          border-radius: $radius-lg;
+          font-size: $fs-sm;
+          color: $color-neutral-900;
+          font-family: inherit;
+          transition: all $transition-fast;
+
+          &::placeholder {
+            color: hsl(342, 15%, 65%);
+          }
+
+          &:focus {
+            outline: none;
+            border-color: $color-primary-500;
+            box-shadow: 0 0 0 3px rgba(235, 40, 108, 0.18);
+          }
+
+          &.has-error {
+            border-color: $color-danger;
+            background-color: hsla(0, 84%, 60%, 0.04);
+          }
+        }
+
+        .funnel-textarea {
+          resize: vertical;
+          min-height: 60px;
+        }
+
+        .field-error-text {
+          font-size: 11.5px;
+          font-weight: 600;
+          color: $color-danger;
+        }
+      }
+
+      .zone-options-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: $space-2;
+
+        @media (max-width: 450px) {
+          grid-template-columns: 1fr;
+        }
+
+        .zone-radio-card {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 8px 10px;
+          border-radius: $radius-lg;
+          background: #ffffff;
+          border: 1.5px solid hsl(342, 30%, 86%);
+          cursor: pointer;
+          transition: all $transition-fast;
+          position: relative;
+          text-align: center;
+          user-select: none;
+
+          .zone-native-radio {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+          }
+
+          .zone-name {
+            font-size: 12px;
+            font-weight: $fw-semibold;
+            color: $color-neutral-800;
+          }
+
+          .zone-rate {
+            font-size: 13px;
+            font-weight: $fw-bold;
+            color: $color-primary-600;
+            margin-top: 2px;
+          }
+
+          &:hover {
+            border-color: $color-primary-400;
+            background: hsl(342, 60%, 99.5%);
+          }
+
+          &.selected {
+            border-color: $color-primary-500;
+            background: $color-primary-50;
+            box-shadow: 0 2px 8px rgba(235, 40, 108, 0.2);
+
+            .zone-name {
+              color: $color-primary-800;
+            }
+          }
+        }
+      }
+
+      .funnel-price-summary {
+        background: #ffffff;
+        border: 1px solid hsl(342, 35%, 88%);
+        border-radius: $radius-xl;
+        padding: 12px 16px;
+        margin-top: $space-2;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        .calc-row {
+          display: flex;
+          justify-content: space-between;
+          font-size: 13px;
+          color: $color-neutral-600;
+
+          .free-badge {
+            color: $color-success;
+            font-weight: $fw-bold;
+          }
+
+          &.total-row {
+            padding-top: 8px;
+            margin-top: 4px;
+            border-top: 1px dashed hsl(342, 35%, 88%);
+            font-size: 15px;
+            font-weight: $fw-bold;
+            color: hsl(342, 45%, 15%);
+
+            .highlight-total {
+              font-size: 18px;
+              color: $color-primary-600;
+              font-weight: $fw-extrabold;
+            }
+          }
+        }
+
+        .cod-tag {
+          font-size: 11.5px;
+          font-weight: $fw-semibold;
+          color: hsl(142, 71%, 35%);
+          background: hsla(142, 71%, 45%, 0.1);
+          padding: 3px 8px;
+          border-radius: $radius-sm;
+          text-align: center;
+          margin-top: 4px;
+        }
+      }
+
+      .btn-funnel-submit {
+        width: 100%;
+        margin-top: $space-3;
+        padding: 14px 20px;
+        border-radius: $radius-xl;
+        background: linear-gradient(135deg, $color-primary-500 0%, $color-primary-600 100%);
+        color: #ffffff;
+        border: none;
+        font-size: 16.5px;
+        font-weight: $fw-bold;
+        font-family: inherit;
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(235, 40, 108, 0.4);
+        transition: all $transition-base;
+        display: flex;
+        align-items: center;
+        justify-content: center;
 
         &:hover:not(:disabled) {
-          background: $color-neutral-900;
+          background: linear-gradient(135deg, $color-primary-400 0%, $color-primary-600 100%);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 22px rgba(235, 40, 108, 0.5);
+        }
+
+        &:active:not(:disabled) {
+          transform: translateY(0);
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          box-shadow: none;
+        }
+      }
+
+      .secondary-cart-action {
+        margin-top: $space-3;
+        text-align: center;
+
+        .btn-secondary-cart {
+          background: transparent;
+          border: none;
+          color: $color-neutral-600;
+          font-size: 13px;
+          font-weight: $fw-semibold;
+          cursor: pointer;
+          padding: 6px 12px;
+          border-radius: $radius-md;
+          transition: all $transition-fast;
+
+          &:hover:not(:disabled) {
+            color: $color-primary-600;
+            background: rgba(235, 40, 108, 0.08);
+          }
+
+          &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
         }
       }
     }
@@ -1058,6 +1542,30 @@ const formatPrice = (amount: number): string => {
         }
       }
     }
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes pulse-icon {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 </style>

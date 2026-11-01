@@ -14,6 +14,7 @@ use App\Modules\Inventory\Models\InventoryStock;
 use App\Modules\Inventory\Models\Warehouse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -123,9 +124,9 @@ class CatalogController extends Controller
             'image_url' => ['nullable', 'string'],
         ]);
 
-        $productSlug = !empty($validated['slug'])
-            ? \Illuminate\Support\Str::slug($validated['slug'])
-            : \Illuminate\Support\Str::slug($validated['name']);
+        $productSlug = ! empty($validated['slug'])
+            ? Str::slug($validated['slug'])
+            : Str::slug($validated['name']);
 
         $product = Product::create([
             'name' => $validated['name'],
@@ -146,7 +147,7 @@ class CatalogController extends Controller
         // Attach image if uploaded or URL provided
         if ($request->hasFile('image')) {
             $product->addMediaFromRequest('image')->toMediaCollection('products');
-        } elseif (!empty($validated['image_url'])) {
+        } elseif (! empty($validated['image_url'])) {
             try {
                 $product->addMediaFromUrl($validated['image_url'])->toMediaCollection('products');
             } catch (\Throwable) {
@@ -166,16 +167,16 @@ class CatalogController extends Controller
         $baseVariant = $variants->first();
         if ($baseVariant) {
             $variantUpdates = [];
-            if (!empty($validated['sku'])) {
+            if (! empty($validated['sku'])) {
                 $variantUpdates['sku'] = strtoupper($validated['sku']);
             }
-            if (!empty($validated['barcode_ean'])) {
+            if (! empty($validated['barcode_ean'])) {
                 $variantUpdates['barcode_ean'] = $validated['barcode_ean'];
             }
             if (isset($validated['compare_at_price'])) {
                 $variantUpdates['compare_at_price_bdt'] = (float) $validated['compare_at_price'];
             }
-            if (!empty($variantUpdates)) {
+            if (! empty($variantUpdates)) {
                 $baseVariant->update($variantUpdates);
             }
 
@@ -274,8 +275,8 @@ class CatalogController extends Controller
             'stock_quantity' => ['nullable', 'integer', 'min:0'],
         ]);
 
-        if (!empty($validated['slug'])) {
-            $validated['slug'] = \Illuminate\Support\Str::slug($validated['slug']);
+        if (! empty($validated['slug'])) {
+            $validated['slug'] = Str::slug($validated['slug']);
         }
 
         $product->update($validated);
@@ -283,7 +284,7 @@ class CatalogController extends Controller
         if ($request->hasFile('image')) {
             $product->clearMediaCollection('products');
             $product->addMediaFromRequest('image')->toMediaCollection('products');
-        } elseif (!empty($validated['image_url']) && $validated['image_url'] !== $product->getFirstMediaUrl('products')) {
+        } elseif (! empty($validated['image_url']) && $validated['image_url'] !== $product->getFirstMediaUrl('products')) {
             try {
                 $product->clearMediaCollection('products');
                 $product->addMediaFromUrl($validated['image_url'])->toMediaCollection('products');
@@ -305,16 +306,16 @@ class CatalogController extends Controller
             if (isset($validated['compare_at_price'])) {
                 $vUpdates['compare_at_price_bdt'] = (float) $validated['compare_at_price'];
             }
-            if (!empty($validated['sku'])) {
+            if (! empty($validated['sku'])) {
                 $vUpdates['sku'] = strtoupper($validated['sku']);
             }
-            if (!empty($validated['barcode_ean'])) {
+            if (! empty($validated['barcode_ean'])) {
                 $vUpdates['barcode_ean'] = $validated['barcode_ean'];
             }
             if (isset($validated['weight_kg'])) {
                 $vUpdates['weight_kg'] = (float) $validated['weight_kg'];
             }
-            if (!empty($vUpdates)) {
+            if (! empty($vUpdates)) {
                 $defaultVariant->update($vUpdates);
             }
 
