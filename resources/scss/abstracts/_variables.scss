@@ -2,20 +2,20 @@
 // ENTERPRISE E-COMMERCE DESIGN TOKENS (HSL PALETTE, SCALES & SYSTEM METRICS)
 // ==============================================================================
 
-// --- Color Palette: Primary Commercial Brand (Emerald / Cyan Modern Fintech-Commerce)
-$color-primary-h: 160;
-$color-primary-s: 84%;
-$color-primary-50:  hsl($color-primary-h, 75%, 97%);
-$color-primary-100: hsl($color-primary-h, 70%, 92%);
-$color-primary-200: hsl($color-primary-h, 72%, 82%);
-$color-primary-300: hsl($color-primary-h, 74%, 68%);
-$color-primary-400: hsl($color-primary-h, 76%, 52%);
-$color-primary-500: hsl($color-primary-h, $color-primary-s, 39%); // Brand Base: #10b981
-$color-primary-600: hsl($color-primary-h, 86%, 31%);
-$color-primary-700: hsl($color-primary-h, 88%, 24%);
-$color-primary-800: hsl($color-primary-h, 86%, 19%);
-$color-primary-900: hsl($color-primary-h, 85%, 15%);
-$color-primary-950: hsl($color-primary-h, 90%, 8%);
+// --- Color Palette: Primary Commercial Brand (Baby Pink / Rose Blush Aesthetic)
+$color-primary-h: 342;
+$color-primary-s: 85%;
+$color-primary-50:  hsl($color-primary-h, 95%, 97%);  // Ultra-soft baby pink cream tint (#fef1f5)
+$color-primary-100: hsl($color-primary-h, 92%, 93%);  // Soft pastel baby pink blush (#fcd7e3)
+$color-primary-200: hsl($color-primary-h, 88%, 85%);  // Delicate baby pink border & accent (#f9b0c7)
+$color-primary-300: hsl($color-primary-h, 84%, 75%);  // Soft rose pink (#f582a6)
+$color-primary-400: hsl($color-primary-h, 82%, 65%);  // Vibrant baby pink (#ee5485)
+$color-primary-500: hsl($color-primary-h, $color-primary-s, 55%); // Brand Base: Baby Pink / Rose (#eb286c)
+$color-primary-600: hsl($color-primary-h, 85%, 46%);  // Interactive CTA / Buttons (#d21755)
+$color-primary-700: hsl($color-primary-h, 86%, 37%);  // High-contrast text & deep rose (#a90f42)
+$color-primary-800: hsl($color-primary-h, 86%, 28%);  // Deep wine rose (#800a31)
+$color-primary-900: hsl($color-primary-h, 85%, 19%);  // (#57041f)
+$color-primary-950: hsl($color-primary-h, 90%, 10%);  // (#300110)
 
 // --- Secondary Brand / Trust Color (Deep Sapphire / Navy)
 $color-secondary-50:  hsl(214, 100%, 97%);
@@ -115,7 +115,7 @@ $shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.1), 0 2px 4px -2px rgba(15, 23, 42
 $shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -4px rgba(15, 23, 42, 0.1);
 $shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
 $shadow-2xl: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
-$shadow-glow-primary: 0 0 20px rgba(16, 185, 129, 0.35);
+$shadow-glow-primary: 0 0 20px rgba(235, 40, 108, 0.35);
 
 // --- Responsive Breakpoints (Mobile First)
 $bp-xs: 480px;

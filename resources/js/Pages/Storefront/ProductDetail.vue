@@ -773,6 +773,7 @@ const formatPrice = (amount: number): string => {
             background: $color-primary-50;
             color: $color-primary-700;
             font-weight: $fw-bold;
+            box-shadow: 0 2px 8px rgba(235, 40, 108, 0.2);
           }
         }
       }

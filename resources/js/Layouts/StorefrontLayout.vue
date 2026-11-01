@@ -131,9 +131,11 @@ const toggleLocale = () => {
 
 <style lang="scss" scoped>
 .top-announcement-bar {
-  background-color: $color-secondary-900;
-  color: $color-neutral-0;
+  background: linear-gradient(90deg, $color-primary-100 0%, $color-primary-50 50%, $color-primary-100 100%);
+  color: $color-primary-900;
+  border-bottom: 1px solid $color-primary-200;
   font-size: $fs-xs;
+  font-weight: $fw-semibold;
   padding: $space-2 0;
 
   .announcement-content {
@@ -141,10 +143,17 @@ const toggleLocale = () => {
   }
 
   .locale-toggle-btn {
-    color: $color-accent-400;
-    font-weight: $fw-semibold;
+    color: $color-primary-700;
+    font-weight: $fw-bold;
     text-decoration: underline;
     cursor: pointer;
+    background: transparent;
+    border: none;
+    font-size: $fs-xs;
+
+    &:hover {
+      color: $color-primary-900;
+    }
   }
 }
 

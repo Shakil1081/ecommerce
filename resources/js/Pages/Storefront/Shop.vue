@@ -321,10 +321,11 @@ const formatPrice = (amount: number): string => {
 }
 
 .shop-hero {
-  background: linear-gradient(135deg, $color-neutral-900 0%, $color-neutral-800 100%);
-  color: $color-neutral-0;
+  background: linear-gradient(135deg, #fff2f6 0%, #fde4ed 50%, #fbd5e3 100%);
+  color: #3b0d1e;
   padding: $space-12 $space-4 $space-10;
   text-align: center;
+  border-bottom: 1px solid $color-primary-200;
 
   .hero-content {
     max-width: 840px;
@@ -338,12 +339,13 @@ const formatPrice = (amount: number): string => {
     display: inline-flex;
     padding: $space-1 $space-3;
     border-radius: $radius-full;
-    background: rgba($color-primary-500, 0.18);
-    border: 1px solid rgba($color-primary-400, 0.35);
-    color: $color-primary-300;
+    background: $color-neutral-0;
+    border: 1px solid $color-primary-300;
+    color: $color-primary-700;
     font-size: $fs-xs;
     font-weight: $fw-semibold;
     margin-bottom: $space-4;
+    box-shadow: $shadow-xs;
   }
 
   .hero-headline {
@@ -351,7 +353,7 @@ const formatPrice = (amount: number): string => {
     font-weight: $fw-extrabold;
     line-height: 1.25;
     margin-bottom: $space-3;
-    color: $color-neutral-0;
+    color: #3b0d1e;
 
     @media (max-width: 768px) {
       font-size: $fs-2xl;
@@ -360,7 +362,7 @@ const formatPrice = (amount: number): string => {
 
   .hero-subtext {
     font-size: $fs-base;
-    color: $color-neutral-300;
+    color: #723247;
     max-width: 640px;
     margin: 0 auto $space-6;
     line-height: 1.5;
@@ -374,7 +376,8 @@ const formatPrice = (amount: number): string => {
     background: $color-neutral-0;
     border-radius: $radius-full;
     padding: $space-2 $space-2 $space-2 $space-4;
-    box-shadow: $shadow-xl;
+    box-shadow: 0 10px 25px -5px rgba(235, 40, 108, 0.15);
+    border: 1px solid $color-primary-200;
     gap: $space-2;
 
     .search-icon {
@@ -399,6 +402,14 @@ const formatPrice = (amount: number): string => {
       border-radius: $radius-full;
       padding: $space-2 $space-6;
       font-weight: $fw-bold;
+      background: $color-primary-600;
+      color: #ffffff;
+      border: none;
+      cursor: pointer;
+
+      &:hover {
+        background: $color-primary-700;
+      }
     }
   }
 }
@@ -448,6 +459,7 @@ const formatPrice = (amount: number): string => {
       color: $color-neutral-0;
       border-color: $color-primary-600;
       font-weight: $fw-semibold;
+      box-shadow: 0 4px 12px rgba(235, 40, 108, 0.25);
 
       .pill-count {
         background: rgba($color-neutral-0, 0.25);
@@ -544,7 +556,8 @@ const formatPrice = (amount: number): string => {
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: $shadow-lg;
+    border-color: $color-primary-300;
+    box-shadow: 0 12px 28px -6px rgba(235, 40, 108, 0.18);
   }
 
   .card-badges {
