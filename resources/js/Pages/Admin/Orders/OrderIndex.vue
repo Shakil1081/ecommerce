@@ -27,6 +27,8 @@ interface OrderRecord {
   status: string;
   payment_status: string;
   payment_method: string;
+  ticket_print_count: number;
+  ticket_printed_at: string | null;
   created_at: string;
   items: OrderItem[];
 }
@@ -97,7 +99,25 @@ const getStatusBadgeClass = (status: string) => {
 
 const selectedOrderIds = ref<number[]>([]);
 const isConfirming = ref<Record<number, boolean>>({});
+const isTransitioning = ref<Record<number, boolean>>({});
 const isBulkConfirming = ref(false);
+const isBulkTransitioning = ref(false);
+
+const selectedOrders = computed(() => {
+  return props.orders.data.filter((o) => selectedOrderIds.value.includes(o.id));
+});
+
+const confirmedSelectedCount = computed(() => {
+  return selectedOrders.value.filter((o) => o.status === 'confirmed').length;
+});
+
+const processingSelectedCount = computed(() => {
+  return selectedOrders.value.filter((o) => o.status === 'processing' || o.status === 'picked_and_packed').length;
+});
+
+const pendingSelectedCount = computed(() => {
+  return selectedOrders.value.filter((o) => o.status === 'pending').length;
+});
 
 const isAllSelected = computed(() => {
   return props.orders.data.length > 0 && selectedOrderIds.value.length === props.orders.data.length;
@@ -129,6 +149,24 @@ const confirmOrder = (order: OrderRecord) => {
   );
 };
 
+const transitionOrder = (order: OrderRecord, targetStatus: string, reason?: string) => {
+  isTransitioning.value[order.id] = true;
+  router.post(
+    `/admin/orders/${order.id}/transition`,
+    {
+      target_status: targetStatus,
+      reason: reason || `Transitioned to ${targetStatus} from orders table action button.`,
+    },
+    {
+      preserveScroll: true,
+      preserveState: true,
+      onFinish: () => {
+        isTransitioning.value[order.id] = false;
+      },
+    }
+  );
+};
+
 const handleBulkConfirm = () => {
   if (selectedOrderIds.value.length === 0) return;
   if (!confirm(`Are you sure you want to confirm all ${selectedOrderIds.value.length} selected orders?`)) return;
@@ -145,6 +183,31 @@ const handleBulkConfirm = () => {
       },
       onFinish: () => {
         isBulkConfirming.value = false;
+      },
+    }
+  );
+};
+
+const handleBulkTransition = (targetStatus: string, actionLabel: string) => {
+  if (selectedOrderIds.value.length === 0) return;
+  if (!confirm(`Are you sure you want to transition ${selectedOrderIds.value.length} selected order(s) to '${actionLabel}'?`)) return;
+
+  isBulkTransitioning.value = true;
+  router.post(
+    '/admin/orders/bulk-transition',
+    {
+      order_ids: selectedOrderIds.value,
+      target_status: targetStatus,
+      reason: `Bulk transitioned to ${targetStatus} from admin orders dashboard.`,
+    },
+    {
+      preserveScroll: true,
+      preserveState: true,
+      onSuccess: () => {
+        selectedOrderIds.value = [];
+      },
+      onFinish: () => {
+        isBulkTransitioning.value = false;
       },
     }
   );
@@ -274,7 +337,10 @@ const printBagTickets = (orderIds?: number[]) => {
           >
             🖨️ Print {{ selectedOrderIds.length }} Bag Ticket(s) with Barcode
           </button>
+
+          <!-- Bulk Confirm for Pending Orders -->
           <button
+            v-if="pendingSelectedCount > 0 || filters.status === 'pending'"
             type="button"
             class="btn btn-confirm-bulk"
             :disabled="isBulkConfirming"
@@ -282,8 +348,35 @@ const printBagTickets = (orderIds?: number[]) => {
             @click="handleBulkConfirm"
           >
             <span v-if="isBulkConfirming">⏳ Confirming...</span>
-            <span v-else>✓ Confirm Selected</span>
+            <span v-else>✓ Confirm Selected ({{ pendingSelectedCount || selectedOrderIds.length }})</span>
           </button>
+
+          <!-- Bulk Move Confirmed Orders to Processing & Pick -->
+          <button
+            v-if="confirmedSelectedCount > 0 || filters.status === 'confirmed'"
+            type="button"
+            class="btn btn-process-bulk"
+            :disabled="isBulkTransitioning"
+            title="Move confirmed orders to Processing & Pick"
+            @click="handleBulkTransition('processing', 'Processing & Pick')"
+          >
+            <span v-if="isBulkTransitioning">⏳ Updating...</span>
+            <span v-else>📦 Move to Processing & Pick ({{ confirmedSelectedCount || selectedOrderIds.length }})</span>
+          </button>
+
+          <!-- Bulk Assign Processing Orders to With Courier -->
+          <button
+            v-if="processingSelectedCount > 0 || filters.status === 'processing'"
+            type="button"
+            class="btn btn-courier-bulk"
+            :disabled="isBulkTransitioning"
+            title="Bulk assign orders to With Courier"
+            @click="handleBulkTransition('handed_to_courier', 'With Courier')"
+          >
+            <span v-if="isBulkTransitioning">⏳ Updating...</span>
+            <span v-else>🚚 Assign With Courier ({{ processingSelectedCount || selectedOrderIds.length }})</span>
+          </button>
+
           <button
             type="button"
             class="btn btn-deselect"
@@ -311,12 +404,13 @@ const printBagTickets = (orderIds?: number[]) => {
               <th>Order #</th>
               <th>Customer</th>
               <th>Zone</th>
+              <th>Bag Ticket</th>
               <th>Items</th>
               <th>Total BDT</th>
               <th>Payment</th>
               <th>Status</th>
               <th>Date</th>
-              <th style="min-width: 190px;">Actions</th>
+              <th style="min-width: 220px;">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -351,6 +445,24 @@ const printBagTickets = (orderIds?: number[]) => {
                 </span>
               </td>
               <td>
+                <div class="ticket-status-wrap">
+                  <span
+                    v-if="order.ticket_print_count > 0"
+                    class="print-count-badge is-printed"
+                    :title="`Printed ${order.ticket_print_count} time(s). Last at: ${order.ticket_printed_at || 'N/A'}`"
+                  >
+                    🖨️ {{ order.ticket_print_count }}x Printed
+                  </span>
+                  <span
+                    v-else
+                    class="print-count-badge is-unprinted"
+                    title="Bag ticket has not been printed yet"
+                  >
+                    ⚠️ 0x (Unprinted)
+                  </span>
+                </div>
+              </td>
+              <td>
                 <span class="items-count-badge">{{ order.items?.length || 0 }} SKU(s)</span>
               </td>
               <td class="order-total-cell">
@@ -382,6 +494,32 @@ const printBagTickets = (orderIds?: number[]) => {
                     <span v-else>✓ Confirm</span>
                   </button>
 
+                  <!-- Quick Move to Processing & Pick -->
+                  <button
+                    v-else-if="order.status === 'confirmed'"
+                    type="button"
+                    class="btn btn-process-sm"
+                    :disabled="isTransitioning[order.id]"
+                    title="Move to Processing & Pick"
+                    @click="transitionOrder(order, 'processing', 'Moved to Processing & Pick from orders table')"
+                  >
+                    <span v-if="isTransitioning[order.id]">⏳</span>
+                    <span v-else>📦 Pick & Pack</span>
+                  </button>
+
+                  <!-- Quick Assign With Courier -->
+                  <button
+                    v-else-if="order.status === 'processing' || order.status === 'picked_and_packed'"
+                    type="button"
+                    class="btn btn-courier-sm"
+                    :disabled="isTransitioning[order.id]"
+                    title="Assign / Hand over to Courier"
+                    @click="transitionOrder(order, 'handed_to_courier', 'Handed over to courier from orders table')"
+                  >
+                    <span v-if="isTransitioning[order.id]">⏳</span>
+                    <span v-else>🚚 With Courier</span>
+                  </button>
+
                   <!-- Quick Bag Ticket Print with Barcode -->
                   <button
                     type="button"
@@ -399,7 +537,7 @@ const printBagTickets = (orderIds?: number[]) => {
               </td>
             </tr>
             <tr v-if="orders.data.length === 0">
-              <td colspan="10" class="empty-state">
+              <td colspan="11" class="empty-state">
                 <div class="empty-wrap">
                   <span class="empty-icon">📭</span>
                   <p>No orders found matching the selected filters.</p>
@@ -535,6 +673,48 @@ const printBagTickets = (orderIds?: number[]) => {
 
         &:hover:not(:disabled) {
           background: #15803d;
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      }
+
+      .btn-process-bulk {
+        background: #7c3aed;
+        color: #ffffff;
+        border: none;
+        padding: 7px 14px;
+        border-radius: $radius-md;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.15s ease;
+
+        &:hover:not(:disabled) {
+          background: #6d28d9;
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      }
+
+      .btn-courier-bulk {
+        background: #2563eb;
+        color: #ffffff;
+        border: none;
+        padding: 7px 14px;
+        border-radius: $radius-md;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.15s ease;
+
+        &:hover:not(:disabled) {
+          background: #1d4ed8;
         }
 
         &:disabled {
@@ -746,6 +926,54 @@ const printBagTickets = (orderIds?: number[]) => {
             }
           }
 
+          .btn-process-sm {
+            background: #7c3aed;
+            color: #ffffff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: $radius-md;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+
+            &:hover:not(:disabled) {
+              background: #6d28d9;
+            }
+
+            &:disabled {
+              opacity: 0.6;
+              cursor: not-allowed;
+            }
+          }
+
+          .btn-courier-sm {
+            background: #2563eb;
+            color: #ffffff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: $radius-md;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+
+            &:hover:not(:disabled) {
+              background: #1d4ed8;
+            }
+
+            &:disabled {
+              opacity: 0.6;
+              cursor: not-allowed;
+            }
+          }
+
           .btn-ticket-sm {
             background: #f1f5f9;
             color: #1e293b;
@@ -807,6 +1035,34 @@ const printBagTickets = (orderIds?: number[]) => {
         &.zone-outside_dhaka {
           background: rgba(147, 51, 234, 0.1);
           color: #7e22ce;
+        }
+      }
+
+      .ticket-status-wrap {
+        display: flex;
+        align-items: center;
+
+        .print-count-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 3px 8px;
+          border-radius: $radius-full;
+          font-size: 11px;
+          font-weight: 700;
+          white-space: nowrap;
+
+          &.is-printed {
+            background: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+          }
+
+          &.is-unprinted {
+            background: #fffbeb;
+            color: #b45309;
+            border: 1px solid #fde68a;
+          }
         }
       }
 

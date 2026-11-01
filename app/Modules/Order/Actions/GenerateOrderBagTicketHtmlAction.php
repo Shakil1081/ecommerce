@@ -482,6 +482,11 @@ HTML;
         $orderDate = $order->created_at ? $order->created_at->format('d M Y, h:i A') : 'N/A';
         $pageBreakClass = $hasPageBreak ? 'page-break' : '';
 
+        $printCount = (int) $order->ticket_print_count;
+        $printBadge = $printCount > 1
+            ? "<span style='background:#dc2626; color:#ffffff; font-size:8.5px; font-weight:800; padding:1px 5px; border-radius:3px; margin-left:4px;'>REPRINT #{$printCount}</span>"
+            : "<span style='background:#e2e8f0; color:#334155; font-size:8.5px; font-weight:700; padding:1px 4px; border-radius:2px; margin-left:4px;'>Print #1</span>";
+
         return <<<HTML
     <div class="bag-ticket {$pageBreakClass}">
         <div>
@@ -489,7 +494,7 @@ HTML;
             <div class="ticket-header">
                 <div>
                     <div class="store-brand">E-Commerce Dispatch Hub</div>
-                    <div class="ticket-date">Date: {$orderDate}</div>
+                    <div class="ticket-date">Date: {$orderDate} • {$printBadge}</div>
                 </div>
                 <div>
                     <span class="ticket-badge">BAG TICKET #{$order->id}</span>

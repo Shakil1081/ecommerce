@@ -166,11 +166,86 @@ final class OrderAdminController extends Controller
             return response('No matching orders found.', 404);
         }
 
+        // Increment ticket print count and timestamp for audit tracking
+        foreach ($orders as $order) {
+            $order->increment('ticket_print_count');
+            $order->updateQuietly(['ticket_printed_at' => now()]);
+            $order->ticket_print_count++;
+        }
+
         $html = $action($orders);
 
         return response($html, 200, [
             'Content-Type' => 'text/html; charset=UTF-8',
         ]);
+    }
+
+    /**
+     * Bulk transition orders to a target lifecycle status (e.g. processing, handed_to_courier).
+     */
+    public function bulkTransition(
+        Request $request,
+        TransitionOrderStatusAction $transitionAction,
+        ReserveStockForOrderAction $reserveAction,
+        CommitStockReservationAction $commitAction,
+        ReleaseStockReservationAction $releaseAction
+    ): RedirectResponse {
+        $validated = $request->validate([
+            'order_ids' => ['required', 'array', 'min:1'],
+            'order_ids.*' => ['integer', 'exists:orders,id'],
+            'target_status' => ['required', 'string'],
+            'reason' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $targetStatus = $validated['target_status'];
+        $reason = $validated['reason'] ?? "Bulk transitioned to {$targetStatus} from admin dashboard.";
+
+        $orders = Order::query()
+            ->whereIn('id', $validated['order_ids'])
+            ->get();
+
+        $successCount = 0;
+        $failedCount = 0;
+
+        foreach ($orders as $order) {
+            if (! $order->canTransitionTo($targetStatus)) {
+                $failedCount++;
+                continue;
+            }
+
+            try {
+                if ($targetStatus === Order::STATUS_CONFIRMED) {
+                    $reserveAction($order);
+                }
+
+                $transitionAction(
+                    order: $order,
+                    targetStatus: $targetStatus,
+                    changedBy: $request->user(),
+                    reason: $reason
+                );
+
+                if ($targetStatus === Order::STATUS_HANDED_TO_COURIER) {
+                    $commitAction($order);
+                } elseif ($targetStatus === Order::STATUS_CANCELLED) {
+                    $releaseAction($order);
+                }
+
+                $successCount++;
+            } catch (InsufficientStockException $e) {
+                $failedCount++;
+            } catch (\Throwable $e) {
+                $failedCount++;
+            }
+        }
+
+        $label = str_replace('_', ' ', $targetStatus);
+        $message = "{$successCount} order(s) successfully transitioned to '{$label}'.";
+        if ($failedCount > 0) {
+            $message .= " ({$failedCount} orders could not be transitioned).";
+        }
+
+        return back()->with('success', $message);
     }
 
     /**

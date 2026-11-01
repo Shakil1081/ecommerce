@@ -155,6 +155,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/orders', [OrderAdminController::class, 'index'])->name('orders.index');
     Route::match(['GET', 'POST'], '/orders/bag-tickets', [OrderAdminController::class, 'printBagTickets'])->name('orders.bag-tickets');
     Route::post('/orders/bulk-confirm', [OrderAdminController::class, 'bulkConfirm'])->name('orders.bulk-confirm');
+    Route::post('/orders/bulk-transition', [OrderAdminController::class, 'bulkTransition'])->name('orders.bulk-transition');
     Route::get('/orders/{order}', [OrderAdminController::class, 'show'])->name('orders.show');
     Route::post('/orders/{order}/transition', [OrderAdminController::class, 'transitionStatus'])->name('orders.transition');
     Route::post('/orders/{order}/book-courier', [ShippingLabelController::class, 'book'])->name('orders.book-courier');

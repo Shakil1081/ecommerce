@@ -55,6 +55,8 @@ use Illuminate\Support\Str;
  * @property string|null $courier_consignment_id
  * @property string|null $courier_tracking_code
  * @property string|null $mushak_6_3_number
+ * @property int $ticket_print_count
+ * @property CarbonInterface|null $ticket_printed_at
  * @property CarbonInterface|null $confirmed_at
  * @property CarbonInterface|null $shipped_at
  * @property CarbonInterface|null $delivered_at
@@ -100,8 +102,8 @@ class Order extends Model
 
     public const ALLOWED_TRANSITIONS = [
         self::STATUS_PENDING => [self::STATUS_CONFIRMED, self::STATUS_CANCELLED],
-        self::STATUS_CONFIRMED => [self::STATUS_PROCESSING, self::STATUS_CANCELLED],
-        self::STATUS_PROCESSING => [self::STATUS_PICKED_AND_PACKED, self::STATUS_CANCELLED],
+        self::STATUS_CONFIRMED => [self::STATUS_PROCESSING, self::STATUS_HANDED_TO_COURIER, self::STATUS_CANCELLED],
+        self::STATUS_PROCESSING => [self::STATUS_PICKED_AND_PACKED, self::STATUS_HANDED_TO_COURIER, self::STATUS_CANCELLED],
         self::STATUS_PICKED_AND_PACKED => [self::STATUS_HANDED_TO_COURIER, self::STATUS_CANCELLED],
         self::STATUS_HANDED_TO_COURIER => [self::STATUS_OUT_FOR_DELIVERY, self::STATUS_RETURNED, self::STATUS_DELIVERED],
         self::STATUS_OUT_FOR_DELIVERY => [self::STATUS_DELIVERED, self::STATUS_RETURNED],
@@ -143,6 +145,8 @@ class Order extends Model
         'courier_consignment_id',
         'courier_tracking_code',
         'mushak_6_3_number',
+        'ticket_print_count',
+        'ticket_printed_at',
         'confirmed_at',
         'shipped_at',
         'delivered_at',
@@ -162,6 +166,7 @@ class Order extends Model
         'payable_cod_amount_bdt' => '0.0000',
         'fraud_risk_score' => 0,
         'fraud_risk_level' => 'low',
+        'ticket_print_count' => 0,
     ];
 
     protected function casts(): array
@@ -174,6 +179,8 @@ class Order extends Model
             'advance_paid_bdt' => 'decimal:4',
             'payable_cod_amount_bdt' => 'decimal:4',
             'fraud_risk_score' => 'integer',
+            'ticket_print_count' => 'integer',
+            'ticket_printed_at' => 'datetime',
             'confirmed_at' => 'datetime',
             'shipped_at' => 'datetime',
             'delivered_at' => 'datetime',

@@ -211,6 +211,9 @@ final class OrderAdminTest extends TestCase
 
     public function test_admin_can_print_multiple_bag_tickets_with_barcodes(): void
     {
+        $this->assertEquals(0, $this->order->ticket_print_count);
+        $this->assertNull($this->order->ticket_printed_at);
+
         $response = $this->actingAs($this->admin)->get("/admin/orders/bag-tickets?order_ids={$this->order->id}");
 
         $response->assertOk();
@@ -220,5 +223,50 @@ final class OrderAdminTest extends TestCase
         $this->assertStringContainsString('Naveed Iqbal', $response->getContent());
         $this->assertStringContainsString('01711998877', $response->getContent());
         $this->assertStringContainsString('<svg', $response->getContent());
+        $this->assertStringContainsString('Print #1', $response->getContent());
+
+        $this->order->refresh();
+        $this->assertEquals(1, $this->order->ticket_print_count);
+        $this->assertNotNull($this->order->ticket_printed_at);
+
+        // Printing a second time should increment count to 2 and show REPRINT badge
+        $secondResponse = $this->actingAs($this->admin)->get("/admin/orders/bag-tickets?order_ids={$this->order->id}");
+        $secondResponse->assertOk();
+        $this->assertStringContainsString('REPRINT #2', $secondResponse->getContent());
+
+        $this->order->refresh();
+        $this->assertEquals(2, $this->order->ticket_print_count);
+    }
+
+    public function test_admin_can_bulk_transition_confirmed_orders_to_processing(): void
+    {
+        $this->order->update(['status' => Order::STATUS_CONFIRMED]);
+
+        $response = $this->actingAs($this->admin)->post('/admin/orders/bulk-transition', [
+            'order_ids' => [$this->order->id],
+            'target_status' => Order::STATUS_PROCESSING,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->order->refresh();
+        $this->assertEquals(Order::STATUS_PROCESSING, $this->order->status);
+    }
+
+    public function test_admin_can_bulk_transition_processing_orders_to_with_courier(): void
+    {
+        $this->order->update(['status' => Order::STATUS_PROCESSING]);
+
+        $response = $this->actingAs($this->admin)->post('/admin/orders/bulk-transition', [
+            'order_ids' => [$this->order->id],
+            'target_status' => Order::STATUS_HANDED_TO_COURIER,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->order->refresh();
+        $this->assertEquals(Order::STATUS_HANDED_TO_COURIER, $this->order->status);
     }
 }
