@@ -43,6 +43,15 @@ const deleteProduct = (product: ProductItem) => {
           </p>
         </div>
         <div class="header-actions">
+          <a
+            href="/shop"
+            target="_blank"
+            class="btn btn-storefront-view"
+            title="Open public storefront catalog in a new tab"
+          >
+            <span>🛍️</span> View Public Shop
+            <span class="ext-arrow">↗</span>
+          </a>
           <Link href="/admin/products/create" class="btn btn-primary">
             <span>➕</span> Add New Product
           </Link>
@@ -67,10 +76,31 @@ const deleteProduct = (product: ProductItem) => {
                 <td>
                   <div class="product-identity">
                     <span class="product-icon">📦</span>
-                    <div>
-                      <div class="product-name">{{ product.name }}</div>
-                      <div class="product-warranty" v-if="product.warranty_policy">
-                        🛡️ {{ product.warranty_policy }}
+                    <div class="product-info-wrap">
+                      <div class="product-name-row">
+                        <span class="product-name">{{ product.name }}</span>
+                        <a
+                          :href="`/products/${product.slug}`"
+                          target="_blank"
+                          class="public-link-pill"
+                          title="Open product live on public storefront in new tab"
+                        >
+                          <span class="pill-label">Public View</span>
+                          <span class="ext-arrow">↗</span>
+                        </a>
+                      </div>
+                      <div class="product-meta-row">
+                        <a
+                          :href="`/products/${product.slug}`"
+                          target="_blank"
+                          class="public-slug-link"
+                          title="View public URL: /products/{{ product.slug }}"
+                        >
+                          /products/{{ product.slug }}
+                        </a>
+                        <span class="product-warranty" v-if="product.warranty_policy">
+                          • 🛡️ {{ product.warranty_policy }}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -111,6 +141,14 @@ const deleteProduct = (product: ProductItem) => {
                   </span>
                 </td>
                 <td class="text-right actions-cell">
+                  <a
+                    :href="`/products/${product.slug}`"
+                    target="_blank"
+                    class="btn btn-sm btn-view-public"
+                    title="View live product on public storefront (opens in new tab)"
+                  >
+                    <span>👁️</span> Public View
+                  </a>
                   <Link :href="`/admin/products/${product.id}/matrix`" class="btn btn-sm btn-primary">
                     ⚡ Matrix
                   </Link>
@@ -161,8 +199,9 @@ const deleteProduct = (product: ProductItem) => {
   .header-title {
     font-size: $font-size-2xl;
     font-weight: 700;
-    color: $color-text-main;
+    color: hsl(342, 45%, 15%);
     margin-bottom: $spacing-1;
+    font-family: $font-heading;
   }
 
   .header-subtitle {
@@ -173,13 +212,51 @@ const deleteProduct = (product: ProductItem) => {
 
   .header-actions {
     display: flex;
+    align-items: center;
     gap: $spacing-3;
+    flex-wrap: wrap;
+  }
+}
+
+.btn-storefront-view {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: 9px 16px;
+  border-radius: $radius-lg;
+  background-color: $color-primary-50;
+  color: $color-primary-700;
+  border: 1px solid $color-primary-200;
+  font-size: $font-size-sm;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all $transition-base;
+
+  .ext-arrow {
+    font-size: 13px;
+    opacity: 0.8;
+    transition: transform $transition-fast;
+  }
+
+  &:hover {
+    background-color: $color-primary-100;
+    border-color: $color-primary-400;
+    color: $color-primary-800;
+    box-shadow: 0 4px 12px rgba(235, 40, 108, 0.15);
+    transform: translateY(-1px);
+
+    .ext-arrow {
+      transform: translate(2px, -2px);
+    }
   }
 }
 
 .table-card {
   padding: 0;
   overflow: hidden;
+  border: 1px solid hsl(342, 40%, 92%);
+  box-shadow: 0 4px 12px rgba(235, 40, 108, 0.04), 0 1px 3px rgba(15, 23, 42, 0.04);
+  background-color: #ffffff;
 }
 
 .data-table {
@@ -188,20 +265,25 @@ const deleteProduct = (product: ProductItem) => {
   text-align: left;
 
   th {
-    background: $color-surface-hover;
+    background: hsl(342, 50%, 98%);
     padding: $spacing-3 $spacing-4;
     font-size: $font-size-xs;
-    font-weight: 600;
-    color: $color-text-muted;
+    font-weight: 700;
+    color: hsl(342, 35%, 35%);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    border-bottom: 1px solid $color-border;
+    border-bottom: 1px solid hsl(342, 35%, 90%);
   }
 
   td {
     padding: $spacing-4;
-    border-bottom: 1px solid $color-border;
+    border-bottom: 1px solid hsl(342, 30%, 93%);
     font-size: $font-size-sm;
+    transition: background-color $transition-fast;
+  }
+
+  tr:hover td {
+    background-color: hsl(342, 60%, 99.2%);
   }
 
   tr:last-child td {
@@ -215,21 +297,89 @@ const deleteProduct = (product: ProductItem) => {
 
 .product-identity {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: $spacing-3;
 
   .product-icon {
     font-size: 1.5rem;
+    flex-shrink: 0;
+    margin-top: 2px;
   }
 
-  .product-name {
-    font-weight: 600;
-    color: $color-text-main;
+  .product-info-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
   }
 
-  .product-warranty {
-    font-size: $font-size-xs;
-    color: $color-text-muted;
+  .product-name-row {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+    flex-wrap: wrap;
+
+    .product-name {
+      font-weight: 600;
+      color: $color-text-main;
+      font-size: 14.5px;
+    }
+
+    .public-link-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 1px 7px;
+      border-radius: $radius-full;
+      background: $color-primary-50;
+      border: 1px solid $color-primary-200;
+      color: $color-primary-600;
+      font-size: 11px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all $transition-fast;
+
+      .ext-arrow {
+        font-size: 10px;
+        transition: transform $transition-fast;
+      }
+
+      &:hover {
+        background: $color-primary-500;
+        border-color: $color-primary-500;
+        color: #ffffff;
+        box-shadow: 0 2px 6px rgba(235, 40, 108, 0.3);
+
+        .ext-arrow {
+          transform: translate(1px, -1px);
+        }
+      }
+    }
+  }
+
+  .product-meta-row {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+    flex-wrap: wrap;
+
+    .public-slug-link {
+      font-family: $font-mono;
+      font-size: 11.5px;
+      color: hsl(342, 45%, 45%);
+      text-decoration: none;
+      transition: color $transition-fast;
+
+      &:hover {
+        color: $color-primary-600;
+        text-decoration: underline;
+      }
+    }
+
+    .product-warranty {
+      font-size: $font-size-xs;
+      color: $color-text-muted;
+    }
   }
 }
 
@@ -267,15 +417,37 @@ const deleteProduct = (product: ProductItem) => {
 
   .price-range {
     font-weight: 700;
-    color: $color-primary;
+    color: $color-primary-600;
     font-size: $font-size-sm;
   }
 }
 
 .actions-cell {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: $spacing-2;
+  flex-wrap: nowrap;
+}
+
+.btn-view-public {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: hsl(342, 90%, 96%);
+  color: $color-primary-700;
+  border: 1px solid hsl(342, 70%, 85%);
+  font-weight: 600;
+  text-decoration: none;
+  transition: all $transition-fast;
+
+  &:hover {
+    background-color: $color-primary-600;
+    border-color: $color-primary-600;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(235, 40, 108, 0.35);
+    transform: translateY(-1px);
+  }
 }
 
 .empty-state-cell {
@@ -326,13 +498,14 @@ const deleteProduct = (product: ProductItem) => {
   font-weight: 600;
 
   &.badge-info {
-    background: hsla(217, 91%, 60%, 0.12);
-    color: $color-primary;
+    background: hsl(342, 85%, 95%);
+    color: $color-primary-700;
+    border: 1px solid hsl(342, 60%, 88%);
   }
 
   &.badge-neutral {
-    background: $color-surface-hover;
-    color: $color-text-muted;
+    background: hsl(342, 30%, 96%);
+    color: hsl(342, 25%, 35%);
   }
 
   &.badge-warning {

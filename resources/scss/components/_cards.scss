@@ -8,8 +8,8 @@
 .card {
   background-color: $color-neutral-0;
   border-radius: $radius-xl;
-  border: 1px solid $color-neutral-200;
-  box-shadow: $shadow-sm;
+  border: 1px solid hsl(342, 35%, 92%);
+  box-shadow: 0 2px 8px rgba(235, 40, 108, 0.04), 0 1px 3px rgba(15, 23, 42, 0.05);
   overflow: hidden;
   transition: all $transition-base;
 
@@ -20,7 +20,8 @@
 
   &-header {
     padding: $space-4 $space-6;
-    border-bottom: 1px solid $color-neutral-200;
+    border-bottom: 1px solid hsl(342, 30%, 93%);
+    background-color: hsl(342, 60%, 99.5%);
     @include flex-between;
   }
 
@@ -30,8 +31,8 @@
 
   &-footer {
     padding: $space-4 $space-6;
-    background-color: $color-neutral-50;
-    border-top: 1px solid $color-neutral-200;
+    background-color: hsl(342, 50%, 99%);
+    border-top: 1px solid hsl(342, 30%, 93%);
   }
 }
 
@@ -89,6 +90,7 @@
   &-primary {
     background-color: $color-primary-100;
     color: $color-primary-800;
+    border: 1px solid $color-primary-200;
   }
 
   &-secondary {

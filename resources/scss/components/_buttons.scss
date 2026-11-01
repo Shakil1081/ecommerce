@@ -32,20 +32,34 @@
 
   // --- Variants
   &-primary {
-    background-color: $color-primary-600;
+    background: linear-gradient(135deg, $color-primary-500 0%, $color-primary-600 100%);
     color: $color-neutral-0;
     border-color: $color-primary-600;
-    box-shadow: $shadow-sm;
+    box-shadow: 0 2px 6px rgba($color-primary-500, 0.25);
 
     &:hover:not(:disabled) {
-      background-color: $color-primary-700;
+      background: linear-gradient(135deg, $color-primary-400 0%, $color-primary-600 100%);
       border-color: $color-primary-700;
-      box-shadow: $shadow-md;
+      box-shadow: 0 4px 12px rgba($color-primary-500, 0.35);
+      transform: translateY(-1px);
     }
 
     &:active:not(:disabled) {
-      background-color: $color-primary-800;
+      background: $color-primary-700;
       transform: scale(0.98);
+    }
+  }
+
+  &-outline-primary {
+    background-color: transparent;
+    color: $color-primary-600;
+    border-color: $color-primary-300;
+
+    &:hover:not(:disabled) {
+      background-color: $color-primary-50;
+      border-color: $color-primary-500;
+      color: $color-primary-700;
+      box-shadow: 0 2px 8px rgba($color-primary-500, 0.15);
     }
   }
 
