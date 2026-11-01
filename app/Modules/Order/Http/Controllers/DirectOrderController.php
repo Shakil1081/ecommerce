@@ -216,16 +216,16 @@ final class DirectOrderController extends Controller
             return $order;
         });
 
-        if ($request->wantsJson()) {
+        if ($request->wantsJson() && ! $request->header('X-Inertia')) {
             return response()->json([
                 'success' => true,
                 'order_number' => $order->order_number,
-                'redirect_url' => route('storefront.order-confirmed', $order->order_number),
+                'redirect_url' => route('storefront.order-confirmed', ['order' => $order->order_number]),
                 'message' => 'ধন্যবাদ! আপনার অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে।',
             ], 201);
         }
 
-        return redirect()->route('storefront.order-confirmed', $order->order_number)
+        return redirect()->route('storefront.order-confirmed', ['order' => $order->order_number])
             ->with('success', 'ধন্যবাদ! আপনার অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে।');
     }
 }

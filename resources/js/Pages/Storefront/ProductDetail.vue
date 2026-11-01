@@ -152,6 +152,14 @@ const funnelForm = ref({
 
 const isSubmittingFunnel = ref(false);
 const funnelErrors = ref<Record<string, string>>({});
+const orderSuccessMessage = ref('');
+
+const generalErrorMessage = computed(() => {
+  if (funnelErrors.value.fraud) return funnelErrors.value.fraud;
+  if (funnelErrors.value.product_variant_id) return funnelErrors.value.product_variant_id;
+  if (funnelErrors.value.general) return funnelErrors.value.general;
+  return '';
+});
 
 const deliveryFees = {
   inside_dhaka: 60,
@@ -202,6 +210,7 @@ const handleFunnelOrderSubmit = () => {
   }
 
   isSubmittingFunnel.value = true;
+  orderSuccessMessage.value = '';
 
   const payload = {
     product_variant_id: selectedVariant.value.id,
@@ -215,8 +224,16 @@ const handleFunnelOrderSubmit = () => {
   };
 
   router.post('/checkout/fast-order', payload, {
+    onSuccess: (page) => {
+      orderSuccessMessage.value = 'ধন্যবাদ! আপনার অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে। বিস্তারিত পেজে রিডাইরেক্ট হচ্ছে...';
+      const redirectUrl = (page?.props as any)?.redirect_url;
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      }
+    },
     onError: (errors) => {
       funnelErrors.value = errors as Record<string, string>;
+      isSubmittingFunnel.value = false;
     },
     onFinish: () => {
       isSubmittingFunnel.value = false;
@@ -376,6 +393,24 @@ const handleFunnelOrderSubmit = () => {
                   <div class="badge-text-wrap">
                     <span class="badge-headline">অর্ডার করতে নিচের তথ্য দিন (ক্যাশ অন ডেলিভারি)</span>
                     <span class="badge-sub">কোনো অগ্রিম পেমেন্ট লাগবে না • পণ্য হাতে পেয়ে মূল্য পরিশোধ করুন</span>
+                  </div>
+                </div>
+
+                <!-- Success Alert -->
+                <div v-if="orderSuccessMessage" class="funnel-success-alert">
+                  <span class="alert-icon">🎉</span>
+                  <div>
+                    <div class="alert-title">অর্ডার সফলভাবে গ্রহণ করা হয়েছে!</div>
+                    <div class="alert-msg">{{ orderSuccessMessage }}</div>
+                  </div>
+                </div>
+
+                <!-- General Error Alert -->
+                <div v-if="generalErrorMessage" class="funnel-error-alert">
+                  <span class="alert-icon">⚠️</span>
+                  <div>
+                    <div class="alert-title">অর্ডার সম্পন্ন করা সম্ভব হয়নি</div>
+                    <div class="alert-msg">{{ generalErrorMessage }}</div>
                   </div>
                 </div>
 
@@ -1116,6 +1151,60 @@ const handleFunnelOrderSubmit = () => {
             color: $color-primary-700;
             font-weight: $fw-medium;
           }
+        }
+      }
+
+      .funnel-success-alert {
+        display: flex;
+        align-items: center;
+        gap: $space-3;
+        padding: $space-3 $space-4;
+        background: hsl(142, 60%, 96%);
+        border: 1.5px solid hsl(142, 55%, 75%);
+        border-radius: $radius-xl;
+        color: hsl(142, 70%, 22%);
+        margin-bottom: $space-4;
+        animation: pulse-icon 1.2s ease-in-out;
+
+        .alert-icon {
+          font-size: 1.5rem;
+          flex-shrink: 0;
+        }
+
+        .alert-title {
+          font-weight: $fw-bold;
+          font-size: 14px;
+        }
+
+        .alert-msg {
+          font-size: 12.5px;
+          opacity: 0.9;
+        }
+      }
+
+      .funnel-error-alert {
+        display: flex;
+        align-items: center;
+        gap: $space-3;
+        padding: $space-3 $space-4;
+        background: hsla(0, 84%, 60%, 0.08);
+        border: 1.5px solid hsla(0, 84%, 60%, 0.35);
+        border-radius: $radius-xl;
+        color: $color-danger;
+        margin-bottom: $space-4;
+
+        .alert-icon {
+          font-size: 1.5rem;
+          flex-shrink: 0;
+        }
+
+        .alert-title {
+          font-weight: $fw-bold;
+          font-size: 14px;
+        }
+
+        .alert-msg {
+          font-size: 12.5px;
         }
       }
 
