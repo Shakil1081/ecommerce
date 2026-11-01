@@ -178,4 +178,47 @@ final class OrderAdminTest extends TestCase
             'changed_by_user_id' => $this->admin->id,
         ]);
     }
+
+    public function test_admin_can_bulk_confirm_pending_orders(): void
+    {
+        $getCart = app(GetActiveCartAction::class);
+        $addToCart = app(AddToCartAction::class);
+        $createOrder = app(CreateOrderFromCartAction::class);
+
+        $cart2 = $getCart($this->admin);
+        $cart2 = $addToCart($cart2, $this->variant, 1);
+        $order2 = $createOrder($cart2, [
+            'customer_name' => 'Sadia Islam',
+            'customer_phone' => '01811223344',
+            'division_id' => $this->order->division_id,
+            'district_id' => $this->order->district_id,
+            'delivery_address' => 'Gulshan 2, Dhaka',
+        ], $this->admin);
+
+        $response = $this->actingAs($this->admin)->post('/admin/orders/bulk-confirm', [
+            'order_ids' => [$this->order->id, $order2->id],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->order->refresh();
+        $order2->refresh();
+
+        $this->assertEquals(Order::STATUS_CONFIRMED, $this->order->status);
+        $this->assertEquals(Order::STATUS_CONFIRMED, $order2->status);
+    }
+
+    public function test_admin_can_print_multiple_bag_tickets_with_barcodes(): void
+    {
+        $response = $this->actingAs($this->admin)->get("/admin/orders/bag-tickets?order_ids={$this->order->id}");
+
+        $response->assertOk();
+        $this->assertStringContainsString('BAG TICKET', $response->getContent());
+        $this->assertStringContainsString('E-Commerce Dispatch Hub', $response->getContent());
+        $this->assertStringContainsString($this->order->order_number, $response->getContent());
+        $this->assertStringContainsString('Naveed Iqbal', $response->getContent());
+        $this->assertStringContainsString('01711998877', $response->getContent());
+        $this->assertStringContainsString('<svg', $response->getContent());
+    }
 }

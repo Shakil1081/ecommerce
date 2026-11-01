@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
@@ -94,6 +94,68 @@ const formatCurrency = (val: string | number) => {
 const getStatusBadgeClass = (status: string) => {
   return `badge-status-${status.replace(/_/g, '-')}`;
 };
+
+const selectedOrderIds = ref<number[]>([]);
+const isConfirming = ref<Record<number, boolean>>({});
+const isBulkConfirming = ref(false);
+
+const isAllSelected = computed(() => {
+  return props.orders.data.length > 0 && selectedOrderIds.value.length === props.orders.data.length;
+});
+
+const toggleSelectAll = () => {
+  if (isAllSelected.value) {
+    selectedOrderIds.value = [];
+  } else {
+    selectedOrderIds.value = props.orders.data.map((o) => o.id);
+  }
+};
+
+const confirmOrder = (order: OrderRecord) => {
+  isConfirming.value[order.id] = true;
+  router.post(
+    `/admin/orders/${order.id}/transition`,
+    {
+      target_status: 'confirmed',
+      reason: 'Confirmed directly from orders table action button.',
+    },
+    {
+      preserveScroll: true,
+      preserveState: true,
+      onFinish: () => {
+        isConfirming.value[order.id] = false;
+      },
+    }
+  );
+};
+
+const handleBulkConfirm = () => {
+  if (selectedOrderIds.value.length === 0) return;
+  if (!confirm(`Are you sure you want to confirm all ${selectedOrderIds.value.length} selected orders?`)) return;
+
+  isBulkConfirming.value = true;
+  router.post(
+    '/admin/orders/bulk-confirm',
+    { order_ids: selectedOrderIds.value },
+    {
+      preserveScroll: true,
+      preserveState: true,
+      onSuccess: () => {
+        selectedOrderIds.value = [];
+      },
+      onFinish: () => {
+        isBulkConfirming.value = false;
+      },
+    }
+  );
+};
+
+const printBagTickets = (orderIds?: number[]) => {
+  const ids = orderIds && orderIds.length > 0 ? orderIds : selectedOrderIds.value;
+  if (ids.length === 0) return;
+  const url = `/admin/orders/bag-tickets?order_ids=${ids.join(',')}`;
+  window.open(url, '_blank');
+};
 </script>
 
 <template>
@@ -106,6 +168,17 @@ const getStatusBadgeClass = (status: string) => {
         <div>
           <h1 class="page-title">🛍️ Orders & Dispatch Management</h1>
           <p class="page-subtitle">Track real-time order lifecycle transitions, customer verification, and courier handoffs.</p>
+        </div>
+        <div class="header-actions">
+          <button
+            v-if="orders.data.length > 0"
+            type="button"
+            class="btn btn-outline btn-sm btn-header-print"
+            title="Open printable bag tickets for all orders currently listed"
+            @click="printBagTickets(orders.data.map((o) => o.id))"
+          >
+            🖨️ Print All Page Bag Tickets ({{ orders.data.length }})
+          </button>
         </div>
       </div>
 
@@ -186,11 +259,55 @@ const getStatusBadgeClass = (status: string) => {
         </div>
       </div>
 
+      <!-- Bulk Actions Bar -->
+      <div v-if="selectedOrderIds.length > 0" class="bulk-actions-bar">
+        <div class="bulk-info">
+          <span class="bulk-count-badge">{{ selectedOrderIds.length }}</span>
+          <span>order(s) selected</span>
+        </div>
+        <div class="bulk-btn-group">
+          <button
+            type="button"
+            class="btn btn-print-bulk"
+            title="Print in-bag tickets with Code128 barcodes for selected orders"
+            @click="printBagTickets()"
+          >
+            🖨️ Print {{ selectedOrderIds.length }} Bag Ticket(s) with Barcode
+          </button>
+          <button
+            type="button"
+            class="btn btn-confirm-bulk"
+            :disabled="isBulkConfirming"
+            title="Confirm selected pending orders and reserve stock"
+            @click="handleBulkConfirm"
+          >
+            <span v-if="isBulkConfirming">⏳ Confirming...</span>
+            <span v-else>✓ Confirm Selected</span>
+          </button>
+          <button
+            type="button"
+            class="btn btn-deselect"
+            @click="selectedOrderIds = []"
+          >
+            ✕ Deselect All
+          </button>
+        </div>
+      </div>
+
       <!-- Orders Data Table -->
       <div class="table-container">
         <table class="data-table">
           <thead>
             <tr>
+              <th class="checkbox-cell">
+                <input
+                  type="checkbox"
+                  class="checkbox-custom"
+                  :checked="isAllSelected"
+                  title="Select All on Page"
+                  @change="toggleSelectAll"
+                />
+              </th>
               <th>Order #</th>
               <th>Customer</th>
               <th>Zone</th>
@@ -199,11 +316,24 @@ const getStatusBadgeClass = (status: string) => {
               <th>Payment</th>
               <th>Status</th>
               <th>Date</th>
-              <th>Action</th>
+              <th style="min-width: 190px;">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="order in orders.data" :key="order.id" class="order-row">
+            <tr
+              v-for="order in orders.data"
+              :key="order.id"
+              class="order-row"
+              :class="{ 'is-selected': selectedOrderIds.includes(order.id) }"
+            >
+              <td class="checkbox-cell">
+                <input
+                  type="checkbox"
+                  class="checkbox-custom"
+                  :value="order.id"
+                  v-model="selectedOrderIds"
+                />
+              </td>
               <td class="font-mono">
                 <Link :href="`/admin/orders/${order.id}`" class="order-link">
                   <strong>{{ order.order_number }}</strong>
@@ -237,14 +367,39 @@ const getStatusBadgeClass = (status: string) => {
               <td class="order-date-cell">
                 {{ new Date(order.created_at).toLocaleDateString('en-GB') }}
               </td>
-              <td>
-                <Link :href="`/admin/orders/${order.id}`" class="btn btn-outline btn-sm">
-                  View →
-                </Link>
+              <td class="actions-cell">
+                <div class="row-actions">
+                  <!-- Quick Confirm Order Button directly in Table -->
+                  <button
+                    v-if="order.status === 'pending'"
+                    type="button"
+                    class="btn btn-confirm-sm"
+                    :disabled="isConfirming[order.id]"
+                    title="Confirm order & reserve warehouse stock"
+                    @click="confirmOrder(order)"
+                  >
+                    <span v-if="isConfirming[order.id]">⏳</span>
+                    <span v-else>✓ Confirm</span>
+                  </button>
+
+                  <!-- Quick Bag Ticket Print with Barcode -->
+                  <button
+                    type="button"
+                    class="btn btn-ticket-sm"
+                    title="Print in-bag packing ticket with Code128 barcode"
+                    @click="printBagTickets([order.id])"
+                  >
+                    🖨️ Ticket
+                  </button>
+
+                  <Link :href="`/admin/orders/${order.id}`" class="btn btn-outline btn-sm">
+                    View →
+                  </Link>
+                </div>
               </td>
             </tr>
             <tr v-if="orders.data.length === 0">
-              <td colspan="9" class="empty-state">
+              <td colspan="10" class="empty-state">
                 <div class="empty-wrap">
                   <span class="empty-icon">📭</span>
                   <p>No orders found matching the selected filters.</p>
@@ -277,7 +432,13 @@ const getStatusBadgeClass = (status: string) => {
   padding: $space-6;
 
   .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: $space-4;
     margin-bottom: $space-6;
+    flex-wrap: wrap;
+
     .page-title {
       font-size: $fs-2xl;
       font-weight: 800;
@@ -287,6 +448,116 @@ const getStatusBadgeClass = (status: string) => {
       font-size: $fs-sm;
       color: $color-text-muted;
       margin-top: $space-1;
+    }
+
+    .btn-header-print {
+      border-color: #cbd5e1;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+
+      &:hover {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+      }
+    }
+  }
+
+  .bulk-actions-bar {
+    position: sticky;
+    top: 70px;
+    z-index: 50;
+    background: #0f172a;
+    color: #ffffff;
+    padding: 12px 20px;
+    border-radius: $radius-lg;
+    margin-bottom: $space-4;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-3;
+    flex-wrap: wrap;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+
+    .bulk-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+
+      .bulk-count-badge {
+        background: #eb286c;
+        color: #ffffff;
+        padding: 2px 8px;
+        border-radius: $radius-full;
+        font-weight: 800;
+        font-size: 12px;
+      }
+    }
+
+    .bulk-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+
+      .btn-print-bulk {
+        background: #eb286c;
+        color: #ffffff;
+        border: none;
+        padding: 7px 16px;
+        border-radius: $radius-md;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: background 0.15s ease;
+
+        &:hover {
+          background: #d41f5e;
+        }
+      }
+
+      .btn-confirm-bulk {
+        background: #16a34a;
+        color: #ffffff;
+        border: none;
+        padding: 7px 14px;
+        border-radius: $radius-md;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.15s ease;
+
+        &:hover:not(:disabled) {
+          background: #15803d;
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      }
+
+      .btn-deselect {
+        background: transparent;
+        color: #94a3b8;
+        border: 1px solid #475569;
+        padding: 6px 12px;
+        border-radius: $radius-md;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover {
+          color: #ffffff;
+          border-color: #cbd5e1;
+        }
+      }
     }
   }
 
@@ -417,8 +688,84 @@ const getStatusBadgeClass = (status: string) => {
         vertical-align: middle;
       }
 
-      .order-row:hover {
-        background: $color-bg-subtle;
+      .checkbox-cell {
+        width: 40px;
+        text-align: center;
+        padding-left: $space-3;
+        padding-right: $space-2;
+
+        .checkbox-custom {
+          width: 17px;
+          height: 17px;
+          cursor: pointer;
+          accent-color: $color-primary;
+          border-radius: $radius-sm;
+        }
+      }
+
+      .order-row {
+        transition: background 0.15s ease;
+
+        &:hover {
+          background: $color-bg-subtle;
+        }
+
+        &.is-selected {
+          background: rgba($color-primary, 0.05);
+        }
+      }
+
+      .actions-cell {
+        .row-actions {
+          display: flex;
+          align-items: center;
+          gap: $space-2;
+          white-space: nowrap;
+
+          .btn-confirm-sm {
+            background: #16a34a;
+            color: #ffffff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: $radius-md;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+
+            &:hover:not(:disabled) {
+              background: #15803d;
+            }
+
+            &:disabled {
+              opacity: 0.6;
+              cursor: not-allowed;
+            }
+          }
+
+          .btn-ticket-sm {
+            background: #f1f5f9;
+            color: #1e293b;
+            border: 1px solid #cbd5e1;
+            padding: 5px 9px;
+            border-radius: $radius-md;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+
+            &:hover {
+              background: #e2e8f0;
+              border-color: #94a3b8;
+            }
+          }
+        }
       }
 
       .order-link {

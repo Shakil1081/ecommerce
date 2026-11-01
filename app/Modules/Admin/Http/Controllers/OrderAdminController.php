@@ -9,10 +9,12 @@ use App\Modules\Inventory\Actions\CommitStockReservationAction;
 use App\Modules\Inventory\Actions\ReleaseStockReservationAction;
 use App\Modules\Inventory\Actions\ReserveStockForOrderAction;
 use App\Modules\Inventory\Exceptions\InsufficientStockException;
+use App\Modules\Order\Actions\GenerateOrderBagTicketHtmlAction;
 use App\Modules\Order\Actions\TransitionOrderStatusAction;
 use App\Modules\Order\Models\Order;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -134,5 +136,84 @@ final class OrderAdminController extends Controller
         }
 
         return back()->with('success', "Order [{$order->order_number}] transitioned to {$targetStatus} successfully.");
+    }
+
+    /**
+     * Render printable Order Bag Tickets with barcodes for single or multiple orders.
+     */
+    public function printBagTickets(Request $request, GenerateOrderBagTicketHtmlAction $action): HttpResponse
+    {
+        $orderIdsInput = $request->input('order_ids');
+
+        if (is_string($orderIdsInput)) {
+            $orderIds = array_filter(array_map('intval', explode(',', $orderIdsInput)));
+        } else {
+            $orderIds = array_filter(array_map('intval', (array) $orderIdsInput));
+        }
+
+        if (empty($orderIds)) {
+            return response('No valid order IDs provided for bag ticket printing.', 400);
+        }
+
+        $orders = Order::query()
+            ->with(['items', 'district'])
+            ->whereIn('id', $orderIds)
+            ->latest('id')
+            ->get()
+            ->all();
+
+        if (empty($orders)) {
+            return response('No matching orders found.', 404);
+        }
+
+        $html = $action($orders);
+
+        return response($html, 200, [
+            'Content-Type' => 'text/html; charset=UTF-8',
+        ]);
+    }
+
+    /**
+     * Bulk confirm multiple pending orders at once.
+     */
+    public function bulkConfirm(
+        Request $request,
+        TransitionOrderStatusAction $transitionAction,
+        ReserveStockForOrderAction $reserveAction
+    ): RedirectResponse {
+        $validated = $request->validate([
+            'order_ids' => ['required', 'array', 'min:1'],
+            'order_ids.*' => ['integer', 'exists:orders,id'],
+        ]);
+
+        $orders = Order::query()
+            ->whereIn('id', $validated['order_ids'])
+            ->where('status', Order::STATUS_PENDING)
+            ->get();
+
+        $confirmedCount = 0;
+        $failedCount = 0;
+
+        foreach ($orders as $order) {
+            try {
+                $reserveAction($order);
+                $transitionAction(
+                    order: $order,
+                    targetStatus: Order::STATUS_CONFIRMED,
+                    changedBy: $request->user(),
+                    reason: 'Bulk confirmed from admin orders dashboard.'
+                );
+                $confirmedCount++;
+            } catch (InsufficientStockException $e) {
+                $failedCount++;
+            }
+        }
+
+        $message = "{$confirmedCount} order(s) confirmed successfully.";
+        if ($failedCount > 0) {
+            $message .= " {$failedCount} order(s) could not be confirmed due to insufficient stock.";
+        }
+
+        return back()->with('success', $message);
     }
 }
