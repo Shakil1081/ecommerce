@@ -25,11 +25,12 @@ final class StorefrontShopTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Storefront/Shop')
-            ->has('products', 5)
+            ->component('Storefront/Home')
+            ->has('bestSellingProducts')
+            ->has('newArrivals')
+            ->has('allProducts')
             ->has('categories', 5)
             ->has('brands', 7)
-            ->has('filters')
         );
 
         $shopResponse = $this->get('/shop');
@@ -37,6 +38,9 @@ final class StorefrontShopTest extends TestCase
         $shopResponse->assertInertia(fn (Assert $page) => $page
             ->component('Storefront/Shop')
             ->has('products', 5)
+            ->has('categories', 5)
+            ->has('brands', 7)
+            ->has('filters')
         );
     }
 
@@ -89,4 +93,3 @@ final class StorefrontShopTest extends TestCase
         $response->assertNotFound();
     }
 }
-

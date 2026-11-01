@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import type { SharedProps } from '@/types';
 
 defineProps<{
@@ -9,9 +9,20 @@ defineProps<{
 
 const page = usePage<SharedProps>();
 const sidebarCollapsed = ref(false);
+const isLoggingOut = ref(false);
 
 const toggleSidebar = () => {
   sidebarCollapsed.value = !sidebarCollapsed.value;
+};
+
+const handleLogout = () => {
+  if (isLoggingOut.value) return;
+  isLoggingOut.value = true;
+  router.post('/logout', {}, {
+    onFinish: () => {
+      isLoggingOut.value = false;
+    },
+  });
 };
 </script>
 
@@ -160,6 +171,29 @@ const toggleSidebar = () => {
           <span v-if="!sidebarCollapsed">System Info & Updates</span>
         </Link>
       </nav>
+
+      <!-- Sidebar User Profile & Logout -->
+      <div class="sidebar-footer" :class="{ 'collapsed': sidebarCollapsed }">
+        <div v-if="!sidebarCollapsed" class="sidebar-user-card">
+          <span class="user-avatar-badge">👤</span>
+          <div class="sidebar-user-details">
+            <span class="sidebar-user-name">{{ page.props.auth?.user?.name || 'Administrator' }}</span>
+            <span class="sidebar-user-email">{{ page.props.auth?.user?.email || 'admin@ecommerce.test' }}</span>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="sidebar-logout-btn"
+          :title="sidebarCollapsed ? 'Sign Out / Logout' : undefined"
+          :disabled="isLoggingOut"
+          @click="handleLogout"
+        >
+          <span class="logout-icon">🚪</span>
+          <span v-if="!sidebarCollapsed" class="logout-label">
+            {{ isLoggingOut ? 'Signing out...' : 'Sign Out' }}
+          </span>
+        </button>
+      </div>
     </aside>
 
     <!-- Main Content Area -->
@@ -170,11 +204,24 @@ const toggleSidebar = () => {
           <h2 class="page-title">{{ title || 'Dashboard' }}</h2>
         </div>
         <div class="topbar-right">
+          <Link href="/shop" class="topbar-storefront-link" title="Open Storefront">
+            <span>🛍️</span> Storefront
+          </Link>
           <span class="version-tag badge badge-primary">v0.1.0 Alpha</span>
           <div class="user-profile">
             <span class="user-avatar">👤</span>
             <span class="user-name">{{ page.props.auth?.user?.name || 'Administrator' }}</span>
           </div>
+          <button
+            type="button"
+            class="topbar-logout-btn"
+            title="Sign Out / Logout"
+            :disabled="isLoggingOut"
+            @click="handleLogout"
+          >
+            <span class="logout-icon">🚪</span>
+            <span class="logout-text">{{ isLoggingOut ? 'Signing out...' : 'Logout' }}</span>
+          </button>
         </div>
       </header>
 
@@ -301,6 +348,95 @@ const toggleSidebar = () => {
       }
     }
   }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: $space-4 $space-3;
+    border-top: 1px solid $color-neutral-800;
+    background-color: rgba($color-neutral-950, 0.4);
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+
+    &.collapsed {
+      padding: $space-3 $space-2;
+      align-items: center;
+    }
+
+    .sidebar-user-card {
+      display: flex;
+      align-items: center;
+      gap: $space-3;
+      padding: 0 $space-2;
+
+      .user-avatar-badge {
+        font-size: $fs-base;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: $color-neutral-800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .sidebar-user-details {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+
+        .sidebar-user-name {
+          font-size: $fs-xs;
+          font-weight: $fw-bold;
+          color: $color-neutral-100;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .sidebar-user-email {
+          font-size: $fs-2xs;
+          color: $color-neutral-400;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+
+    .sidebar-logout-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: $space-2;
+      width: 100%;
+      padding: $space-2 $space-3;
+      background: rgba($color-danger, 0.12);
+      color: #fca5a5;
+      border: 1px solid rgba($color-danger, 0.25);
+      border-radius: $radius-lg;
+      font-size: $fs-xs;
+      font-weight: $fw-semibold;
+      cursor: pointer;
+      transition: all $transition-fast;
+
+      &:hover:not(:disabled) {
+        background: rgba($color-danger, 0.25);
+        color: #ffffff;
+        border-color: $color-danger;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .logout-icon {
+        font-size: $fs-sm;
+      }
+    }
+  }
 }
 
 .sidebar-collapsed .admin-sidebar {
@@ -345,6 +481,57 @@ const toggleSidebar = () => {
       font-size: $fs-sm;
       font-weight: $fw-medium;
       color: $color-neutral-700;
+    }
+
+    .topbar-storefront-link {
+      display: inline-flex;
+      align-items: center;
+      gap: $space-1;
+      font-size: $fs-xs;
+      font-weight: $fw-medium;
+      color: $color-neutral-600;
+      padding: 4px $space-3;
+      border-radius: $radius-full;
+      background: $color-neutral-100;
+      text-decoration: none;
+      border: 1px solid $color-neutral-200;
+      transition: all $transition-fast;
+
+      &:hover {
+        background: $color-primary-50;
+        color: $color-primary-700;
+        border-color: $color-primary-300;
+      }
+    }
+
+    .topbar-logout-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: $space-1;
+      font-size: $fs-xs;
+      font-weight: $fw-semibold;
+      color: $color-neutral-700;
+      padding: 6px $space-3;
+      border-radius: $radius-lg;
+      background: $color-neutral-100;
+      border: 1px solid $color-neutral-300;
+      cursor: pointer;
+      transition: all $transition-fast;
+
+      &:hover:not(:disabled) {
+        background: rgba($color-danger, 0.1);
+        color: $color-danger;
+        border-color: rgba($color-danger, 0.4);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .logout-icon {
+        font-size: $fs-sm;
+      }
     }
   }
 }

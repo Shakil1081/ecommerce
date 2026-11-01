@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Admin\Http\Controllers\AiAdminController;
 use App\Modules\Admin\Http\Controllers\AuditLogAdminController;
+use App\Modules\Admin\Http\Controllers\AuthController;
 use App\Modules\Admin\Http\Controllers\BotSecuritySettingsController;
 use App\Modules\Admin\Http\Controllers\CatalogController;
 use App\Modules\Admin\Http\Controllers\CommunicationAdminController;
@@ -35,8 +36,15 @@ use App\Modules\Seo\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+// Authentication (Login & Logout)
+Route::get('/login', [AuthController::class, 'create'])->name('login');
+Route::post('/login', [AuthController::class, 'store'])->name('login.store');
+Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
+Route::post('/admin/logout', [AuthController::class, 'destroy'])->name('admin.logout');
+Route::get('/logout', [AuthController::class, 'destroy']);
+
 // Customer-Facing Storefront & Shop Catalog
-Route::get('/', [StorefrontController::class, 'index'])->name('storefront.home');
+Route::get('/', [StorefrontController::class, 'home'])->name('storefront.home');
 Route::get('/shop', [StorefrontController::class, 'index'])->name('storefront.shop');
 Route::get('/products/{slug}', [StorefrontController::class, 'show'])->name('storefront.product.show');
 
