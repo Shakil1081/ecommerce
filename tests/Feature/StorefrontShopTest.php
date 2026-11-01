@@ -29,6 +29,7 @@ final class StorefrontShopTest extends TestCase
             ->has('bestSellingProducts')
             ->has('newArrivals')
             ->has('allProducts')
+            ->has('pagination')
             ->has('categories', 5)
             ->has('brands', 7)
         );

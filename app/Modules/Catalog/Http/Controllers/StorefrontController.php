@@ -16,43 +16,73 @@ use Inertia\Response;
 class StorefrontController extends Controller
 {
     /**
-     * Display the customer-facing Home Page with Best Selling, New Arrivals, All Products, and Why Us sections.
+     * Display the customer-facing Home Page with Best Selling, New Arrivals, Paginated All Products, and Why Us sections.
      */
-    public function home(): Response
+    public function home(Request $request): Response
     {
-        $baseQuery = Product::query()
+        $categorySlug = $request->input('category');
+        $perPage = 12;
+
+        $allProductsQuery = Product::query()
             ->where('is_published', true)
-            ->with(['category', 'brand', 'variants.stocks', 'media']);
+            ->with(['category:id,name,slug', 'brand:id,name,slug,origin_country', 'variants.stocks', 'media']);
 
-        $allProducts = (clone $baseQuery)
-            ->orderBy('is_featured', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(fn (Product $p) => $this->formatProductCard($p));
-
-        $bestSellingProducts = (clone $baseQuery)
-            ->where('is_featured', true)
-            ->orderBy('created_at', 'desc')
-            ->take(8)
-            ->get()
-            ->map(fn (Product $p) => $this->formatProductCard($p));
-
-        if ($bestSellingProducts->count() < 4) {
-            $bestSellingProducts = $allProducts->take(8);
+        if (! empty($categorySlug) && $categorySlug !== 'all') {
+            $allProductsQuery->whereHas('category', fn ($q) => $q->where('slug', $categorySlug));
         }
 
-        $newArrivals = (clone $baseQuery)
+        $allProductsQuery->orderBy('is_featured', 'desc')->orderBy('created_at', 'desc');
+
+        $paginated = $allProductsQuery->paginate($perPage)->withQueryString();
+
+        $allProducts = $paginated->getCollection()->map(fn (Product $p) => $this->formatProductCard($p))->values();
+
+        $pagination = [
+            'current_page' => $paginated->currentPage(),
+            'last_page' => $paginated->lastPage(),
+            'per_page' => $paginated->perPage(),
+            'total' => $paginated->total(),
+            'from' => $paginated->firstItem(),
+            'to' => $paginated->lastItem(),
+            'has_more_pages' => $paginated->hasMorePages(),
+            'prev_page_url' => $paginated->previousPageUrl(),
+            'next_page_url' => $paginated->nextPageUrl(),
+            'links' => $paginated->linkCollection()->toArray(),
+        ];
+
+        // Best Selling & New Arrivals - evaluated on full page render, skipped on partial pagination reloads
+        $bestSellingProducts = fn () => Product::query()
+            ->where('is_published', true)
+            ->where('is_featured', true)
+            ->with(['category:id,name,slug', 'brand:id,name,slug,origin_country', 'variants.stocks', 'media'])
+            ->orderBy('created_at', 'desc')
+            ->take(8)
+            ->get()
+            ->map(fn (Product $p) => $this->formatProductCard($p))
+            ->whenEmpty(function () {
+                return Product::query()
+                    ->where('is_published', true)
+                    ->with(['category:id,name,slug', 'brand:id,name,slug,origin_country', 'variants.stocks', 'media'])
+                    ->orderBy('created_at', 'desc')
+                    ->take(8)
+                    ->get()
+                    ->map(fn (Product $p) => $this->formatProductCard($p));
+            });
+
+        $newArrivals = fn () => Product::query()
+            ->where('is_published', true)
+            ->with(['category:id,name,slug', 'brand:id,name,slug,origin_country', 'variants.stocks', 'media'])
             ->orderBy('created_at', 'desc')
             ->take(8)
             ->get()
             ->map(fn (Product $p) => $this->formatProductCard($p));
 
-        $categories = Category::active()
+        $categories = fn () => Category::active()
             ->withCount(['products' => fn ($q) => $q->where('is_published', true)])
             ->orderBy('sort_order')
             ->get(['id', 'name', 'slug', 'description']);
 
-        $brands = Brand::active()
+        $brands = fn () => Brand::active()
             ->withCount(['products' => fn ($q) => $q->where('is_published', true)])
             ->orderBy('name')
             ->take(8)
@@ -62,8 +92,10 @@ class StorefrontController extends Controller
             'bestSellingProducts' => $bestSellingProducts,
             'newArrivals' => $newArrivals,
             'allProducts' => $allProducts,
+            'pagination' => $pagination,
             'categories' => $categories,
             'brands' => $brands,
+            'activeCategory' => $categorySlug ?: 'all',
         ]);
     }
 
