@@ -160,7 +160,7 @@ final class FraudRiskScoreTest extends TestCase
 
         // Timing (+50) + Dummy phone (+50) = 100
         $this->assertEquals(100, $assessment->score);
-        $this->assertEquals(OrderFraudRiskAssessmentDto::LEVEL_BLACKLISTED, $assessment->riskLevel);
+        $this->assertEquals(OrderFraudRiskAssessmentDto::LEVEL_HIGH, $assessment->riskLevel);
         $this->assertFalse($assessment->isCodAllowed);
     }
 

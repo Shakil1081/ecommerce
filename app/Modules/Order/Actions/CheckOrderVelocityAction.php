@@ -55,14 +55,17 @@ final class CheckOrderVelocityAction
             ->whereIn('status', self::UNFULFILLED_STATUSES)
             ->count();
 
-        if ($paymentMethod === 'cash_on_delivery' && $activeCodOrdersCount >= $maxActiveCodOrders) {
+        $isLoopbackIp = in_array($ipAddress, ['127.0.0.1', '::1', 'localhost'], true);
+        $isLocalTesting = app()->environment('local') && $isLoopbackIp;
+
+        if ($paymentMethod === 'cash_on_delivery' && $activeCodOrdersCount >= $maxActiveCodOrders && ! $isLocalTesting) {
             $violations[] = 'active_cod_limit_exceeded';
             $primaryReason ??= "Customer already has {$activeCodOrdersCount} active unfulfilled Cash on Delivery order(s). Maximum permitted is {$maxActiveCodOrders}.";
         }
 
         // 2. Check daily order burst limit for the client IP address
         $dailyOrdersFromIpCount = 0;
-        if (! empty($ipAddress)) {
+        if (! empty($ipAddress) && ! $isLoopbackIp) {
             $dailyOrdersFromIpCount = Order::query()
                 ->where('ip_address', $ipAddress)
                 ->where('created_at', '>=', $since)

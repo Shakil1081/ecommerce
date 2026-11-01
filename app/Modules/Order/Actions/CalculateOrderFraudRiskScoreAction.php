@@ -97,13 +97,23 @@ final class CalculateOrderFraudRiskScoreAction
         $honeypotValue = $orderData['honeypot_value'] ?? $orderData[$honeypotKey] ?? null;
 
         if (! empty($honeypotValue)) {
-            $score += 100;
-            $signals['honeypot'] = [
-                'triggered' => true,
-                'field' => $honeypotKey,
-                'points' => 100,
-            ];
-            $reasons[] = 'Automated bot submission detected via invisible honeypot trap.';
+            return new OrderFraudRiskAssessmentDto(
+                score: 100,
+                riskLevel: OrderFraudRiskAssessmentDto::LEVEL_BLACKLISTED,
+                isCodAllowed: false,
+                requiresOtp: false,
+                requiresAdvanceDeliveryCharge: false,
+                signals: [
+                    'honeypot' => [
+                        'triggered' => true,
+                        'field' => $honeypotKey,
+                        'points' => 100,
+                    ],
+                ],
+                reasons: [
+                    'Automated bot submission detected via invisible honeypot trap.',
+                ]
+            );
         }
 
         // 2. Layer 2: Client Submission Timing Guard

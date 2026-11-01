@@ -33,10 +33,6 @@ final readonly class OrderFraudRiskAssessmentDto
      */
     public static function determineRiskLevel(int $score, bool $isCourierHighRisk = false): string
     {
-        if ($score >= 100) {
-            return self::LEVEL_BLACKLISTED;
-        }
-
         if ($score >= 70 || $isCourierHighRisk) {
             return self::LEVEL_HIGH;
         }
