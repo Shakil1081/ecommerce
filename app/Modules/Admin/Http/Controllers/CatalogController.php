@@ -67,6 +67,7 @@ class CatalogController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'slug' => ['nullable', 'string', 'max:255'],
             'category_id' => ['required', 'exists:categories,id'],
             'brand_id' => ['nullable', 'exists:brands,id'],
             'hs_code' => ['nullable', 'string', 'max:30'],
@@ -78,10 +79,23 @@ class CatalogController extends Controller
             'is_featured' => ['boolean'],
             'default_selling_price' => ['required', 'numeric', 'min:0'],
             'default_purchase_cost' => ['nullable', 'numeric', 'min:0'],
+            'compare_at_price' => ['nullable', 'numeric', 'min:0'],
+            'sku' => ['nullable', 'string', 'max:100'],
+            'barcode_ean' => ['nullable', 'string', 'max:100'],
+            'weight_kg' => ['nullable', 'numeric', 'min:0'],
+            'stock_quantity' => ['nullable', 'integer', 'min:0'],
+            'seo_title' => ['nullable', 'string', 'max:255'],
+            'seo_description' => ['nullable', 'string', 'max:500'],
+            'image_url' => ['nullable', 'string'],
         ]);
+
+        $productSlug = !empty($validated['slug'])
+            ? \Illuminate\Support\Str::slug($validated['slug'])
+            : \Illuminate\Support\Str::slug($validated['name']);
 
         $product = Product::create([
             'name' => $validated['name'],
+            'slug' => $productSlug,
             'category_id' => $validated['category_id'],
             'brand_id' => $validated['brand_id'] ?? null,
             'hs_code' => $validated['hs_code'] ?? null,
@@ -91,15 +105,66 @@ class CatalogController extends Controller
             'specifications' => $validated['specifications'] ?? [],
             'is_published' => $validated['is_published'] ?? true,
             'is_featured' => $validated['is_featured'] ?? false,
+            'seo_title' => $validated['seo_title'] ?? null,
+            'seo_description' => $validated['seo_description'] ?? null,
         ]);
 
+        // Attach image if uploaded or URL provided
+        if ($request->hasFile('image')) {
+            $product->addMediaFromRequest('image')->toMediaCollection('products');
+        } elseif (!empty($validated['image_url'])) {
+            try {
+                $product->addMediaFromUrl($validated['image_url'])->toMediaCollection('products');
+            } catch (\Throwable) {
+                // Ignore if sandbox or network blocks external image fetch
+            }
+        }
+
         // Create default base variant
-        $generateAction(
+        $variants = $generateAction(
             $product,
             [],
             (float) $validated['default_selling_price'],
-            (float) ($validated['default_purchase_cost'] ?? 0.0)
+            (float) ($validated['default_purchase_cost'] ?? 0.0),
+            (float) ($validated['weight_kg'] ?? 0.500)
         );
+
+        $baseVariant = $variants->first();
+        if ($baseVariant) {
+            $variantUpdates = [];
+            if (!empty($validated['sku'])) {
+                $variantUpdates['sku'] = strtoupper($validated['sku']);
+            }
+            if (!empty($validated['barcode_ean'])) {
+                $variantUpdates['barcode_ean'] = $validated['barcode_ean'];
+            }
+            if (isset($validated['compare_at_price'])) {
+                $variantUpdates['compare_at_price_bdt'] = (float) $validated['compare_at_price'];
+            }
+            if (!empty($variantUpdates)) {
+                $baseVariant->update($variantUpdates);
+            }
+
+            // Assign initial stock to primary warehouse if quantity provided
+            $initialStock = (int) ($validated['stock_quantity'] ?? 0);
+            if ($initialStock > 0) {
+                $primaryWarehouse = \App\Modules\Inventory\Models\Warehouse::where('is_primary', true)->first()
+                    ?? \App\Modules\Inventory\Models\Warehouse::first();
+                if ($primaryWarehouse) {
+                    \App\Modules\Inventory\Models\InventoryStock::updateOrCreate(
+                        [
+                            'warehouse_id' => $primaryWarehouse->id,
+                            'product_variant_id' => $baseVariant->id,
+                        ],
+                        [
+                            'physical_quantity' => $initialStock,
+                            'reserved_quantity' => 0,
+                            'bin_location' => 'MAIN-01',
+                        ]
+                    );
+                }
+            }
+        }
 
         return redirect()->route('admin.products.index')
             ->with('success', "Product '{$product->name}' created successfully.");
@@ -110,10 +175,13 @@ class CatalogController extends Controller
      */
     public function edit(Product $product): Response
     {
+        $defaultVariant = $product->defaultVariant;
+
         return Inertia::render('Admin/Catalog/ProductForm', [
             'product' => [
                 'id' => $product->id,
                 'name' => $product->name,
+                'slug' => $product->slug,
                 'category_id' => $product->category_id,
                 'brand_id' => $product->brand_id,
                 'hs_code' => $product->hs_code,
@@ -123,6 +191,16 @@ class CatalogController extends Controller
                 'specifications' => $product->specifications ?? [],
                 'is_published' => $product->is_published,
                 'is_featured' => $product->is_featured,
+                'seo_title' => $product->seo_title,
+                'seo_description' => $product->seo_description,
+                'image_url' => $product->getFirstMediaUrl('products') ?: $product->getFirstMediaUrl('thumbnail'),
+                'default_selling_price' => $defaultVariant ? (float) $defaultVariant->selling_price_bdt : 0,
+                'default_purchase_cost' => $defaultVariant ? (float) $defaultVariant->purchase_cost_bdt : 0,
+                'compare_at_price' => $defaultVariant ? (float) ($defaultVariant->compare_at_price_bdt ?? 0) : 0,
+                'sku' => $defaultVariant?->sku ?? '',
+                'barcode_ean' => $defaultVariant?->barcode_ean ?? '',
+                'weight_kg' => $defaultVariant ? (float) $defaultVariant->weight_kg : 0.5,
+                'stock_quantity' => $defaultVariant ? $defaultVariant->available_quantity : 0,
             ],
             'categories' => Category::active()->orderBy('name')->get(['id', 'name']),
             'brands' => Brand::active()->orderBy('name')->get(['id', 'name', 'origin_country']),
@@ -137,6 +215,7 @@ class CatalogController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'slug' => ['nullable', 'string', 'max:255'],
             'category_id' => ['required', 'exists:categories,id'],
             'brand_id' => ['nullable', 'exists:brands,id'],
             'hs_code' => ['nullable', 'string', 'max:30'],
@@ -146,9 +225,61 @@ class CatalogController extends Controller
             'specifications' => ['nullable', 'array'],
             'is_published' => ['boolean'],
             'is_featured' => ['boolean'],
+            'seo_title' => ['nullable', 'string', 'max:255'],
+            'seo_description' => ['nullable', 'string', 'max:500'],
+            'image_url' => ['nullable', 'string'],
+            'default_selling_price' => ['nullable', 'numeric', 'min:0'],
+            'default_purchase_cost' => ['nullable', 'numeric', 'min:0'],
+            'compare_at_price' => ['nullable', 'numeric', 'min:0'],
+            'sku' => ['nullable', 'string', 'max:100'],
+            'barcode_ean' => ['nullable', 'string', 'max:100'],
+            'weight_kg' => ['nullable', 'numeric', 'min:0'],
         ]);
 
+        if (!empty($validated['slug'])) {
+            $validated['slug'] = \Illuminate\Support\Str::slug($validated['slug']);
+        }
+
         $product->update($validated);
+
+        if ($request->hasFile('image')) {
+            $product->clearMediaCollection('products');
+            $product->addMediaFromRequest('image')->toMediaCollection('products');
+        } elseif (!empty($validated['image_url']) && $validated['image_url'] !== $product->getFirstMediaUrl('products')) {
+            try {
+                $product->clearMediaCollection('products');
+                $product->addMediaFromUrl($validated['image_url'])->toMediaCollection('products');
+            } catch (\Throwable) {
+                // Ignore if sandbox or network blocks external image fetch
+            }
+        }
+
+        // Update default variant if prices or sku changed
+        $defaultVariant = $product->defaultVariant;
+        if ($defaultVariant) {
+            $vUpdates = [];
+            if (isset($validated['default_selling_price'])) {
+                $vUpdates['selling_price_bdt'] = (float) $validated['default_selling_price'];
+            }
+            if (isset($validated['default_purchase_cost'])) {
+                $vUpdates['purchase_cost_bdt'] = (float) $validated['default_purchase_cost'];
+            }
+            if (isset($validated['compare_at_price'])) {
+                $vUpdates['compare_at_price_bdt'] = (float) $validated['compare_at_price'];
+            }
+            if (!empty($validated['sku'])) {
+                $vUpdates['sku'] = strtoupper($validated['sku']);
+            }
+            if (!empty($validated['barcode_ean'])) {
+                $vUpdates['barcode_ean'] = $validated['barcode_ean'];
+            }
+            if (isset($validated['weight_kg'])) {
+                $vUpdates['weight_kg'] = (float) $validated['weight_kg'];
+            }
+            if (!empty($vUpdates)) {
+                $defaultVariant->update($vUpdates);
+            }
+        }
 
         return redirect()->route('admin.products.index')
             ->with('success', "Product '{$product->name}' updated successfully.");
