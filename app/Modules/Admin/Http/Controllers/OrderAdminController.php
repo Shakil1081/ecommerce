@@ -170,7 +170,6 @@ final class OrderAdminController extends Controller
         foreach ($orders as $order) {
             $order->increment('ticket_print_count');
             $order->updateQuietly(['ticket_printed_at' => now()]);
-            $order->ticket_print_count++;
         }
 
         $html = $action($orders);
@@ -210,6 +209,7 @@ final class OrderAdminController extends Controller
         foreach ($orders as $order) {
             if (! $order->canTransitionTo($targetStatus)) {
                 $failedCount++;
+
                 continue;
             }
 

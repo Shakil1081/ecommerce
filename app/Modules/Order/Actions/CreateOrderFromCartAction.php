@@ -77,7 +77,7 @@ final class CreateOrderFromCartAction
                 $shippingFee = match ($deliveryZone) {
                     'dhaka_suburbs' => '100.0000',
                     'outside_dhaka' => '130.0000',
-                    default => '70.0000', // inside_dhaka
+                    default => '60.0000', // inside_dhaka
                 };
             }
 

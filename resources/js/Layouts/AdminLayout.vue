@@ -45,6 +45,7 @@ const menuGroups: MenuGroup[] = [
       { title: 'Product Catalog', href: '/admin/products', icon: '🏷️' },
       { title: 'Add New Product', href: '/admin/products/create', icon: '➕', highlight: true },
       { title: 'Orders & Anti-Fraud', href: '/admin/orders', icon: '🛍️' },
+      { title: 'Order Returns & RMA', href: '/admin/tax-compliance/rma', icon: '🔄' },
       { title: 'Fraud Directory', href: '/admin/fraud-directory', icon: '🛡️' },
     ],
   },

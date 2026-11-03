@@ -19,12 +19,29 @@ export interface AppMeta {
     currency_symbol: string;
 }
 
+export interface NavCategoryChild {
+    id: string;
+    name: string;
+    slug: string;
+}
+
+export interface NavCategoryItem {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string | null;
+    is_featured: boolean;
+    products_count: number;
+    children: NavCategoryChild[];
+}
+
 export interface SharedProps {
     auth: {
         user: User | null;
     };
     flash: FlashMessages;
     app: AppMeta;
+    categories?: NavCategoryItem[];
     [key: string]: unknown;
 }
 

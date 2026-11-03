@@ -67,7 +67,8 @@ const deleteProduct = (product: ProductItem) => {
                 <th>Product Information</th>
                 <th>Category & Brand</th>
                 <th>Origin & HS Code</th>
-                <th>Variants & Price Range</th>
+                <th>Price & Variants</th>
+                <th>Stock Level</th>
                 <th>Status</th>
                 <th class="text-right">Actions</th>
               </tr>
@@ -132,13 +133,20 @@ const deleteProduct = (product: ProductItem) => {
                       <span class="badge badge-neutral">
                         {{ product.variants_count }} {{ product.variants_count === 1 ? 'Variant' : 'Variants' }}
                       </span>
-                      <span
-                        class="badge"
-                        :class="product.total_stock > 0 ? 'badge-stock-in' : 'badge-stock-out'"
-                      >
-                        {{ product.total_stock > 0 ? `${product.total_stock} in stock` : '0 in stock' }}
-                      </span>
                     </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="stock-cell">
+                    <span
+                      class="stock-pill"
+                      :class="product.total_stock > 10 ? 'stock-healthy' : product.total_stock > 0 ? 'stock-low' : 'stock-out'"
+                      :title="`Current physical inventory in warehouse: ${product.total_stock} units`"
+                    >
+                      <span v-if="product.total_stock > 10">✅ {{ product.total_stock }} in stock</span>
+                      <span v-else-if="product.total_stock > 0">⚠️ Low: {{ product.total_stock }} left</span>
+                      <span v-else>❌ 0 in stock</span>
+                    </span>
                   </div>
                 </td>
                 <td>
@@ -170,7 +178,7 @@ const deleteProduct = (product: ProductItem) => {
                 </td>
               </tr>
               <tr v-if="products.length === 0">
-                <td colspan="6" class="empty-state-cell">
+                <td colspan="7" class="empty-state-cell">
                   <div class="empty-catalog-box">
                     <span class="empty-catalog-icon">📦</span>
                     <h3 class="empty-catalog-title">No products found in the catalog</h3>
@@ -435,6 +443,40 @@ const deleteProduct = (product: ProductItem) => {
     align-items: center;
     gap: $spacing-1;
     flex-wrap: wrap;
+  }
+}
+
+.stock-cell {
+  display: flex;
+  align-items: center;
+
+  .stock-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: $radius-full;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+
+    &.stock-healthy {
+      background: #ecfdf5;
+      color: #047857;
+      border: 1px solid #a7f3d0;
+    }
+
+    &.stock-low {
+      background: #fffbeb;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+
+    &.stock-out {
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
   }
 }
 

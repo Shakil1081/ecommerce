@@ -58,6 +58,40 @@ class HandleInertiaRequests extends Middleware
                 'currency' => config('app.currency', 'BDT'),
                 'currency_symbol' => config('app.currency_symbol', '৳'),
             ],
+            'categories' => function () {
+                if (! \Illuminate\Support\Facades\Schema::hasTable('categories')) {
+                    return [];
+                }
+
+                return \Illuminate\Support\Facades\Cache::remember(
+                    'storefront_shared_categories',
+                    now()->addMinutes(30),
+                    function () {
+                        return \App\Modules\Catalog\Models\Category::query()
+                            ->where('is_active', true)
+                            ->whereNull('parent_id')
+                            ->with(['children' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
+                            ->withCount('products')
+                            ->orderBy('sort_order')
+                            ->get()
+                            ->map(fn ($cat) => [
+                                'id' => (string) $cat->id,
+                                'name' => $cat->name,
+                                'slug' => $cat->slug,
+                                'description' => $cat->description,
+                                'is_featured' => (bool) $cat->is_featured,
+                                'products_count' => (int) $cat->products_count,
+                                'children' => $cat->children->map(fn ($child) => [
+                                    'id' => (string) $child->id,
+                                    'name' => $child->name,
+                                    'slug' => $child->slug,
+                                ])->values()->all(),
+                            ])
+                            ->values()
+                            ->all();
+                    }
+                );
+            },
         ];
     }
 }

@@ -49,6 +49,14 @@ class Category extends Model implements HasMedia
                 $category->slug = Str::slug($category->name);
             }
         });
+
+        static::saved(function () {
+            \Illuminate\Support\Facades\Cache::forget('storefront_shared_categories');
+        });
+
+        static::deleted(function () {
+            \Illuminate\Support\Facades\Cache::forget('storefront_shared_categories');
+        });
     }
 
     /**

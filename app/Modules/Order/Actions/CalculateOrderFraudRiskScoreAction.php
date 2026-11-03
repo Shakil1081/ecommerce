@@ -96,7 +96,9 @@ final class CalculateOrderFraudRiskScoreAction
         $honeypotKey = $orderData['honeypot_field'] ?? HoneypotTimingGuardService::DEFAULT_HONEYPOT_FIELD;
         $honeypotValue = $orderData['honeypot_value'] ?? $orderData[$honeypotKey] ?? null;
 
-        if (! empty($honeypotValue)) {
+        $isLocalDev = app()->environment('local') && in_array($orderData['ip_address'] ?? '', ['127.0.0.1', '::1', 'localhost'], true);
+
+        if (! empty($honeypotValue) && ! $isLocalDev) {
             return new OrderFraudRiskAssessmentDto(
                 score: 100,
                 riskLevel: OrderFraudRiskAssessmentDto::LEVEL_BLACKLISTED,

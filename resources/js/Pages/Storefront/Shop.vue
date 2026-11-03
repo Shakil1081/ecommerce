@@ -324,8 +324,20 @@ const formatPrice = (amount: number): string => {
                   :disabled="!product.in_stock || addingVariantId === product.default_variant_id"
                   @click="addToCart(product)"
                 >
-                  <span v-if="addingVariantId === product.default_variant_id">⏳ Adding...</span>
-                  <span v-else>🛒 Add to Cart</span>
+                  <span v-if="addingVariantId === product.default_variant_id" class="btn-cart-content">
+                    <svg class="cart-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4" stroke-dashoffset="10"></circle>
+                    </svg>
+                    <span>Adding...</span>
+                  </span>
+                  <span v-else class="btn-cart-content">
+                    <svg class="cart-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="9" cy="21" r="1"></circle>
+                      <circle cx="20" cy="21" r="1"></circle>
+                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    <span>Add to Cart</span>
+                  </span>
                 </button>
               </div>
             </div>
@@ -402,7 +414,7 @@ const formatPrice = (amount: number): string => {
   color: #3b0d1e;
   padding: $space-12 $space-4 $space-10;
   text-align: center;
-  border-bottom: 1px solid $color-primary-200;
+  border-bottom: none;
 
   .hero-content {
     max-width: 840px;
@@ -493,7 +505,8 @@ const formatPrice = (amount: number): string => {
 
 .category-pills-bar {
   background: $color-neutral-0;
-  border-bottom: 1px solid $color-neutral-200;
+  border-bottom: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   padding: $space-3 0;
   position: sticky;
   top: 0;
@@ -837,9 +850,36 @@ const formatPrice = (amount: number): string => {
       background: $color-primary-600;
       color: $color-neutral-0;
       border: 1px solid $color-primary-600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      .btn-cart-content {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+
+        .cart-btn-svg {
+          width: 16px;
+          height: 16px;
+          flex-shrink: 0;
+          transition: transform 0.2s ease;
+        }
+
+        .cart-spinner {
+          width: 15px;
+          height: 15px;
+          animation: spin-loader 0.8s linear infinite;
+        }
+      }
 
       &:hover:not(:disabled) {
         background: $color-primary-700;
+
+        .cart-btn-svg {
+          transform: scale(1.15) rotate(-6deg);
+        }
       }
 
       &:disabled {
@@ -991,6 +1031,15 @@ const formatPrice = (amount: number): string => {
         }
       }
     }
+  }
+}
+
+@keyframes spin-loader {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 </style>

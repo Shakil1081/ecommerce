@@ -7,6 +7,7 @@ namespace App\Modules\Order\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Cart\Actions\GetActiveCartAction;
 use App\Modules\Cart\Http\Resources\CartResource;
+use App\Modules\Common\Models\BangladeshDistrict;
 use App\Modules\Common\Models\BangladeshDivision;
 use App\Modules\Common\Security\HoneypotTimingGuardService;
 use App\Modules\Customer\Rules\BangladeshPhoneNumberRule;
@@ -70,8 +71,9 @@ final class CheckoutController extends Controller
             'customer_name' => ['required', 'string', 'min:2', 'max:150'],
             'customer_phone' => ['required', 'string', 'max:25'],
             'customer_email' => ['nullable', 'email', 'max:150'],
-            'division_id' => ['required', 'integer', 'exists:bangladesh_divisions,id'],
-            'district_id' => ['required', 'integer', 'exists:bangladesh_districts,id'],
+            'delivery_zone' => ['nullable', 'string', 'in:inside_dhaka,dhaka_suburbs,outside_dhaka'],
+            'division_id' => ['nullable', 'integer', 'exists:bangladesh_divisions,id'],
+            'district_id' => ['nullable', 'integer', 'exists:bangladesh_districts,id'],
             'delivery_address' => ['required', 'string', 'min:5', 'max:500'],
             'customer_notes' => ['nullable', 'string', 'max:500'],
             'payment_method' => ['required', 'string', 'in:cash_on_delivery,bkash,nagad,sslcommerz'],
@@ -80,8 +82,6 @@ final class CheckoutController extends Controller
         ], [
             'customer_name.required' => 'অনুগ্রহ করে আপনার নাম লিখুন।',
             'customer_phone.required' => 'অনুগ্রহ করে আপনার মোবাইল নম্বর লিখুন।',
-            'division_id.required' => 'অনুগ্রহ করে আপনার বিভাগ নির্বাচন করুন।',
-            'district_id.required' => 'অনুগ্রহ করে আপনার জেলা নির্বাচন করুন।',
             'delivery_address.required' => 'অনুগ্রহ করে আপনার সম্পূর্ণ ডেলিভারি ঠিকানা লিখুন।',
             'payment_method.required' => 'অনুগ্রহ করে পেমেন্ট মেথড নির্বাচন করুন।',
         ]);
@@ -106,14 +106,61 @@ final class CheckoutController extends Controller
             ]);
         }
 
+        $zone = $validated['delivery_zone'] ?? 'inside_dhaka';
+
+        // Resolve geographic district matching selected delivery zone or explicit district_id
+        $districtId = $validated['district_id'] ?? null;
+        $divisionId = $validated['division_id'] ?? null;
+
+        if (! $districtId) {
+            $district = BangladeshDistrict::query()
+                ->where('zone_type', $zone)
+                ->where('is_active', true)
+                ->first();
+
+            if (! $district) {
+                $division = BangladeshDivision::firstOrCreate(
+                    ['name_en' => 'Dhaka'],
+                    ['name_bn' => 'ঢাকা', 'is_active' => true]
+                );
+
+                $district = BangladeshDistrict::create([
+                    'division_id' => $division->id,
+                    'name_en' => match ($zone) {
+                        'outside_dhaka' => 'Chattogram',
+                        'dhaka_suburbs' => 'Gazipur',
+                        default => 'Dhaka',
+                    },
+                    'name_bn' => match ($zone) {
+                        'outside_dhaka' => 'চট্টগ্রাম',
+                        'dhaka_suburbs' => 'গাজীপুর',
+                        default => 'ঢাকা',
+                    },
+                    'code' => match ($zone) {
+                        'outside_dhaka' => 'CTG-01',
+                        'dhaka_suburbs' => 'GAZ-01',
+                        default => 'DHA-01',
+                    },
+                    'zone_type' => $zone,
+                    'is_active' => true,
+                ]);
+            }
+
+            $districtId = $district->id;
+            $divisionId = $district->division_id;
+        } elseif (! $divisionId) {
+            $district = BangladeshDistrict::find($districtId);
+            $divisionId = $district?->division_id;
+        }
+
         $order = $createOrder(
             cart: $cart,
             customerData: [
                 'customer_name' => $validated['customer_name'],
                 'customer_phone' => $localPhone,
                 'customer_email' => $validated['customer_email'] ?? $request->user()?->email,
-                'division_id' => (int) $validated['division_id'],
-                'district_id' => (int) $validated['district_id'],
+                'division_id' => (int) $divisionId,
+                'district_id' => (int) $districtId,
                 'delivery_address' => $validated['delivery_address'],
                 'customer_notes' => $validated['customer_notes'] ?? null,
                 'payment_method' => $validated['payment_method'],

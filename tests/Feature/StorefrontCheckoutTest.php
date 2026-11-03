@@ -135,4 +135,29 @@ final class StorefrontCheckoutTest extends TestCase
 
         $response->assertRedirect(route('storefront.order-confirmed', ['order' => $order->order_number]));
     }
+
+    public function test_user_can_submit_order_using_delivery_zone_without_division_or_district(): void
+    {
+        $getCart = app(GetActiveCartAction::class);
+        $addToCart = app(AddToCartAction::class);
+
+        $cart = $getCart(user: $this->user);
+        $addToCart($cart, $this->variant, 1);
+
+        $response = $this->actingAs($this->user)->post('/checkout', [
+            'customer_name' => 'Fahim Ahmed',
+            'customer_phone' => '01811223344',
+            'delivery_zone' => 'outside_dhaka',
+            'delivery_address' => 'GEC Circle, Nasirabad, Chattogram',
+            'payment_method' => 'cash_on_delivery',
+        ]);
+
+        $order = Order::latest()->first();
+        $this->assertNotNull($order);
+        $this->assertEquals('Fahim Ahmed', $order->customer_name);
+        $this->assertEquals('01811223344', $order->customer_phone);
+        $this->assertEquals('outside_dhaka', $order->delivery_zone);
+
+        $response->assertRedirect(route('storefront.order-confirmed', ['order' => $order->order_number]));
+    }
 }

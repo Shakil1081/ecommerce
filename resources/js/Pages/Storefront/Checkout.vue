@@ -50,7 +50,7 @@ interface CartProp {
 
 const props = defineProps<{
   cart: { data: CartProp } | CartProp;
-  divisions: Division[];
+  divisions?: Division[];
   timingToken?: string;
   freeShippingThreshold?: number;
   shippingRates?: {
@@ -74,8 +74,7 @@ const form = ref({
   customer_name: '',
   customer_phone: '',
   customer_email: '',
-  division_id: '' as string | number,
-  district_id: '' as string | number,
+  delivery_zone: 'inside_dhaka' as 'inside_dhaka' | 'dhaka_suburbs' | 'outside_dhaka',
   delivery_address: '',
   customer_notes: '',
   payment_method: 'cash_on_delivery',
@@ -89,52 +88,8 @@ const couponCode = ref('');
 const isApplyingCoupon = ref(false);
 const couponFeedback = ref<{ success: boolean; message: string } | null>(null);
 
-// Available districts for chosen division
-const availableDistricts = computed<District[]>(() => {
-  if (!form.value.division_id) return [];
-  const selectedDiv = props.divisions.find((d) => d.id === Number(form.value.division_id));
-  return selectedDiv?.districts || [];
-});
-
-// Auto-select Dhaka as default division if available
-if (props.divisions.length > 0 && !form.value.division_id) {
-  const dhakaDiv = props.divisions.find((d) => d.name_en.toLowerCase() === 'dhaka') || props.divisions[0];
-  form.value.division_id = dhakaDiv.id;
-  if (dhakaDiv.districts && dhakaDiv.districts.length > 0) {
-    const dhakaDistrict = dhakaDiv.districts.find((dist) => dist.name_en.toLowerCase() === 'dhaka') || dhakaDiv.districts[0];
-    form.value.district_id = dhakaDistrict.id;
-  }
-}
-
-// Reset district selection if division changes
-watch(
-  () => form.value.division_id,
-  (newDivId) => {
-    const div = props.divisions.find((d) => d.id === Number(newDivId));
-    if (div && div.districts && div.districts.length > 0) {
-      // If current district not in new division, select first district
-      const exists = div.districts.some((dist) => dist.id === Number(form.value.district_id));
-      if (!exists) {
-        form.value.district_id = div.districts[0].id;
-      }
-    } else {
-      form.value.district_id = '';
-    }
-  }
-);
-
-// Resolve current district object & courier delivery zone
-const selectedDistrict = computed<District | null>(() => {
-  if (!form.value.district_id) return null;
-  for (const div of props.divisions) {
-    const found = div.districts?.find((d) => d.id === Number(form.value.district_id));
-    if (found) return found;
-  }
-  return null;
-});
-
 const currentZone = computed<'inside_dhaka' | 'dhaka_suburbs' | 'outside_dhaka'>(() => {
-  return selectedDistrict.value?.zone_type || 'inside_dhaka';
+  return form.value.delivery_zone;
 });
 
 // Calculations
@@ -217,16 +172,6 @@ const handleOrderSubmit = () => {
     return;
   }
 
-  if (!form.value.division_id) {
-    errors.value.division_id = 'অনুগ্রহ করে আপনার বিভাগ নির্বাচন করুন।';
-    return;
-  }
-
-  if (!form.value.district_id) {
-    errors.value.district_id = 'অনুগ্রহ করে আপনার জেলা নির্বাচন করুন।';
-    return;
-  }
-
   if (!form.value.delivery_address.trim() || form.value.delivery_address.trim().length < 5) {
     errors.value.delivery_address = 'আপনার সম্পূর্ণ ডেলিভারি ঠিকানা দিন (বাড়ি/রোড, এলাকা/থানা)';
     return;
@@ -283,7 +228,9 @@ const handleOrderSubmit = () => {
               name="user_company_fax"
               class="visually-hidden"
               tabindex="-1"
-              autocomplete="off"
+              autocomplete="new-password"
+              aria-hidden="true"
+              style="position: absolute !important; left: -9999px !important; top: -9999px !important; width: 1px !important; height: 1px !important; opacity: 0 !important; pointer-events: none !important;"
             />
             <input
               type="hidden"
@@ -368,81 +315,78 @@ const handleOrderSubmit = () => {
               </div>
             </div>
 
-            <!-- Section 2: Delivery Address (Cascading BD Locations) -->
+            <!-- Section 2: Delivery Area & Address -->
             <div class="form-section card">
               <div class="section-header">
                 <span class="section-num">২</span>
                 <div>
-                  <h3 class="section-title">ডেলিভারি ঠিকানা (Shipping Address)</h3>
-                  <p class="section-sub">সঠিক বিভাগ ও জেলা নির্বাচন করলে স্বয়ংক্রিয়ভাবে ডেলিভারি চার্জ হিসাব হবে</p>
+                  <h3 class="section-title">ডেলিভারি এরিয়া ও ঠিকানা (Delivery Area & Address)</h3>
+                  <p class="section-sub">আপনার ডেলিভারি এরিয়া বেছে নিন এবং সম্পূর্ণ ঠিকানা লিখুন</p>
                 </div>
               </div>
 
               <div class="form-group-grid">
-                <!-- Division Select -->
-                <div class="form-field">
-                  <label class="field-label" for="checkout-division">
-                    <span>বিভাগ (Division)</span>
+                <!-- Delivery Zone / Area Radio Cards -->
+                <div class="form-field full-width">
+                  <label class="field-label">
+                    <span>ডেলিভারি এরিয়া বেছে নিন</span>
                     <span class="required">*</span>
                   </label>
-                  <select
-                    id="checkout-division"
-                    v-model="form.division_id"
-                    class="form-select"
-                    :class="{ 'has-error': errors.division_id }"
-                    required
-                  >
-                    <option value="" disabled>বিভাগ নির্বাচন করুন</option>
-                    <option v-for="div in divisions" :key="div.id" :value="div.id">
-                      {{ div.name_bn }} ({{ div.name_en }})
-                    </option>
-                  </select>
-                  <span v-if="errors.division_id" class="field-error">{{ errors.division_id }}</span>
-                </div>
+                  <div class="zone-options-grid">
+                    <label
+                      class="zone-radio-card"
+                      :class="{ selected: form.delivery_zone === 'inside_dhaka' }"
+                    >
+                      <input
+                        type="radio"
+                        v-model="form.delivery_zone"
+                        value="inside_dhaka"
+                        class="zone-native-radio"
+                      />
+                      <span class="zone-name">ঢাকা সিটি</span>
+                      <span class="zone-rate">
+                        {{ isFreeShipping ? 'ফ্রি (Free)' : `৳${shippingRates?.inside_dhaka ?? 60}` }}
+                      </span>
+                    </label>
 
-                <!-- District Select -->
-                <div class="form-field">
-                  <label class="field-label" for="checkout-district">
-                    <span>জেলা (District)</span>
-                    <span class="required">*</span>
-                  </label>
-                  <select
-                    id="checkout-district"
-                    v-model="form.district_id"
-                    class="form-select"
-                    :class="{ 'has-error': errors.district_id }"
-                    :disabled="!availableDistricts.length"
-                    required
-                  >
-                    <option value="" disabled>জেলা নির্বাচন করুন</option>
-                    <option v-for="dist in availableDistricts" :key="dist.id" :value="dist.id">
-                      {{ dist.name_bn }} ({{ dist.name_en }})
-                    </option>
-                  </select>
-                  <span v-if="errors.district_id" class="field-error">{{ errors.district_id }}</span>
-                </div>
+                    <label
+                      class="zone-radio-card"
+                      :class="{ selected: form.delivery_zone === 'dhaka_suburbs' }"
+                    >
+                      <input
+                        type="radio"
+                        v-model="form.delivery_zone"
+                        value="dhaka_suburbs"
+                        class="zone-native-radio"
+                      />
+                      <span class="zone-name">ঢাকা উপশহর</span>
+                      <span class="zone-rate">
+                        {{ isFreeShipping ? 'ফ্রি (Free)' : `৳${shippingRates?.dhaka_suburbs ?? 100}` }}
+                      </span>
+                    </label>
 
-                <!-- Zone Indicator Pill -->
-                <div v-if="selectedDistrict" class="zone-pill-row full-width">
-                  <span class="zone-pill" :class="selectedDistrict.zone_type">
-                    📍 কুরিয়ার জোন: 
-                    <strong>
-                      {{
-                        selectedDistrict.zone_type === 'inside_dhaka'
-                          ? 'ঢাকা সিটি (Inside Dhaka - ৳60)'
-                          : selectedDistrict.zone_type === 'dhaka_suburbs'
-                          ? 'ঢাকা উপশহর (Dhaka Suburbs - ৳100)'
-                          : 'ঢাকার বাইরে সারা বাংলাদেশ (Outside Dhaka - ৳130)'
-                      }}
-                    </strong>
-                  </span>
-                  <span v-if="isFreeShipping" class="free-badge">🎉 ফ্রি ডেলিভারি প্রযোজ্য!</span>
+                    <label
+                      class="zone-radio-card"
+                      :class="{ selected: form.delivery_zone === 'outside_dhaka' }"
+                    >
+                      <input
+                        type="radio"
+                        v-model="form.delivery_zone"
+                        value="outside_dhaka"
+                        class="zone-native-radio"
+                      />
+                      <span class="zone-name">ঢাকার বাইরে</span>
+                      <span class="zone-rate">
+                        {{ isFreeShipping ? 'ফ্রি (Free)' : `৳${shippingRates?.outside_dhaka ?? 130}` }}
+                      </span>
+                    </label>
+                  </div>
                 </div>
 
                 <!-- Detailed Street Address -->
                 <div class="form-field full-width">
                   <label class="field-label" for="checkout-address">
-                    <span>সম্পূর্ণ ঠিকানা (বাসা/রোড, এলাকা/থানা)</span>
+                    <span>সম্পূর্ণ ঠিকানা (বাসা/রোড, এলাকা, থানা ও জেলা)</span>
                     <span class="required">*</span>
                   </label>
                   <textarea
@@ -451,7 +395,7 @@ const handleOrderSubmit = () => {
                     class="form-textarea"
                     :class="{ 'has-error': errors.delivery_address }"
                     rows="3"
-                    placeholder="বাড়ি নং, রোড নং/নাম, এলাকা, থানা ও ল্যান্ডমার্ক লিখুন..."
+                    placeholder="বাসা নং, রোড নং/নাম, এলাকা, থানা ও জেলার নাম লিখুন..."
                     required
                   ></textarea>
                   <span v-if="errors.delivery_address" class="field-error">{{ errors.delivery_address }}</span>
@@ -938,29 +882,64 @@ const handleOrderSubmit = () => {
     }
   }
 
-  .zone-pill-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: $space-2;
-    background-color: $color-primary-50;
-    border: 1px dashed $color-primary-200;
-    padding: $space-2 $space-3;
-    border-radius: $radius-md;
+  .zone-options-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: $space-3;
+    margin-top: $space-1;
 
-    .zone-pill {
-      font-size: $fs-xs;
-      color: $color-primary-900;
+    @media (max-width: 500px) {
+      grid-template-columns: 1fr;
     }
 
-    .free-badge {
-      background-color: $color-success;
-      color: #fff;
-      font-size: $fs-xs;
-      font-weight: $fw-bold;
-      padding: 2px 8px;
-      border-radius: $radius-full;
+    .zone-radio-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 14px;
+      border-radius: $radius-lg;
+      background: #ffffff;
+      border: 2px solid $color-neutral-200;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      text-align: center;
+      user-select: none;
+
+      .zone-native-radio {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .zone-name {
+        font-size: $fs-sm;
+        font-weight: $fw-bold;
+        color: $color-neutral-800;
+      }
+
+      .zone-rate {
+        font-size: $fs-base;
+        font-weight: $fw-extrabold;
+        color: $color-primary-600;
+        margin-top: 3px;
+      }
+
+      &:hover {
+        border-color: $color-primary-400;
+        background: $color-primary-50;
+      }
+
+      &.selected {
+        border-color: $color-primary-500;
+        background: $color-primary-50;
+        box-shadow: 0 2px 8px rgba(235, 40, 108, 0.18);
+
+        .zone-name {
+          color: $color-primary-900;
+        }
+      }
     }
   }
 

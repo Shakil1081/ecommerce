@@ -414,8 +414,20 @@ const scrollToOrderForm = () => {
                   :disabled="!isCurrentVariantInStock || isAddingToCart"
                   @click="handleAddToCart"
                 >
-                  <span v-if="isAddingToCart">⏳ যোগ হচ্ছে...</span>
-                  <span v-else>🛒 ব্যাগে যোগ করুন</span>
+                  <span v-if="isAddingToCart" class="btn-cart-content">
+                    <svg class="cart-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4" stroke-dashoffset="10"></circle>
+                    </svg>
+                    <span>যোগ হচ্ছে...</span>
+                  </span>
+                  <span v-else class="btn-cart-content">
+                    <svg class="cart-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="9" cy="21" r="1"></circle>
+                      <circle cx="20" cy="21" r="1"></circle>
+                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    <span>ব্যাগে যোগ করুন</span>
+                  </span>
                 </button>
               </div>
             </div>
@@ -483,7 +495,9 @@ const scrollToOrderForm = () => {
               name="user_company_fax"
               class="visually-hidden"
               tabindex="-1"
-              autocomplete="off"
+              autocomplete="new-password"
+              aria-hidden="true"
+              style="position: absolute !important; left: -9999px !important; top: -9999px !important; width: 1px !important; height: 1px !important; opacity: 0 !important; pointer-events: none !important;"
             />
 
             <div class="funnel-grid-2col">
@@ -1271,7 +1285,7 @@ const scrollToOrderForm = () => {
       }
 
       .btn-top-add-cart {
-        padding: 12px 16px;
+        padding: 12px 18px;
         border-radius: $radius-xl;
         background: $color-neutral-0;
         color: $color-primary-600;
@@ -1286,8 +1300,32 @@ const scrollToOrderForm = () => {
         justify-content: center;
         white-space: nowrap;
 
+        .btn-cart-content {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 7px;
+
+          .cart-btn-svg {
+            width: 17px;
+            height: 17px;
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+          }
+
+          .cart-spinner {
+            width: 15px;
+            height: 15px;
+            animation: spin-loader 0.8s linear infinite;
+          }
+        }
+
         &:hover:not(:disabled) {
           background: $color-primary-50;
+
+          .cart-btn-svg {
+            transform: scale(1.15) rotate(-6deg);
+          }
         }
 
         &:disabled {
@@ -1984,6 +2022,14 @@ const scrollToOrderForm = () => {
   }
   100% {
     transform: scale(1);
+  }
+}
+@keyframes spin-loader {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 </style>
