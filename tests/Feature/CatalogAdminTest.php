@@ -42,7 +42,33 @@ class CatalogAdminTest extends TestCase
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
             ->component('Admin/Catalog/ProductIndex')
-            ->has('products', 1)
+            ->has('products.data', 1)
+        );
+    }
+
+    public function test_can_filter_product_catalog_by_search_query(): void
+    {
+        Product::create([
+            'category_id' => $this->category->id,
+            'name' => 'MacBook Pro M3 Max',
+            'origin_country' => 'USA',
+            'is_published' => true,
+        ]);
+
+        Product::create([
+            'category_id' => $this->category->id,
+            'name' => 'Dell XPS 15',
+            'origin_country' => 'USA',
+            'is_published' => true,
+        ]);
+
+        $response = $this->get(route('admin.products.index', ['search' => 'MacBook']));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Admin/Catalog/ProductIndex')
+            ->has('products.data', 1)
+            ->where('products.data.0.name', 'MacBook Pro M3 Max')
         );
     }
 

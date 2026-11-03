@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Modules\Admin\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Inventory\Models\Warehouse;
 use App\Modules\TaxCompliance\Actions\GenerateMushak61RegisterAction;
 use App\Modules\TaxCompliance\Actions\GenerateMushak62RegisterAction;
 use App\Modules\TaxCompliance\Actions\GenerateMushak91ReturnAction;
+use App\Modules\TaxCompliance\Actions\ProcessRmaInspectionAction;
 use App\Modules\TaxCompliance\Actions\SubmitMushak91ReturnAction;
 use App\Modules\TaxCompliance\Models\Mushak63Invoice;
 use App\Modules\TaxCompliance\Models\Mushak65Challan;
@@ -195,10 +197,59 @@ class TaxComplianceAdminController extends Controller
         }
 
         $rmas = $query->paginate(15)->withQueryString();
+        $warehouses = Warehouse::where('is_active', true)->get(['id', 'name', 'code', 'is_primary']);
 
         return Inertia::render('Admin/TaxCompliance/RmaIndex', [
             'rmas' => $rmas,
+            'warehouses' => $warehouses,
             'filters' => $request->only(['status']),
+        ]);
+    }
+
+    /**
+     * Inspect returned RMA goods, restock if approved, and issue statutory Mushak 6.7 Credit Note.
+     */
+    public function rmaInspect(
+        Request $request,
+        ReturnMerchandiseAuthorization $rma,
+        ProcessRmaInspectionAction $action
+    ): RedirectResponse {
+        $validated = $request->validate([
+            'inspection_outcome' => ['required', 'string', 'in:restock_available,quarantine_damaged,scrap'],
+            'warehouse_id' => ['nullable', 'exists:warehouses,id'],
+            'admin_notes' => ['nullable', 'string', 'max:500'],
+            'refund_method' => ['nullable', 'string', 'in:bkash,nagad,card_reversal,store_credit,bank_transfer,original_gateway'],
+        ]);
+
+        $warehouse = isset($validated['warehouse_id'])
+            ? Warehouse::findOrFail($validated['warehouse_id'])
+            : (Warehouse::where('is_primary', true)->first() ?? Warehouse::firstOrFail());
+
+        $inspectedRma = $action(
+            rma: $rma,
+            inspectionOutcome: $validated['inspection_outcome'],
+            warehouse: $warehouse,
+            adminNotes: $validated['admin_notes'] ?? null,
+            options: [
+                'refund_method' => $validated['refund_method'] ?? 'original_gateway',
+                'created_by_user_id' => $request->user()?->id,
+            ]
+        );
+
+        $cnNumber = $inspectedRma->creditNote?->credit_note_number ?? 'Issued';
+
+        return redirect()->back()->with('success', "RMA #{$rma->rma_number} inspected successfully. Statutory Mushak 6.7 Credit Note [{$cnNumber}] generated.");
+    }
+
+    /**
+     * Display printable official Mushak 6.7 Credit Note.
+     */
+    public function mushak67Show(Mushak67CreditNote $creditNote): Response
+    {
+        $creditNote->load(['items', 'order', 'invoice', 'rma']);
+
+        return Inertia::render('Admin/TaxCompliance/Mushak67Show', [
+            'creditNote' => $creditNote,
         ]);
     }
 

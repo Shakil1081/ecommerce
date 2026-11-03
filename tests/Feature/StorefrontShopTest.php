@@ -41,7 +41,38 @@ final class StorefrontShopTest extends TestCase
             ->has('products', 5)
             ->has('categories', 5)
             ->has('brands', 7)
+            ->has('availableColors')
+            ->has('priceBounds')
             ->has('filters')
+        );
+    }
+
+    public function test_customer_can_filter_products_by_color_and_price_and_stock(): void
+    {
+        // Filter by color
+        $colorResponse = $this->get('/shop?color=Black');
+        $colorResponse->assertOk();
+        $colorResponse->assertInertia(fn (Assert $page) => $page
+            ->component('Storefront/Shop')
+            ->where('filters.color', 'Black')
+        );
+
+        // Filter by price range
+        $priceResponse = $this->get('/shop?min_price=1000&max_price=50000');
+        $priceResponse->assertOk();
+        $priceResponse->assertInertia(fn (Assert $page) => $page
+            ->component('Storefront/Shop')
+            ->where('filters.min_price', 1000)
+            ->where('filters.max_price', 50000)
+        );
+
+        // Filter by in_stock and warranty
+        $stockResponse = $this->get('/shop?in_stock=1&warranty=1');
+        $stockResponse->assertOk();
+        $stockResponse->assertInertia(fn (Assert $page) => $page
+            ->component('Storefront/Shop')
+            ->where('filters.in_stock', true)
+            ->where('filters.warranty', true)
         );
     }
 

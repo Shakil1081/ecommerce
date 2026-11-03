@@ -57,7 +57,23 @@ class AuditLogAdminController extends Controller
         return Inertia::render('Admin/Audit/AuditLogIndex', [
             'logs' => $logs,
             'eventsList' => $eventsList,
-            'filters' => $request->only(['event', 'search', 'date_from', 'date_to']),
+            'filters' => [
+                'event' => (string) $request->input('event', ''),
+                'search' => (string) $request->input('search', ''),
+                'date_from' => (string) $request->input('date_from', ''),
+                'date_to' => (string) $request->input('date_to', ''),
+            ],
+            'metrics' => [
+                'total' => AuditLog::count(),
+                'priceUpdates' => AuditLog::where('event', AuditLog::EVENT_PRICE_UPDATED)->count(),
+                'stockAdjustments' => AuditLog::where('event', AuditLog::EVENT_STOCK_ADJUSTED)->count(),
+                'orderChanges' => AuditLog::where('event', AuditLog::EVENT_ORDER_STATUS_CHANGED)->count(),
+                'securityEvents' => AuditLog::whereIn('event', [
+                    AuditLog::EVENT_SECURITY_SETTING_CHANGED,
+                    AuditLog::EVENT_FRAUD_LIST_UPDATED,
+                    AuditLog::EVENT_ROLE_UPDATED,
+                ])->count(),
+            ],
         ]);
     }
 }

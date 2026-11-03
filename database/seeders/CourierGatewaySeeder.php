@@ -30,8 +30,8 @@ class CourierGatewaySeeder extends Seeder
                 'code' => CourierGatewaySetting::CODE_PATHAO,
                 'name' => 'Pathao Courier',
                 'is_active' => false,
-                'is_sandbox' => true,
-                'base_url' => 'https://courier-api-sandbox.pathao.com',
+                'is_sandbox' => false,
+                'base_url' => 'https://api-hermes.pathao.com',
                 'supported_features' => ['booking', 'tracking', 'rates', 'stores', 'webhook'],
                 'sort_order' => 2,
                 'credentials' => [

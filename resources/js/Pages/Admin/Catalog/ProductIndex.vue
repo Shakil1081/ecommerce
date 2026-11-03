@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
@@ -6,6 +7,7 @@ interface ProductItem {
   id: string;
   name: string;
   slug: string;
+  thumbnail_url: string | null;
   hs_code: string | null;
   origin_country: string;
   warranty_policy: string | null;
@@ -20,11 +22,98 @@ interface ProductItem {
   created_at: string;
 }
 
-defineProps<{
-  products: ProductItem[];
+interface PaginationLink {
+  url: string | null;
+  label: string;
+  active: boolean;
+}
+
+interface PaginatedProducts {
+  data: ProductItem[];
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+  from: number | null;
+  to: number | null;
+  links: PaginationLink[];
+}
+
+interface CategoryOption {
+  id: number;
+  name: string;
+}
+
+interface Filters {
+  search?: string | null;
+  category_id?: string | number | null;
+  status?: string | null;
+}
+
+const props = defineProps<{
+  products: PaginatedProducts;
+  categories: CategoryOption[];
+  filters: Filters;
 }>();
 
+// Search & Filter state
+const search = ref(props.filters.search || '');
+const selectedCategory = ref(props.filters.category_id || 'all');
+const selectedStatus = ref(props.filters.status || 'all');
+
+const hasActiveFilters = computed(() => {
+  return (
+    Boolean(search.value) ||
+    (selectedCategory.value !== 'all' && selectedCategory.value !== '') ||
+    (selectedStatus.value !== 'all' && selectedStatus.value !== '')
+  );
+});
+
+const handleSearch = () => {
+  router.get(
+    '/admin/products',
+    {
+      search: search.value.trim() || undefined,
+      category_id: selectedCategory.value !== 'all' ? selectedCategory.value : undefined,
+      status: selectedStatus.value !== 'all' ? selectedStatus.value : undefined,
+    },
+    { preserveState: true }
+  );
+};
+
+const clearSearch = () => {
+  search.value = '';
+  handleSearch();
+};
+
+const resetFilters = () => {
+  search.value = '';
+  selectedCategory.value = 'all';
+  selectedStatus.value = 'all';
+  router.get('/admin/products');
+};
+
+// Dropdown Action Menu state
+const activeDropdownId = ref<string | null>(null);
+
+const toggleDropdown = (id: string) => {
+  activeDropdownId.value = activeDropdownId.value === id ? null : id;
+};
+
+const closeDropdown = () => {
+  activeDropdownId.value = null;
+};
+
+onMounted(() => {
+  window.addEventListener('click', closeDropdown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('click', closeDropdown);
+});
+
 const deleteProduct = (product: ProductItem) => {
+  activeDropdownId.value = null;
   if (confirm(`Are you sure you want to delete product "${product.name}" and all associated matrix variants?`)) {
     router.delete(`/admin/products/${product.id}`);
   }
@@ -36,6 +125,7 @@ const deleteProduct = (product: ProductItem) => {
     <Head title="Products & Matrix Catalog" />
 
     <div class="catalog-container">
+      <!-- Header -->
       <div class="page-header">
         <div>
           <h1 class="header-title">Product Catalog & Matrix Variants</h1>
@@ -59,6 +149,63 @@ const deleteProduct = (product: ProductItem) => {
         </div>
       </div>
 
+      <!-- Search & Filters Toolbar -->
+      <div class="filters-card">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input
+            v-model="search"
+            type="text"
+            class="search-input"
+            placeholder="Search products by title, SKU, brand, or HS code..."
+            @keyup.enter="handleSearch"
+          />
+          <button
+            v-if="search"
+            type="button"
+            class="clear-search-btn"
+            title="Clear search"
+            @click="clearSearch"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="filter-controls">
+          <div class="select-wrap">
+            <select v-model="selectedCategory" class="filter-select" @change="handleSearch">
+              <option value="all">All Categories</option>
+              <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+                {{ cat.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="select-wrap">
+            <select v-model="selectedStatus" class="filter-select" @change="handleSearch">
+              <option value="all">All Statuses</option>
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
+            </select>
+          </div>
+
+          <button type="button" class="btn btn-primary btn-search" @click="handleSearch">
+            Search
+          </button>
+
+          <button
+            v-if="hasActiveFilters"
+            type="button"
+            class="btn btn-outline btn-reset"
+            title="Reset all filters"
+            @click="resetFilters"
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+
+      <!-- Products Data Table Card -->
       <div class="card table-card">
         <div class="table-responsive">
           <table class="data-table">
@@ -70,49 +217,48 @@ const deleteProduct = (product: ProductItem) => {
                 <th>Price & Variants</th>
                 <th>Stock Level</th>
                 <th>Status</th>
-                <th class="text-right">Actions</th>
+                <th class="text-right" style="width: 120px;">Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="product in products" :key="product.id">
+              <tr v-for="product in products.data" :key="product.id">
+                <!-- Product Information Column: Thumbnail & Clean Title Only, nothing under title -->
                 <td>
                   <div class="product-identity">
-                    <span class="product-icon">📦</span>
+                    <div class="product-thumb-wrap">
+                      <img
+                        v-if="product.thumbnail_url"
+                        :src="product.thumbnail_url"
+                        :alt="product.name"
+                        class="product-thumb-img"
+                        loading="lazy"
+                        @error="(e) => ((e.target as HTMLElement).style.display = 'none')"
+                      />
+                      <div v-else class="product-thumb-placeholder">
+                        <span class="product-icon">📦</span>
+                      </div>
+                    </div>
                     <div class="product-info-wrap">
-                      <div class="product-name-row">
-                        <span class="product-name">{{ product.name }}</span>
-                        <a
-                          :href="`/products/${product.slug}`"
-                          target="_blank"
-                          class="public-link-pill"
-                          title="Open product live on public storefront in new tab"
-                        >
-                          <span class="pill-label">Public View</span>
-                          <span class="ext-arrow">↗</span>
-                        </a>
-                      </div>
-                      <div class="product-meta-row">
-                        <a
-                          :href="`/products/${product.slug}`"
-                          target="_blank"
-                          class="public-slug-link"
-                          title="View public URL: /products/{{ product.slug }}"
-                        >
-                          /products/{{ product.slug }}
-                        </a>
-                        <span class="product-warranty" v-if="product.warranty_policy">
-                          • 🛡️ {{ product.warranty_policy }}
-                        </span>
-                      </div>
+                      <Link
+                        :href="`/admin/products/${product.id}/edit`"
+                        class="product-name"
+                        :title="`Edit ${product.name}`"
+                      >
+                        {{ product.name }}
+                      </Link>
                     </div>
                   </div>
                 </td>
+
+                <!-- Category & Brand -->
                 <td>
                   <div class="cat-brand-cell">
                     <span class="cat-name">{{ product.category_name }}</span>
                     <span class="brand-name">{{ product.brand_name }}</span>
                   </div>
                 </td>
+
+                <!-- Origin & HS Code -->
                 <td>
                   <div class="origin-cell">
                     <span class="origin-tag">🌍 {{ product.origin_country }}</span>
@@ -121,6 +267,8 @@ const deleteProduct = (product: ProductItem) => {
                     </span>
                   </div>
                 </td>
+
+                <!-- Price & Variants -->
                 <td>
                   <div class="price-cell">
                     <span class="price-range">
@@ -136,6 +284,8 @@ const deleteProduct = (product: ProductItem) => {
                     </div>
                   </div>
                 </td>
+
+                <!-- Stock Level -->
                 <td>
                   <div class="stock-cell">
                     <span
@@ -149,6 +299,8 @@ const deleteProduct = (product: ProductItem) => {
                     </span>
                   </div>
                 </td>
+
+                <!-- Status -->
                 <td>
                   <span v-if="product.is_published" class="badge badge-success">
                     Published
@@ -157,35 +309,97 @@ const deleteProduct = (product: ProductItem) => {
                     Draft
                   </span>
                 </td>
+
+                <!-- Dropdown Action Button -->
                 <td class="text-right actions-cell">
-                  <a
-                    :href="`/products/${product.slug}`"
-                    target="_blank"
-                    class="btn btn-sm btn-view-public"
-                    title="View live product on public storefront (opens in new tab)"
-                  >
-                    <span>👁️</span> Public View
-                  </a>
-                  <Link :href="`/admin/products/${product.id}/matrix`" class="btn btn-sm btn-primary">
-                    ⚡ Matrix
-                  </Link>
-                  <Link :href="`/admin/products/${product.id}/edit`" class="btn btn-sm btn-secondary">
-                    Edit
-                  </Link>
-                  <button class="btn btn-sm btn-danger" @click="deleteProduct(product)">
-                    Delete
-                  </button>
+                  <div class="action-dropdown-wrap">
+                    <button
+                      type="button"
+                      class="btn-dropdown-trigger"
+                      :class="{ 'is-active': activeDropdownId === product.id }"
+                      title="Actions"
+                      @click.stop="toggleDropdown(product.id)"
+                    >
+                      <span>Actions</span>
+                      <span class="chevron" :class="{ 'is-open': activeDropdownId === product.id }">▾</span>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div
+                      v-if="activeDropdownId === product.id"
+                      class="action-dropdown-menu"
+                      @click.stop
+                    >
+                      <Link
+                        :href="`/admin/products/${product.id}/edit`"
+                        class="dropdown-item"
+                        @click="closeDropdown"
+                      >
+                        <span class="dropdown-item-icon">✏️</span>
+                        <span>Edit Product</span>
+                      </Link>
+
+                      <Link
+                        :href="`/admin/products/${product.id}/matrix`"
+                        class="dropdown-item"
+                        @click="closeDropdown"
+                      >
+                        <span class="dropdown-item-icon">⚡</span>
+                        <span>Matrix Variants</span>
+                      </Link>
+
+                      <a
+                        :href="`/products/${product.slug}`"
+                        target="_blank"
+                        class="dropdown-item"
+                        @click="closeDropdown"
+                      >
+                        <span class="dropdown-item-icon">👁️</span>
+                        <span>Public View ↗</span>
+                      </a>
+
+                      <div class="dropdown-divider"></div>
+
+                      <button
+                        type="button"
+                        class="dropdown-item dropdown-item-danger"
+                        @click="deleteProduct(product)"
+                      >
+                        <span class="dropdown-item-icon">🗑️</span>
+                        <span>Delete Product</span>
+                      </button>
+                    </div>
+                  </div>
                 </td>
               </tr>
-              <tr v-if="products.length === 0">
+
+              <!-- Empty State -->
+              <tr v-if="products.data.length === 0">
                 <td colspan="7" class="empty-state-cell">
                   <div class="empty-catalog-box">
                     <span class="empty-catalog-icon">📦</span>
-                    <h3 class="empty-catalog-title">No products found in the catalog</h3>
+                    <h3 class="empty-catalog-title">No products found</h3>
                     <p class="empty-catalog-desc">
-                      Get started by adding your first commercial product with HS tariffs, origin details, and matrix variants.
+                      <span v-if="hasActiveFilters">
+                        No products match your current search and filter criteria. Try resetting your filters.
+                      </span>
+                      <span v-else>
+                        Get started by adding your first commercial product with HS tariffs, origin details, and matrix variants.
+                      </span>
                     </p>
-                    <Link href="/admin/products/create" class="btn btn-primary btn-lg">
+                    <button
+                      v-if="hasActiveFilters"
+                      type="button"
+                      class="btn btn-primary"
+                      @click="resetFilters"
+                    >
+                      Reset All Filters
+                    </button>
+                    <Link
+                      v-else
+                      href="/admin/products/create"
+                      class="btn btn-primary btn-lg"
+                    >
                       <span>➕</span> Add New Product
                     </Link>
                   </div>
@@ -193,6 +407,25 @@ const deleteProduct = (product: ProductItem) => {
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div v-if="products.links && products.links.length > 3" class="pagination-container">
+          <div class="pagination-info">
+            Showing <strong>{{ products.from || 0 }}</strong> to <strong>{{ products.to || 0 }}</strong> of <strong>{{ products.total }}</strong> products
+          </div>
+          <div class="pagination-links">
+            <template v-for="(link, i) in products.links" :key="i">
+              <Link
+                v-if="link.url"
+                :href="link.url"
+                class="pagination-link"
+                :class="{ 'is-active': link.active }"
+                v-html="link.label"
+              />
+              <span v-else class="pagination-link is-disabled" v-html="link.label" />
+            </template>
+          </div>
         </div>
       </div>
     </div>
@@ -268,12 +501,133 @@ const deleteProduct = (product: ProductItem) => {
   }
 }
 
+// SEARCH & FILTERS TOOLBAR
+.filters-card {
+  background: #ffffff;
+  border: 1px solid hsl(342, 40%, 92%);
+  border-radius: $radius-xl;
+  padding: $spacing-4;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-4;
+  flex-wrap: wrap;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+
+  .search-box {
+    position: relative;
+    flex: 1;
+    min-width: 280px;
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 10px 38px 10px 40px;
+      background: hsl(342, 40%, 98%);
+      border: 1px solid hsl(342, 30%, 88%);
+      border-radius: $radius-lg;
+      font-size: $font-size-sm;
+      color: $color-text-main;
+      outline: none;
+      transition: all $transition-fast;
+
+      &::placeholder {
+        color: #94a3b8;
+      }
+
+      &:focus {
+        background: #ffffff;
+        border-color: $color-primary-500;
+        box-shadow: 0 0 0 3px rgba(235, 40, 108, 0.15);
+      }
+    }
+
+    .clear-search-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 4px;
+
+      &:hover {
+        color: #ef4444;
+      }
+    }
+  }
+
+  .filter-controls {
+    display: flex;
+    align-items: center;
+    gap: $spacing-3;
+    flex-wrap: wrap;
+
+    .select-wrap {
+      .filter-select {
+        padding: 10px 14px;
+        background: hsl(342, 40%, 98%);
+        border: 1px solid hsl(342, 30%, 88%);
+        border-radius: $radius-lg;
+        font-size: $font-size-sm;
+        color: $color-text-main;
+        outline: none;
+        cursor: pointer;
+        transition: all $transition-fast;
+
+        &:focus {
+          background: #ffffff;
+          border-color: $color-primary-500;
+          box-shadow: 0 0 0 3px rgba(235, 40, 108, 0.15);
+        }
+      }
+    }
+
+    .btn-search {
+      padding: 10px 18px;
+      font-size: $font-size-sm;
+      font-weight: 600;
+    }
+
+    .btn-reset {
+      padding: 10px 14px;
+      font-size: $font-size-sm;
+      font-weight: 600;
+      border-color: hsl(342, 30%, 88%);
+      color: #64748b;
+
+      &:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+      }
+    }
+  }
+}
+
+// TABLE & ACTIONS
 .table-card {
   padding: 0;
-  overflow: hidden;
+  overflow: visible; // Allows dropdown menu to overflow cleanly
   border: 1px solid hsl(342, 40%, 92%);
   box-shadow: 0 4px 12px rgba(235, 40, 108, 0.04), 0 1px 3px rgba(15, 23, 42, 0.04);
   background-color: #ffffff;
+}
+
+.table-responsive {
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
 .data-table {
@@ -297,6 +651,7 @@ const deleteProduct = (product: ProductItem) => {
     border-bottom: 1px solid hsl(342, 30%, 93%);
     font-size: $font-size-sm;
     transition: background-color $transition-fast;
+    vertical-align: middle;
   }
 
   tr:hover td {
@@ -312,90 +667,62 @@ const deleteProduct = (product: ProductItem) => {
   }
 }
 
+// PRODUCT IDENTITY (Clean Thumbnail + Title Only, Nothing Under Title)
 .product-identity {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: $spacing-3;
 
-  .product-icon {
-    font-size: 1.5rem;
+  .product-thumb-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: $radius-md;
+    border: 1px solid hsl(342, 30%, 88%);
+    background: #ffffff;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
-    margin-top: 2px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+    .product-thumb-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .product-thumb-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: hsl(342, 45%, 98%);
+
+      .product-icon {
+        font-size: 1.25rem;
+      }
+    }
   }
 
   .product-info-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
     min-width: 0;
-  }
-
-  .product-name-row {
-    display: flex;
-    align-items: center;
-    gap: $spacing-2;
-    flex-wrap: wrap;
 
     .product-name {
-      font-weight: 600;
+      font-weight: 700;
       color: $color-text-main;
       font-size: 14.5px;
-    }
-
-    .public-link-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      padding: 1px 7px;
-      border-radius: $radius-full;
-      background: $color-primary-50;
-      border: 1px solid $color-primary-200;
-      color: $color-primary-600;
-      font-size: 11px;
-      font-weight: 600;
       text-decoration: none;
-      transition: all $transition-fast;
-
-      .ext-arrow {
-        font-size: 10px;
-        transition: transform $transition-fast;
-      }
-
-      &:hover {
-        background: $color-primary-500;
-        border-color: $color-primary-500;
-        color: #ffffff;
-        box-shadow: 0 2px 6px rgba(235, 40, 108, 0.3);
-
-        .ext-arrow {
-          transform: translate(1px, -1px);
-        }
-      }
-    }
-  }
-
-  .product-meta-row {
-    display: flex;
-    align-items: center;
-    gap: $spacing-2;
-    flex-wrap: wrap;
-
-    .public-slug-link {
-      font-family: $font-mono;
-      font-size: 11.5px;
-      color: hsl(342, 45%, 45%);
-      text-decoration: none;
+      line-height: 1.4;
+      display: inline-block;
       transition: color $transition-fast;
 
       &:hover {
         color: $color-primary-600;
         text-decoration: underline;
       }
-    }
-
-    .product-warranty {
-      font-size: $font-size-xs;
-      color: $color-text-muted;
     }
   }
 }
@@ -480,34 +807,175 @@ const deleteProduct = (product: ProductItem) => {
   }
 }
 
+// DROPDOWN ACTION BUTTON
 .actions-cell {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: $spacing-2;
-  flex-wrap: nowrap;
+  position: relative;
 }
 
-.btn-view-public {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background-color: hsl(342, 90%, 96%);
-  color: $color-primary-700;
-  border: 1px solid hsl(342, 70%, 85%);
-  font-weight: 600;
-  text-decoration: none;
-  transition: all $transition-fast;
+.action-dropdown-wrap {
+  position: relative;
+  display: inline-block;
+  text-align: right;
 
-  &:hover {
-    background-color: $color-primary-600;
-    border-color: $color-primary-600;
-    color: #ffffff;
-    box-shadow: 0 2px 8px rgba(235, 40, 108, 0.35);
-    transform: translateY(-1px);
+  .btn-dropdown-trigger {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    padding: 6px 14px;
+    border-radius: $radius-md;
+    font-size: $font-size-xs;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all $transition-fast;
+    white-space: nowrap;
+
+    .chevron {
+      font-size: 10px;
+      transition: transform $transition-fast;
+
+      &.is-open {
+        transform: rotate(180deg);
+      }
+    }
+
+    &:hover,
+    &.is-active {
+      background: hsl(342, 95%, 97%);
+      border-color: $color-primary-400;
+      color: $color-primary-700;
+      box-shadow: 0 2px 6px rgba(235, 40, 108, 0.15);
+    }
+  }
+
+  .action-dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: $radius-lg;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    min-width: 175px;
+    z-index: 100;
+    padding: 6px 0;
+    text-align: left;
+    animation: fadeIn 0.15s ease;
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      font-size: $font-size-xs;
+      font-weight: 600;
+      color: #334155;
+      text-decoration: none;
+      width: 100%;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      transition: background-color $transition-fast, color $transition-fast;
+      white-space: nowrap;
+
+      .dropdown-item-icon {
+        font-size: 13px;
+        width: 16px;
+        display: inline-flex;
+        justify-content: center;
+      }
+
+      &:hover {
+        background-color: hsl(342, 95%, 97%);
+        color: $color-primary-700;
+      }
+
+      &.dropdown-item-danger {
+        color: #ef4444;
+
+        &:hover {
+          background-color: #fef2f2;
+          color: #dc2626;
+        }
+      }
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background-color: #f1f5f9;
+      margin: 4px 0;
+    }
   }
 }
 
+// PAGINATION
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-4 $spacing-6;
+  border-top: 1px solid hsl(342, 35%, 93%);
+  background: hsl(342, 50%, 99.5%);
+  flex-wrap: wrap;
+  gap: $spacing-3;
+
+  .pagination-info {
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+
+    strong {
+      color: $color-text-main;
+      font-weight: 700;
+    }
+  }
+
+  .pagination-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+
+    .pagination-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 32px;
+      height: 32px;
+      padding: 0 10px;
+      border-radius: $radius-md;
+      font-size: $font-size-xs;
+      font-weight: 600;
+      text-decoration: none;
+      color: #475569;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      transition: all $transition-fast;
+
+      &:hover:not(.is-disabled) {
+        background: hsl(342, 95%, 97%);
+        border-color: $color-primary-400;
+        color: $color-primary-700;
+      }
+
+      &.is-active {
+        background: $color-primary-600;
+        border-color: $color-primary-600;
+        color: #ffffff;
+        font-weight: 700;
+      }
+
+      &.is-disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        background: #f8fafc;
+      }
+    }
+  }
+}
+
+// EMPTY STATE
 .empty-state-cell {
   text-align: center;
   padding: $spacing-12 $spacing-4;
@@ -575,18 +1043,16 @@ const deleteProduct = (product: ProductItem) => {
     background: hsla(142, 71%, 45%, 0.12);
     color: $color-success;
   }
+}
 
-  &.badge-stock-in {
-    background: hsla(142, 71%, 45%, 0.12);
-    color: $color-success;
-    border: 1px solid hsla(142, 71%, 45%, 0.25);
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
   }
-
-  &.badge-stock-out {
-    background: hsla(0, 84%, 60%, 0.12);
-    color: $color-danger;
-    border: 1px solid hsla(0, 84%, 60%, 0.25);
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 </style>
-

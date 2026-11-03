@@ -1,7 +1,16 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
+
+interface CourierOption {
+  code: string;
+  name: string;
+  is_sandbox: boolean;
+  is_active: boolean;
+}
 
 interface OrderItem {
   id: number;
@@ -68,6 +77,7 @@ interface OrderDetailRecord {
 const props = defineProps<{
   order: OrderDetailRecord;
   allowedTransitions: string[];
+  couriers?: CourierOption[];
 }>();
 
 const showTransitionModal = ref(false);
@@ -77,6 +87,132 @@ const transitionForm = useForm({
   target_status: '',
   reason: '',
 });
+
+const defaultCouriers: CourierOption[] = [
+  { code: 'steadfast', name: 'Steadfast Courier', is_sandbox: false, is_active: true },
+  { code: 'pathao', name: 'Pathao Courier', is_sandbox: true, is_active: true },
+];
+
+const availableCouriers = computed(() => {
+  return props.couriers && props.couriers.length > 0 ? props.couriers : defaultCouriers;
+});
+
+const selectedCourier = ref(
+  props.order.courier_code ||
+  (props.couriers && props.couriers.length > 0 ? props.couriers[0].code : 'steadfast')
+);
+
+const isBookingCourier = ref(false);
+const courierBookingNotification = ref<{
+  type: 'success' | 'error';
+  message: string;
+  labelUrl?: string;
+} | null>(null);
+
+const getCsrfToken = () => {
+  return (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
+};
+
+const handleBookCourier = async () => {
+  const courierName = availableCouriers.value.find((c) => c.code === selectedCourier.value)?.name || selectedCourier.value;
+
+  const result = await Swal.fire({
+    title: '<span style="color: #9d174d; font-weight: 800; font-size: 22px;">Book Courier Consignment?</span>',
+    html: `
+      <div class="swal-pink-card" style="background: #fdf2f8; border: 2px solid #fbcfe8; border-radius: 12px; padding: 18px 20px; color: #831843; font-size: 15px; font-weight: 600; line-height: 1.5; margin: 12px 0; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.12); text-align: center;">
+        🚚 Are you sure you want to send and book order <b style="color: #be185d; font-size: 16px;">${props.order.order_number}</b> with <b style="color: #be185d; font-size: 16px;">${courierName}</b>?
+      </div>
+    `,
+    icon: 'question',
+    iconColor: '#db2777',
+    background: '#fff5f7',
+    showCancelButton: true,
+    confirmButtonColor: '#db2777',
+    cancelButtonColor: '#64748b',
+    confirmButtonText: `🚀 Yes, Book with ${courierName}`,
+    cancelButtonText: 'Cancel',
+    reverseButtons: true,
+    focusConfirm: true,
+    customClass: {
+      popup: 'swal-pink-popup',
+    },
+  });
+
+  if (!result.isConfirmed) return;
+
+  isBookingCourier.value = true;
+  courierBookingNotification.value = null;
+
+  try {
+    const res = await fetch(`/admin/orders/${props.order.id}/book-courier`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': getCsrfToken(),
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        courier_code: selectedCourier.value,
+      }),
+    });
+
+    const data = await res.json();
+    if (res.ok && data.status === 'success') {
+      const tracking = data.tracking_code || data.consignment_id;
+      const labelUrl = `/admin/orders/${props.order.id}/shipping-label`;
+
+      courierBookingNotification.value = {
+        type: 'success',
+        message: `Consignment successfully booked! Tracking Code: ${tracking}`,
+        labelUrl,
+      };
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Consignment Booked!',
+        html: `Order <b>${props.order.order_number}</b> successfully booked with <b>${courierName}</b>!<br><br>Tracking Code: <code style="font-family: monospace; font-weight: bold; background: #eff6ff; padding: 4px 8px; border-radius: 4px; color: #1d4ed8; font-size: 14px;">${tracking}</code>`,
+        confirmButtonColor: '#0f172a',
+        confirmButtonText: '🏷️ Print 4x6 Label',
+        showCancelButton: true,
+        cancelButtonText: 'Close',
+      }).then((modalRes) => {
+        if (modalRes.isConfirmed) {
+          window.open(labelUrl, '_blank');
+        }
+      });
+
+      router.reload({ preserveScroll: true });
+    } else {
+      const errorMsg = data.message || 'Failed to book consignment with courier.';
+      courierBookingNotification.value = {
+        type: 'error',
+        message: errorMsg,
+      };
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Booking Failed',
+        text: errorMsg,
+        confirmButtonColor: '#dc2626',
+      });
+    }
+  } catch (err: any) {
+    const errorMsg = err?.message || 'Network error connecting to courier service.';
+    courierBookingNotification.value = {
+      type: 'error',
+      message: errorMsg,
+    };
+
+    Swal.fire({
+      icon: 'error',
+      title: 'Network Error',
+      text: errorMsg,
+      confirmButtonColor: '#dc2626',
+    });
+  } finally {
+    isBookingCourier.value = false;
+  }
+};
 
 const openTransitionModal = (status: string) => {
   selectedTargetStatus.value = status;
@@ -129,10 +265,11 @@ const getStatusBadgeClass = (status: string) => {
             v-for="target in allowedTransitions"
             :key="target"
             class="btn btn-sm"
-            :class="target === 'cancelled' ? 'btn-danger' : 'btn-primary'"
+            :class="target === 'cancelled' ? 'btn-danger' : (target === 'returned' ? 'btn-returned' : 'btn-primary')"
             @click="openTransitionModal(target)"
           >
-            Mark {{ target.replace(/_/g, ' ') }}
+            <span v-if="target === 'returned'">🔄 Receive Return</span>
+            <span v-else>Mark {{ target.replace(/_/g, ' ') }}</span>
           </button>
         </div>
       </div>
@@ -277,17 +414,109 @@ const getStatusBadgeClass = (status: string) => {
           <!-- Logistics & Shipping Consignment Card -->
           <div class="card courier-card">
             <h2 class="card-title">🚚 Courier Consignment</h2>
-            <div class="info-group">
-              <label>Courier Provider:</label>
-              <strong>{{ order.courier_code?.toUpperCase() || 'Not Booked Yet' }}</strong>
+
+            <!-- Booking Alert Notification -->
+            <div
+              v-if="courierBookingNotification"
+              class="courier-banner"
+              :class="`is-${courierBookingNotification.type}`"
+            >
+              <span>{{ courierBookingNotification.message }}</span>
+              <a
+                v-if="courierBookingNotification.labelUrl"
+                :href="courierBookingNotification.labelUrl"
+                target="_blank"
+                class="banner-label-btn"
+              >
+                🏷️ Open 4x6 Label ↗
+              </a>
             </div>
-            <div v-if="order.courier_tracking_code" class="info-group">
-              <label>Tracking Code:</label>
-              <code class="tracking-code">{{ order.courier_tracking_code }}</code>
+
+            <!-- When Already Booked -->
+            <div v-if="order.courier_consignment_id || order.courier_tracking_code" class="booked-section">
+              <div class="info-group">
+                <label>Courier Provider:</label>
+                <div class="courier-badge-row">
+                  <span class="courier-badge-lg" :class="`courier-${order.courier_code || 'default'}`">
+                    🚚 {{ (order.courier_code || 'courier').toUpperCase() }}
+                  </span>
+                  <span class="status-pill status-booked">✓ Booked</span>
+                </div>
+              </div>
+
+              <div class="info-group">
+                <label>Tracking Code:</label>
+                <code class="tracking-code">{{ order.courier_tracking_code || order.courier_consignment_id }}</code>
+              </div>
+
+              <div v-if="order.courier_consignment_id" class="info-group">
+                <label>Consignment ID:</label>
+                <span class="consignment-text">{{ order.courier_consignment_id }}</span>
+              </div>
+
+              <div v-if="order.mushak_6_3_number" class="info-group">
+                <label>NBR Mushak 6.3 #:</label>
+                <code class="tax-code">{{ order.mushak_6_3_number }}</code>
+              </div>
+
+              <!-- Action Buttons for Booked Order -->
+              <div class="courier-action-buttons">
+                <a
+                  :href="`/admin/orders/${order.id}/shipping-label`"
+                  target="_blank"
+                  class="btn btn-label-lg"
+                  title="Open 4x6 Thermal Printable Barcode Shipping Label"
+                >
+                  🏷️ Print 4x6 Thermal Label
+                </a>
+                <a
+                  :href="`/admin/orders/bag-tickets?order_ids=${order.id}`"
+                  target="_blank"
+                  class="btn btn-ticket-lg"
+                  title="Print Packing Bag Ticket"
+                >
+                  🖨️ Print Packing Ticket
+                </a>
+              </div>
             </div>
-            <div v-if="order.mushak_6_3_number" class="info-group">
-              <label>NBR Mushak 6.3 #:</label>
-              <code class="tax-code">{{ order.mushak_6_3_number }}</code>
+
+            <!-- When Not Booked Yet -->
+            <div v-else class="unbooked-section">
+              <div class="unbooked-status-row">
+                <span class="unbooked-tag">⚠️ Not Booked Yet</span>
+                <span class="unbooked-desc">Assign this parcel to an active courier partner to book consignment & generate tracking.</span>
+              </div>
+
+              <div class="dispatch-form">
+                <div class="form-group-courier">
+                  <label class="courier-select-label">Select Courier Provider:</label>
+                  <select v-model="selectedCourier" class="courier-select">
+                    <option v-for="c in availableCouriers" :key="c.code" :value="c.code">
+                      {{ c.name }} {{ c.is_sandbox ? '🧪 (Sandbox)' : '⚡ (Live)' }}
+                    </option>
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  class="btn btn-book-courier"
+                  :disabled="isBookingCourier || order.status === 'cancelled' || order.status === 'delivered' || order.status === 'returned'"
+                  @click="handleBookCourier"
+                >
+                  <span v-if="isBookingCourier">⏳ Booking Consignment...</span>
+                  <span v-else>🚀 Book & Send to Courier</span>
+                </button>
+              </div>
+
+              <div class="unbooked-ticket-link">
+                <a
+                  :href="`/admin/orders/bag-tickets?order_ids=${order.id}`"
+                  target="_blank"
+                  class="btn btn-ticket-sm-link"
+                >
+                  🖨️ Print Packing Bag Ticket First
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -301,6 +530,14 @@ const getStatusBadgeClass = (status: string) => {
             Transition order <strong>{{ order.order_number }}</strong> to
             <span class="status-target">{{ selectedTargetStatus.replace(/_/g, ' ') }}</span>?
           </p>
+
+          <div v-if="selectedTargetStatus === 'returned'" class="return-restock-notice">
+            <span class="notice-icon">🔄</span>
+            <div>
+              <strong>Warehouse Inward Restocking:</strong>
+              <p>Receiving this parcel will automatically restore and restock the committed items back into your active warehouse inventory.</p>
+            </div>
+          </div>
 
           <form @submit.prevent="submitTransition">
             <div class="form-group">
@@ -621,6 +858,268 @@ const getStatusBadgeClass = (status: string) => {
         font-style: italic;
       }
     }
+
+    .courier-card {
+      .courier-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: $radius-md;
+        font-size: $fs-xs;
+        margin-bottom: $space-3;
+        font-weight: 600;
+
+        &.is-success {
+          background: #ecfdf5;
+          border: 1px solid #a7f3d0;
+          color: #065f46;
+        }
+
+        &.is-error {
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          color: #991b1b;
+        }
+
+        .banner-label-btn {
+          display: inline-block;
+          font-weight: 700;
+          color: inherit;
+          text-decoration: underline;
+          flex-shrink: 0;
+        }
+      }
+
+      .booked-section {
+        .courier-badge-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .courier-badge-lg {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 4px 10px;
+          border-radius: $radius-full;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.5px;
+
+          &.courier-steadfast {
+            background: #e0f2fe;
+            color: #0369a1;
+          }
+
+          &.courier-pathao {
+            background: #fee2e2;
+            color: #b91c1c;
+          }
+
+          &.courier-redx {
+            background: #ffedd5;
+            color: #c2410c;
+          }
+        }
+
+        .status-booked {
+          background: #dcfce7;
+          color: #15803d;
+          font-size: 11px;
+          font-weight: 700;
+          padding: 2px 8px;
+          border-radius: $radius-full;
+        }
+
+        .tracking-code {
+          font-family: monospace;
+          font-weight: 700;
+          font-size: $fs-sm;
+          color: $color-primary;
+          background: #f8fafc;
+          border: 1px solid $color-border;
+          padding: 3px 8px;
+          border-radius: $radius-sm;
+          display: inline-block;
+        }
+
+        .consignment-text {
+          font-family: monospace;
+          font-size: $fs-xs;
+          color: $color-text-muted;
+        }
+
+        .tax-code {
+          font-family: monospace;
+          font-size: $fs-xs;
+          color: #047857;
+          background: #ecfdf5;
+          padding: 2px 6px;
+          border-radius: $radius-sm;
+        }
+
+        .courier-action-buttons {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-top: $space-4;
+          padding-top: $space-3;
+          border-top: 1px solid $color-border;
+
+          .btn-label-lg {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 14px;
+            background: #0f172a;
+            color: #ffffff;
+            border-radius: $radius-md;
+            font-weight: 700;
+            font-size: $fs-xs;
+            text-decoration: none;
+            transition: background 0.2s;
+
+            &:hover {
+              background: #1e293b;
+            }
+          }
+
+          .btn-ticket-lg {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: #f8fafc;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            border-radius: $radius-md;
+            font-weight: 600;
+            font-size: $fs-xs;
+            text-decoration: none;
+            transition: background 0.2s;
+
+            &:hover {
+              background: #e2e8f0;
+            }
+          }
+        }
+      }
+
+      .unbooked-section {
+        background: #fdf2f8;
+        border: 1px solid #fbcfe8;
+        border-radius: $radius-md;
+        padding: $space-4;
+
+        .unbooked-status-row {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          margin-bottom: $space-3;
+          padding-bottom: $space-3;
+          border-bottom: 1px dashed #fbcfe8;
+
+          .unbooked-tag {
+            display: inline-block;
+            align-self: flex-start;
+            padding: 3px 8px;
+            border-radius: $radius-sm;
+            background: #fce7f3;
+            color: #9d174d;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+          }
+
+          .unbooked-desc {
+            font-size: 11px;
+            color: #831843;
+            line-height: 1.4;
+          }
+        }
+
+        .dispatch-form {
+          display: flex;
+          flex-direction: column;
+          gap: $space-3;
+
+          .form-group-courier {
+            .courier-select-label {
+              display: block;
+              font-size: $fs-xs;
+              font-weight: 700;
+              color: #831843;
+              margin-bottom: 4px;
+            }
+
+            .courier-select {
+              width: 100%;
+              padding: 8px 10px;
+              border: 1px solid #f472b6;
+              border-radius: $radius-md;
+              font-size: $fs-sm;
+              font-weight: 600;
+              background: #ffffff;
+              color: #831843;
+              outline: none;
+
+              &:focus {
+                border-color: #db2777;
+                box-shadow: 0 0 0 2px rgba(219, 39, 119, 0.2);
+              }
+            }
+          }
+
+          .btn-book-courier {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: $radius-md;
+            font-weight: 700;
+            font-size: $fs-sm;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(219, 39, 119, 0.3);
+            transition: all 0.2s;
+
+            &:hover:not(:disabled) {
+              background: linear-gradient(135deg, #db2777 0%, #be185d 100%);
+              box-shadow: 0 4px 10px rgba(219, 39, 119, 0.4);
+            }
+
+            &:disabled {
+              opacity: 0.6;
+              cursor: not-allowed;
+            }
+          }
+        }
+
+        .unbooked-ticket-link {
+          margin-top: $space-2;
+          text-align: center;
+
+          .btn-ticket-sm-link {
+            display: inline-block;
+            font-size: 11px;
+            color: #64748b;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 4px 8px;
+
+            &:hover {
+              color: $color-primary;
+              text-decoration: underline;
+            }
+          }
+        }
+      }
+    }
   }
 
   .status-badge {
@@ -711,5 +1210,59 @@ const getStatusBadgeClass = (status: string) => {
       gap: $space-2;
     }
   }
+
+  .btn-returned {
+    background: #e11d48;
+    color: #ffffff;
+    border: 1px solid #be123c;
+    font-weight: 700;
+
+    &:hover {
+      background: #be123c;
+    }
+  }
+
+  .return-restock-notice {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-radius: $radius-md;
+    padding: 12px;
+    margin: 12px 0 16px;
+    font-size: 13px;
+    color: #9f1239;
+
+    .notice-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    strong {
+      color: #881337;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    p {
+      margin: 0;
+      font-size: 12px;
+      color: #be123c;
+      line-height: 1.4;
+    }
+  }
+}
+
+:global(.swal-pink-popup) {
+  background-color: #fff5f7 !important;
+  border: 2px solid #fbcfe8 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 40px rgba(219, 39, 119, 0.18) !important;
+}
+
+:global(.swal-pink-popup .swal2-title) {
+  color: #9d174d !important;
 }
 </style>

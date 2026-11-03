@@ -139,11 +139,12 @@ final class GenerateOrderBagTicketHtmlAction
             letter-spacing: 0.5px;
         }
         .ticket-badge {
-            background: #000;
-            color: #fff;
+            background: transparent;
+            color: #000;
+            border: 1.5px solid #000;
             padding: 2px 6px;
             font-size: 10px;
-            font-weight: 800;
+            font-weight: 700;
             border-radius: 3px;
             text-transform: uppercase;
         }
@@ -176,24 +177,24 @@ final class GenerateOrderBagTicketHtmlAction
             border-radius: 4px;
             padding: 5px 7px;
             margin-bottom: 6px;
-            background: #fafafa;
+            background: transparent;
         }
         .box-title {
             font-size: 8.5px;
-            font-weight: 800;
+            font-weight: 700;
             text-transform: uppercase;
-            color: #475569;
+            color: #64748b;
             margin-bottom: 2px;
             letter-spacing: 0.5px;
         }
         .cust-name {
             font-size: 13px;
-            font-weight: 800;
+            font-weight: 700;
             color: #000;
         }
         .cust-phone {
-            font-size: 14.5px;
-            font-weight: 900;
+            font-size: 14px;
+            font-weight: normal; /* Optimized printing cost: phone number not bold */
             color: #000;
             letter-spacing: 0.5px;
             margin: 2px 0;
@@ -205,10 +206,11 @@ final class GenerateOrderBagTicketHtmlAction
         }
         .zone-tag {
             display: inline-block;
-            background: #000;
-            color: #fff;
+            background: transparent;
+            color: #000;
+            border: 1px solid #000;
             font-size: 9px;
-            font-weight: 700;
+            font-weight: 600;
             padding: 1px 6px;
             border-radius: 3px;
             margin-top: 3px;
@@ -216,9 +218,9 @@ final class GenerateOrderBagTicketHtmlAction
         }
 
         .cod-collection-banner {
-            border: 2px solid #000;
-            background: #000;
-            color: #ffffff;
+            border: 1.5px solid #000;
+            background: transparent;
+            color: #000000;
             padding: 6px 8px;
             border-radius: 4px;
             margin-bottom: 6px;
@@ -228,17 +230,17 @@ final class GenerateOrderBagTicketHtmlAction
         }
         .cod-label {
             font-size: 10px;
-            font-weight: 800;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         .cod-sub {
             font-size: 8.5px;
-            opacity: 0.85;
+            color: #475569;
         }
         .cod-val {
             font-size: 18px;
-            font-weight: 900;
+            font-weight: 800;
             letter-spacing: -0.5px;
         }
 
@@ -253,10 +255,10 @@ final class GenerateOrderBagTicketHtmlAction
             border-bottom: 1px solid #000;
             padding: 3px 4px;
             text-align: left;
-            font-weight: 800;
+            font-weight: 700;
             text-transform: uppercase;
             font-size: 8.5px;
-            background: #f8fafc;
+            background: transparent;
         }
         .items-table td {
             border-bottom: 1px dashed #cbd5e1;
@@ -284,7 +286,7 @@ final class GenerateOrderBagTicketHtmlAction
         }
         .item-qty {
             text-align: center;
-            font-weight: 800;
+            font-weight: 700;
             font-size: 11px;
             width: 28px;
         }
@@ -295,16 +297,16 @@ final class GenerateOrderBagTicketHtmlAction
         }
 
         .order-notes-box {
-            border: 1px dashed #f59e0b;
-            background: #fffbeb;
+            border: 1px dashed #000;
+            background: transparent;
             padding: 4px 6px;
             border-radius: 3px;
             font-size: 9px;
             margin-bottom: 6px;
         }
         .order-notes-title {
-            font-weight: 800;
-            color: #b45309;
+            font-weight: 700;
+            color: #000;
             text-transform: uppercase;
             font-size: 8px;
         }
@@ -351,8 +353,14 @@ final class GenerateOrderBagTicketHtmlAction
             }
             .bag-ticket {
                 margin: 0;
-                border: 2px solid #000;
+                border: 1.5px solid #000;
                 box-shadow: none;
+                background: #ffffff !important;
+            }
+            .ticket-badge, .recipient-box, .zone-tag, .cod-collection-banner, .items-table th, .order-notes-box {
+                background: transparent !important;
+                -webkit-print-color-adjust: economy;
+                print-color-adjust: economy;
             }
             .page-break {
                 page-break-after: always;
@@ -414,7 +422,7 @@ HTML;
         $codBanner = '';
         if ($isPaid) {
             $codBanner = <<<'HTML'
-            <div class="cod-collection-banner" style="background: #166534; border-color: #166534;">
+            <div class="cod-collection-banner" style="background: transparent; border: 1.5px solid #000; color: #000;">
                 <div>
                     <div class="cod-label">PAID ONLINE / অগ্রিম পরিশোধিত</div>
                     <div class="cod-sub">কাস্টমার থেকে কোনো টাকা নেওয়া যাবে না (COD ৳0)</div>
@@ -425,7 +433,7 @@ HTML;
         } else {
             $formattedCod = number_format($payableCod, 0);
             $codBanner = <<<HTML
-            <div class="cod-collection-banner">
+            <div class="cod-collection-banner" style="background: transparent; border: 1.5px solid #000; color: #000;">
                 <div>
                     <div class="cod-label">CASH TO COLLECT (ক্যাশ অন ডেলিভারি)</div>
                     <div class="cod-sub">ডেলিভারির সময় এই টাকা সংগ্রহ করুন</div>

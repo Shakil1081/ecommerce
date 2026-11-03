@@ -61,11 +61,17 @@ class GenerateShippingLabelHtmlAction
         }
         @media print {
             body {
-                background: none;
+                background: none !important;
             }
             .page {
                 margin: 0;
                 border: none;
+                background: #ffffff !important;
+            }
+            .courier-badge, .zone-pill, .cod-banner, .prepaid-banner, .section-box {
+                background: transparent !important;
+                -webkit-print-color-adjust: economy;
+                print-color-adjust: economy;
             }
             .page-break {
                 page-break-after: always;
@@ -91,8 +97,9 @@ class GenerateShippingLabelHtmlAction
             color: #475569;
         }
         .courier-badge {
-            background: #000;
-            color: #fff;
+            background: transparent;
+            color: #000;
+            border: 1.5px solid #000;
             padding: 2px 6px;
             font-size: 10px;
             font-weight: 700;
@@ -112,6 +119,7 @@ class GenerateShippingLabelHtmlAction
         }
         .section-box {
             border: 1px solid #000;
+            background: transparent;
             border-radius: 4px;
             padding: 5px;
             margin-bottom: 4px;
@@ -125,14 +133,15 @@ class GenerateShippingLabelHtmlAction
         }
         .recipient-name {
             font-size: 14px;
-            font-weight: 800;
+            font-weight: 700;
             line-height: 1.2;
         }
         .recipient-phone {
-            font-size: 15px;
-            font-weight: 900;
+            font-size: 14px;
+            font-weight: normal; /* Optimized printing cost: phone number not bold */
             letter-spacing: 0.5px;
             margin: 2px 0;
+            color: #000;
         }
         .recipient-address {
             font-size: 10px;
@@ -140,42 +149,43 @@ class GenerateShippingLabelHtmlAction
         }
         .zone-pill {
             display: inline-block;
-            background: #e2e8f0;
-            color: #0f172a;
+            background: transparent;
+            color: #000;
+            border: 1px solid #000;
             padding: 1px 4px;
             font-size: 8px;
-            font-weight: 700;
+            font-weight: 600;
             text-transform: uppercase;
             border-radius: 2px;
             margin-top: 2px;
         }
         .cod-banner {
-            border: 2px dashed #000;
-            background: #f8fafc;
+            border: 1.5px dashed #000;
+            background: transparent;
             padding: 6px;
             text-align: center;
             margin: 4px 0;
         }
         .cod-label {
             font-size: 10px;
-            font-weight: 800;
+            font-weight: 700;
             text-transform: uppercase;
         }
         .cod-amount {
             font-size: 18px;
-            font-weight: 900;
+            font-weight: 800;
         }
         .prepaid-banner {
-            border: 2px solid #000;
-            background: #000;
-            color: #fff;
+            border: 1.5px solid #000;
+            background: transparent;
+            color: #000;
             padding: 6px;
             text-align: center;
             margin: 4px 0;
         }
         .prepaid-text {
             font-size: 12px;
-            font-weight: 800;
+            font-weight: 700;
             text-transform: uppercase;
         }
         .items-table {

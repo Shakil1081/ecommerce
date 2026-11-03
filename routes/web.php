@@ -7,6 +7,7 @@ use App\Modules\Admin\Http\Controllers\AuditLogAdminController;
 use App\Modules\Admin\Http\Controllers\AuthController;
 use App\Modules\Admin\Http\Controllers\BotSecuritySettingsController;
 use App\Modules\Admin\Http\Controllers\CatalogController;
+use App\Modules\Admin\Http\Controllers\CategoryAdminController;
 use App\Modules\Admin\Http\Controllers\CommunicationAdminController;
 use App\Modules\Admin\Http\Controllers\CourierAdminController;
 use App\Modules\Admin\Http\Controllers\FraudDirectoryAdminController;
@@ -146,22 +147,31 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::resource('roles', RoleController::class);
     Route::resource('staff', StaffUserController::class);
 
+    // Categories Management
+    Route::resource('categories', CategoryAdminController::class)->only(['index', 'store', 'update', 'destroy']);
+
     // Catalog & Matrix Variant Management
     Route::resource('products', CatalogController::class);
     Route::get('products/{product}/matrix', [CatalogController::class, 'matrix'])->name('products.matrix');
     Route::post('products/{product}/generate-variants', [CatalogController::class, 'generateVariants'])->name('products.generate-variants');
+    Route::delete('products/{product}/variants/{variant}', [CatalogController::class, 'deleteVariant'])->name('products.variants.destroy');
 
     // Order Lifecycle Management & Dispatch
     Route::get('/orders', [OrderAdminController::class, 'index'])->name('orders.index');
     Route::match(['GET', 'POST'], '/orders/bag-tickets', [OrderAdminController::class, 'printBagTickets'])->name('orders.bag-tickets');
     Route::post('/orders/bulk-confirm', [OrderAdminController::class, 'bulkConfirm'])->name('orders.bulk-confirm');
     Route::post('/orders/bulk-transition', [OrderAdminController::class, 'bulkTransition'])->name('orders.bulk-transition');
+    Route::post('/orders/bulk-book-courier', [ShippingLabelController::class, 'bulkBook'])->name('orders.bulk-book-courier');
+    Route::match(['GET', 'POST'], '/orders/bulk-shipping-labels', [ShippingLabelController::class, 'bulk'])->name('orders.bulk-shipping-labels');
+    Route::get('/orders/scan-returns', [OrderAdminController::class, 'scanReturnsView'])->name('orders.scan-returns');
+    Route::post('/orders/scan-returns/process', [OrderAdminController::class, 'processBarcodeScanReturn'])->name('orders.scan-returns.process');
+    Route::get('/orders/scan-handover', [OrderAdminController::class, 'scanHandoverView'])->name('orders.scan-handover');
+    Route::post('/orders/scan-handover/process', [OrderAdminController::class, 'processBarcodeScanHandover'])->name('orders.scan-handover.process');
+    Route::get('/orders/scan-handover/manifest', [OrderAdminController::class, 'printHandoverManifest'])->name('orders.scan-handover.manifest');
     Route::get('/orders/{order}', [OrderAdminController::class, 'show'])->name('orders.show');
     Route::post('/orders/{order}/transition', [OrderAdminController::class, 'transitionStatus'])->name('orders.transition');
     Route::post('/orders/{order}/book-courier', [ShippingLabelController::class, 'book'])->name('orders.book-courier');
-    Route::post('/orders/bulk-book-courier', [ShippingLabelController::class, 'bulkBook'])->name('orders.bulk-book-courier');
     Route::get('/orders/{order}/shipping-label', [ShippingLabelController::class, 'show'])->name('orders.shipping-label');
-    Route::match(['GET', 'POST'], '/orders/bulk-shipping-labels', [ShippingLabelController::class, 'bulk'])->name('orders.bulk-shipping-labels');
 
     // Merchant Anti-Fraud Directory (Blacklist & Whitelist)
     Route::get('/fraud-directory', [FraudDirectoryAdminController::class, 'index'])->name('fraud.index');
@@ -207,6 +217,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     // Courier Logistics Hub & Payout Reconciliation
     Route::prefix('logistics')->name('logistics.')->group(function () {
+        Route::get('/delivery-overview', [CourierAdminController::class, 'deliveryOverview'])->name('delivery-overview');
+        Route::get('/delivery-overview/export-csv', [CourierAdminController::class, 'exportDeliveryCsv'])->name('delivery-overview.export-csv');
         Route::get('/zones', [CourierAdminController::class, 'zones'])->name('zones');
         Route::post('/zones/{zone}/rate', [CourierAdminController::class, 'updateZoneRate'])->name('zones.rate');
         Route::get('/cod-reconciliation', [CourierAdminController::class, 'codReconciliation'])->name('reconciliation');
@@ -245,6 +257,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/mushak-9-1/{return}/submit', [TaxComplianceAdminController::class, 'mushak91Submit'])->name('mushak-9-1.submit');
         Route::get('/mushak-6-6', [TaxComplianceAdminController::class, 'mushak66Index'])->name('mushak-6-6.index');
         Route::get('/rma', [TaxComplianceAdminController::class, 'rmaIndex'])->name('rma.index');
+        Route::post('/rma/{rma}/inspect', [TaxComplianceAdminController::class, 'rmaInspect'])->name('rma.inspect');
+        Route::get('/mushak-6-7/{creditNote}', [TaxComplianceAdminController::class, 'mushak67Show'])->name('mushak-6-7.show');
         Route::get('/registers', [TaxComplianceAdminController::class, 'registers'])->name('registers.index');
     });
 

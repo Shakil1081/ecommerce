@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
@@ -32,24 +32,45 @@ interface PaginatedAuditLogs {
   }>;
 }
 
-const props = defineProps<{
-  logs: PaginatedAuditLogs;
-  eventsList: string[];
-  filters: {
-    event?: string;
-    search?: string;
-    date_from?: string;
-    date_to?: string;
-  };
-}>();
+interface AuditMetrics {
+  total: number;
+  priceUpdates: number;
+  stockAdjustments: number;
+  orderChanges: number;
+  securityEvents: number;
+}
 
-const selectedEvent = ref(props.filters.event || '');
-const searchQuery = ref(props.filters.search || '');
-const dateFrom = ref(props.filters.date_from || '');
-const dateTo = ref(props.filters.date_to || '');
+const props = withDefaults(
+  defineProps<{
+    logs?: PaginatedAuditLogs;
+    eventsList?: string[];
+    filters?: {
+      event?: string;
+      search?: string;
+      date_from?: string;
+      date_to?: string;
+    };
+    metrics?: AuditMetrics;
+  }>(),
+  {
+    logs: () => ({ data: [], current_page: 1, last_page: 1, total: 0, links: [] }),
+    eventsList: () => [],
+    filters: () => ({ event: '', search: '', date_from: '', date_to: '' }),
+    metrics: () => ({ total: 0, priceUpdates: 0, stockAdjustments: 0, orderChanges: 0, securityEvents: 0 }),
+  }
+);
+
+const selectedEvent = ref(props.filters?.event || '');
+const searchQuery = ref(props.filters?.search || '');
+const dateFrom = ref(props.filters?.date_from || '');
+const dateTo = ref(props.filters?.date_to || '');
 
 // Inspection Modal state
 const inspectingLog = ref<AuditLogItem | null>(null);
+
+const hasActiveFilters = computed(() => {
+  return Boolean(selectedEvent.value || searchQuery.value || dateFrom.value || dateTo.value);
+});
 
 const handleFilter = () => {
   router.get('/admin/audit-logs', {
@@ -58,6 +79,14 @@ const handleFilter = () => {
     date_from: dateFrom.value || undefined,
     date_to: dateTo.value || undefined,
   }, { preserveState: true });
+};
+
+const clearFilters = () => {
+  selectedEvent.value = '';
+  searchQuery.value = '';
+  dateFrom.value = '';
+  dateTo.value = '';
+  handleFilter();
 };
 
 const openInspector = (log: AuditLogItem) => {
@@ -86,6 +115,8 @@ const getEventBadgeClass = (evt: string) => {
     case 'order_status_changed': return 'badge-green';
     case 'mushak_issued': return 'badge-purple';
     case 'fraud_list_updated': return 'badge-red';
+    case 'security_setting_changed': return 'badge-rose';
+    case 'role_updated': return 'badge-indigo';
     default: return 'badge-gray';
   }
 };
@@ -105,10 +136,49 @@ const getShortEntityName = (fullType: string | null) => {
       <div class="header-section">
         <div>
           <div class="breadcrumb">
-            <Link href="/admin">Dashboard</Link> / <span>Administration</span> / <span>Audit Trail</span>
+            <Link href="/admin">Dashboard</Link> / <span>Analytics & Audit</span> / <span>Audit Trail</span>
           </div>
           <h1 class="page-title">Enterprise Immutable Audit Trail</h1>
           <p class="page-subtitle">Cryptographically frozen record of price modifications, stock movements, order state transitions, and statutory tax entries.</p>
+        </div>
+      </div>
+
+      <!-- Top Metrics Strip -->
+      <div v-if="metrics" class="metrics-grid">
+        <div class="metric-card card-total">
+          <div class="metric-icon">📋</div>
+          <div class="metric-body">
+            <span class="metric-num">{{ metrics.total }}</span>
+            <span class="metric-label">Total Immutable Entries</span>
+          </div>
+        </div>
+        <div class="metric-card card-order">
+          <div class="metric-icon">🛍️</div>
+          <div class="metric-body">
+            <span class="metric-num text-emerald">{{ metrics.orderChanges }}</span>
+            <span class="metric-label">Order Lifecycle Transitions</span>
+          </div>
+        </div>
+        <div class="metric-card card-stock">
+          <div class="metric-icon">📦</div>
+          <div class="metric-body">
+            <span class="metric-num text-blue">{{ metrics.stockAdjustments }}</span>
+            <span class="metric-label">Inventory & Return Moves</span>
+          </div>
+        </div>
+        <div class="metric-card card-price">
+          <div class="metric-icon">🏷️</div>
+          <div class="metric-body">
+            <span class="metric-num text-amber">{{ metrics.priceUpdates }}</span>
+            <span class="metric-label">Price & Landed Cost Edits</span>
+          </div>
+        </div>
+        <div class="metric-card card-security">
+          <div class="metric-icon">🛡️</div>
+          <div class="metric-body">
+            <span class="metric-num text-rose">{{ metrics.securityEvents }}</span>
+            <span class="metric-label">Security & Fraud Changes</span>
+          </div>
         </div>
       </div>
 
@@ -118,7 +188,7 @@ const getShortEntityName = (fullType: string | null) => {
           <select v-model="selectedEvent" class="input-select" @change="handleFilter">
             <option value="">All Audit Events</option>
             <option v-for="evt in eventsList" :key="evt" :value="evt">
-              {{ evt.replace('_', ' ').toUpperCase() }}
+              {{ evt.replace(/_/g, ' ').toUpperCase() }}
             </option>
           </select>
 
@@ -131,13 +201,16 @@ const getShortEntityName = (fullType: string | null) => {
           />
 
           <div class="date-group">
-            <input v-model="dateFrom" type="date" class="input-date" />
+            <input v-model="dateFrom" type="date" class="input-date" title="Filter from date" @change="handleFilter" />
             <span>to</span>
-            <input v-model="dateTo" type="date" class="input-date" />
+            <input v-model="dateTo" type="date" class="input-date" title="Filter to date" @change="handleFilter" />
           </div>
 
-          <button class="btn btn-primary" @click="handleFilter">
+          <button type="button" class="btn btn-primary" @click="handleFilter">
             Filter Logs
+          </button>
+          <button v-if="hasActiveFilters" type="button" class="btn btn-secondary" @click="clearFilters">
+            ✕ Clear
           </button>
         </div>
       </div>
@@ -158,7 +231,16 @@ const getShortEntityName = (fullType: string | null) => {
           </thead>
           <tbody>
             <tr v-if="logs.data.length === 0">
-              <td colspan="7" class="empty-state">No audit logs matching current filter.</td>
+              <td colspan="7" class="empty-state">
+                <div class="empty-box">
+                  <span class="empty-icon">📋</span>
+                  <strong class="empty-title">No Audit Logs Found</strong>
+                  <p class="empty-desc">No immutable ledger entries match your filter or search criteria.</p>
+                  <button v-if="hasActiveFilters" type="button" class="btn btn-sm btn-clear-filters" @click="clearFilters">
+                    Reset Filter Criteria
+                  </button>
+                </div>
+              </td>
             </tr>
             <tr v-for="log in logs.data" :key="log.id">
               <td class="font-mono text-xs whitespace-nowrap">{{ formatDate(log.created_at) }}</td>
@@ -282,8 +364,63 @@ const getShortEntityName = (fullType: string | null) => {
   margin-top: 0.25rem;
 }
 
-.filter-card {
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
   margin-top: 1.5rem;
+
+  .metric-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+    }
+
+    .metric-icon {
+      font-size: 1.75rem;
+      line-height: 1;
+    }
+
+    .metric-body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .metric-num {
+      font-size: 1.375rem;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.2;
+
+      &.text-emerald { color: #059669; }
+      &.text-blue { color: #2563eb; }
+      &.text-amber { color: #d97706; }
+      &.text-rose { color: #e11d48; }
+    }
+
+    .metric-label {
+      font-size: 0.75rem;
+      color: #64748b;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-top: 0.2rem;
+    }
+  }
+}
+
+.filter-card {
+  margin-top: 1.25rem;
   background: #ffffff;
   padding: 1rem;
   border-radius: 0.5rem;
@@ -410,6 +547,8 @@ const getShortEntityName = (fullType: string | null) => {
   &.badge-green { background: #ecfdf5; color: #059669; }
   &.badge-purple { background: #f5f3ff; color: #7c3aed; }
   &.badge-red { background: #fef2f2; color: #dc2626; }
+  &.badge-rose { background: #ffe4e6; color: #e11d48; }
+  &.badge-indigo { background: #e0e7ff; color: #4338ca; }
   &.badge-gray { background: #f1f5f9; color: #475569; }
 }
 
@@ -430,8 +569,50 @@ const getShortEntityName = (fullType: string | null) => {
 
 .empty-state {
   text-align: center;
-  padding: 2.5rem 1rem;
+  padding: 3.5rem 1rem;
   color: #94a3b8;
+
+  .empty-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+
+    .empty-icon {
+      font-size: 2.5rem;
+      line-height: 1;
+      opacity: 0.8;
+    }
+
+    .empty-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .empty-desc {
+      font-size: 0.875rem;
+      color: #64748b;
+      margin: 0;
+      max-width: 360px;
+    }
+
+    .btn-clear-filters {
+      margin-top: 0.5rem;
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      padding: 0.35rem 0.85rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+
+      &:hover {
+        background: #e2e8f0;
+      }
+    }
+  }
 }
 
 .pagination-bar {

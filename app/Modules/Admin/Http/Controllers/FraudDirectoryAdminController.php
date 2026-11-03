@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\Admin\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Admin\Actions\LogAuditTrailAction;
+use App\Modules\Admin\Models\AuditLog;
 use App\Modules\Customer\Actions\AddCustomerToFraudListAction;
 use App\Modules\Customer\Actions\RemoveCustomerFromFraudListAction;
 use App\Modules\Customer\Models\CustomerFraudList;
@@ -77,7 +79,16 @@ final class FraudDirectoryAdminController extends Controller
 
         $validated['blocked_by_user_id'] = $request->user()?->id;
 
-        $addAction($validated);
+        $entry = $addAction($validated);
+
+        app(LogAuditTrailAction::class)(
+            event: AuditLog::EVENT_FRAUD_LIST_UPDATED,
+            description: "Added {$validated['type']} entry for ".($validated['phone_number'] ?? $validated['ip_address'] ?? $validated['customer_name'] ?? 'identifier').'. Reason: '.($validated['reason'] ?? 'Manual addition'),
+            auditable: $entry,
+            oldValues: null,
+            newValues: $validated,
+            options: ['user' => $request->user()]
+        );
 
         return back()->with('success', ucfirst($validated['type']).' entry added successfully.');
     }
@@ -86,9 +97,19 @@ final class FraudDirectoryAdminController extends Controller
      * Remove an entry from the fraud directory.
      */
     public function destroy(
+        Request $request,
         CustomerFraudList $customerFraudList,
         RemoveCustomerFromFraudListAction $removeAction
     ): RedirectResponse {
+        app(LogAuditTrailAction::class)(
+            event: AuditLog::EVENT_FRAUD_LIST_UPDATED,
+            description: "Removed {$customerFraudList->type} entry for ".($customerFraudList->phone_number ?? $customerFraudList->ip_address ?? $customerFraudList->customer_name ?? 'identifier'),
+            auditable: $customerFraudList,
+            oldValues: $customerFraudList->toArray(),
+            newValues: null,
+            options: ['user' => $request->user()]
+        );
+
         $removeAction($customerFraudList);
 
         return back()->with('success', 'Fraud directory entry removed successfully.');

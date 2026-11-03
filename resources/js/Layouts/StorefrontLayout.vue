@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Head, Link, usePage, router } from '@inertiajs/vue3';
 import type { SharedProps, NavCategoryItem } from '@/types';
 import CartDrawer from '@/Components/Cart/CartDrawer.vue';
@@ -15,7 +15,8 @@ const cartStore = useCartStore();
 const currentLocale = ref(page.props.app?.locale || 'en');
 const headerSearchQuery = ref('');
 
-// Category Menu Dropdown State
+// Category Menu Dropdown State & Click-Outside Ref
+const catMenuRef = ref<HTMLElement | null>(null);
 const isCatMenuOpen = ref(false);
 const mobileCatDrawerOpen = ref(false);
 let catMenuTimer: ReturnType<typeof setTimeout> | null = null;
@@ -29,14 +30,34 @@ const handleCatMouseEnter = () => {
 };
 
 const handleCatMouseLeave = () => {
+  if (catMenuTimer) {
+    clearTimeout(catMenuTimer);
+  }
   catMenuTimer = setTimeout(() => {
     isCatMenuOpen.value = false;
-  }, 160);
+  }, 260);
 };
 
 const toggleCatMenu = () => {
   isCatMenuOpen.value = !isCatMenuOpen.value;
 };
+
+const handleClickOutside = (event: MouseEvent) => {
+  if (catMenuRef.value && !catMenuRef.value.contains(event.target as Node)) {
+    isCatMenuOpen.value = false;
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+  if (catMenuTimer) {
+    clearTimeout(catMenuTimer);
+  }
+});
 
 const toggleLocale = () => {
   currentLocale.value = currentLocale.value === 'en' ? 'bn' : 'en';
@@ -71,11 +92,16 @@ const getCategoryIcon = (slug: string): string => {
   if (s.includes('phone') || s.includes('mobile')) return '📱';
   if (s.includes('electronic') || s.includes('audio') || s.includes('sound') || s.includes('headphone')) return '🎧';
   if (s.includes('computer') || s.includes('laptop') || s.includes('it')) return '💻';
-  if (s.includes('kitchen') || s.includes('appliance') || s.includes('home')) return '🍳';
+  if (s.includes('kitchen') || s.includes('appliance') || s.includes('home') || s.includes('cook')) return '🍳';
   if (s.includes('bag') || s.includes('handbag') || s.includes('purse')) return '👜';
-  if (s.includes('fashion') || s.includes('cloth') || s.includes('wear') || s.includes('shoe')) return '👗';
-  if (s.includes('beauty') || s.includes('cosmetic')) return '💄';
+  if (s.includes('fashion') || s.includes('cloth') || s.includes('wear') || s.includes('dress') || s.includes('shoe')) return '👗';
+  if (s.includes('beauty') || s.includes('cosmetic') || s.includes('skin')) return '💄';
   if (s.includes('watch') || s.includes('jewelry')) return '⌚';
+  if (s.includes('baby') || s.includes('toy') || s.includes('kid')) return '🧸';
+  if (s.includes('health') || s.includes('care') || s.includes('fit')) return '💊';
+  if (s.includes('book') || s.includes('stationery')) return '📚';
+  if (s.includes('tool') || s.includes('hardware')) return '🛠️';
+  if (s.includes('auto') || s.includes('motor')) return '🚗';
   return '🛍️';
 };
 
@@ -88,6 +114,8 @@ const getCategoryBn = (name: string, slug: string): string => {
   if (s.includes('kitchen') || s.includes('home')) return 'হোম ও কিচেন অ্যাপ্লায়েন্স';
   if (s.includes('bag')) return 'লেডিস ব্যাগ ও হ্যান্ডব্যাগ';
   if (s.includes('fashion')) return 'ফ্যাশন ও লাইফস্টাইল';
+  if (s.includes('beauty')) return 'সৌন্দর্য ও রূপচর্চা';
+  if (s.includes('watch')) return 'ঘড়ি ও অ্যাক্সেসরিজ';
   return name;
 };
 
@@ -100,6 +128,8 @@ const getCategoryThemeClass = (slug: string): string => {
   if (s.includes('kitchen') || s.includes('home')) return 'theme-amber';
   if (s.includes('bag')) return 'theme-rose';
   if (s.includes('fashion')) return 'theme-emerald';
+  if (s.includes('beauty')) return 'theme-rose';
+  if (s.includes('watch')) return 'theme-amber';
   return 'theme-indigo';
 };
 </script>
@@ -112,7 +142,7 @@ const getCategoryThemeClass = (slug: string): string => {
 
     <!-- Top Announcement Bar -->
     <div class="top-announcement-bar">
-      <div class="container announcement-content">
+      <div class="announcement-content">
         <span>🚀 {{ currentLocale === 'bn' ? 'সারা বাংলাদেশে দ্রুততম হোম ডেলিভারি ও ক্যাশ অন ডেলিভারি!' : 'Fast Nationwide Cash on Delivery Across Bangladesh!' }}</span>
         <button class="locale-toggle-btn" @click="toggleLocale">
           {{ currentLocale === 'bn' ? 'English (EN)' : 'বাংলা (BN)' }}
@@ -122,38 +152,26 @@ const getCategoryThemeClass = (slug: string): string => {
 
     <!-- Storefront Navigation Header -->
     <header class="storefront-header">
-      <div class="container header-container">
-        <!-- Logo -->
-        <Link href="/" class="brand-logo">
-          <span class="logo-accent">E</span>COMMERCE
-        </Link>
+      <div class="header-container">
+        <!-- Brand & Category Trigger Group -->
+        <div class="header-left-group">
+          <!-- Logo -->
+          <Link href="/" class="brand-logo">
+            <span class="logo-accent">E</span>COMMERCE
+          </Link>
 
-        <!-- Search Bar -->
-        <div class="search-container">
-          <form @submit.prevent="handleHeaderSearch" class="header-search-form">
-            <span class="search-icon">🔍</span>
-            <input
-              v-model="headerSearchQuery"
-              type="search"
-              :placeholder="currentLocale === 'bn' ? 'পণ্য, ব্র্যান্ড বা এসকেইউ খুঁজুন...' : 'Search products, brands or SKU...'"
-              class="header-search-input"
-            >
-          </form>
-        </div>
-
-        <!-- Main Storefront Nav Links -->
-        <nav class="header-nav-links">
-          <!-- App-Style Category Menu Trigger with Hover Dropdown -->
+          <!-- App-Style Category Menu Trigger with Hover & Click Dropdown (Desktop) -->
           <div
+            ref="catMenuRef"
             class="cat-menu-wrapper"
             @mouseenter="handleCatMouseEnter"
             @mouseleave="handleCatMouseLeave"
           >
             <button
               type="button"
-              class="header-nav-link cat-trigger-btn"
+              class="cat-trigger-btn"
               :class="{ 'is-open': isCatMenuOpen }"
-              @click="toggleCatMenu"
+              @click.stop="toggleCatMenu"
               aria-haspopup="true"
               :aria-expanded="isCatMenuOpen"
             >
@@ -163,7 +181,7 @@ const getCategoryThemeClass = (slug: string): string => {
                 <span class="grid-square"></span>
                 <span class="grid-square"></span>
               </span>
-              <span class="cat-btn-label">{{ currentLocale === 'bn' ? 'ক্যাটাগরি' : 'Categories' }}</span>
+              <span class="cat-btn-label">{{ currentLocale === 'bn' ? 'সকল ক্যাটাগরি' : 'All Categories' }}</span>
               <span class="cat-chevron" :class="{ 'rotated': isCatMenuOpen }">▾</span>
             </button>
 
@@ -190,30 +208,54 @@ const getCategoryThemeClass = (slug: string): string => {
                   </Link>
                 </div>
 
-                <!-- 3-Column App-Style Category Grid -->
+                <!-- 2-Column App-Style Category Grid with Subcategories -->
                 <div class="mega-cards-grid">
-                  <Link
+                  <div
                     v-for="cat in categories"
                     :key="cat.id"
-                    :href="`/shop?category=${cat.slug}`"
-                    class="app-category-card"
-                    @click="isCatMenuOpen = false"
+                    class="app-category-card-wrapper"
                   >
-                    <div class="card-icon-container" :class="getCategoryThemeClass(cat.slug)">
-                      <span class="card-emoji">{{ getCategoryIcon(cat.slug) }}</span>
-                    </div>
-                    <div class="card-text-container">
-                      <div class="card-title-row">
-                        <span class="card-title">{{ cat.name }}</span>
-                        <span v-if="cat.is_featured" class="hot-badge">HOT</span>
+                    <Link
+                      :href="`/shop?category=${cat.slug}`"
+                      class="app-category-card"
+                      @click="isCatMenuOpen = false"
+                    >
+                      <div class="card-icon-container" :class="getCategoryThemeClass(cat.slug)">
+                        <span class="card-emoji">{{ getCategoryIcon(cat.slug) }}</span>
                       </div>
-                      <span class="card-subtitle-bn">{{ getCategoryBn(cat.name, cat.slug) }}</span>
-                      <div class="card-meta">
-                        <span class="card-count">{{ cat.products_count ? `${cat.products_count}+ Products` : 'In Stock' }}</span>
-                        <span class="card-arrow-link">Explore →</span>
+                      <div class="card-text-container">
+                        <div class="card-title-row">
+                          <span class="card-title">{{ cat.name }}</span>
+                          <span v-if="cat.is_featured" class="hot-badge">HOT</span>
+                        </div>
+                        <span class="card-subtitle-bn">{{ getCategoryBn(cat.name, cat.slug) }}</span>
+                        <div class="card-meta">
+                          <span class="card-count">{{ cat.products_count ? `${cat.products_count}+ Products` : 'In Stock' }}</span>
+                          <span class="card-arrow-link">Explore →</span>
+                        </div>
                       </div>
+                    </Link>
+
+                    <div v-if="cat.children && cat.children.length > 0" class="subcat-chips-row">
+                      <Link
+                        v-for="child in cat.children.slice(0, 4)"
+                        :key="child.id"
+                        :href="`/shop?category=${child.slug}`"
+                        class="subcat-chip"
+                        @click="isCatMenuOpen = false"
+                      >
+                        {{ child.name }}
+                      </Link>
+                      <Link
+                        v-if="cat.children.length > 4"
+                        :href="`/shop?category=${cat.slug}`"
+                        class="subcat-more"
+                        @click="isCatMenuOpen = false"
+                      >
+                        +{{ cat.children.length - 4 }} more
+                      </Link>
                     </div>
-                  </Link>
+                  </div>
                 </div>
 
                 <!-- Mega Dropdown Footer Bar -->
@@ -230,7 +272,23 @@ const getCategoryThemeClass = (slug: string): string => {
               </div>
             </transition>
           </div>
+        </div>
 
+        <!-- Search Bar -->
+        <div class="search-container">
+          <form @submit.prevent="handleHeaderSearch" class="header-search-form">
+            <span class="search-icon">🔍</span>
+            <input
+              v-model="headerSearchQuery"
+              type="search"
+              :placeholder="currentLocale === 'bn' ? 'পণ্য, ব্র্যান্ড বা এসকেইউ খুঁজুন...' : 'Search products, brands or SKU...'"
+              class="header-search-input"
+            >
+          </form>
+        </div>
+
+        <!-- Main Storefront Nav Links -->
+        <nav class="header-nav-links">
           <Link href="/shop" class="header-nav-link">
             <span>🛍️</span> {{ currentLocale === 'bn' ? 'শপ' : 'Shop Catalog' }}
           </Link>
@@ -358,13 +416,21 @@ const getCategoryThemeClass = (slug: string): string => {
 
     <!-- Storefront Footer -->
     <footer class="storefront-footer">
-      <div class="container footer-grid">
-        <div class="footer-col">
-          <h4 class="footer-heading">Enterprise E-Commerce</h4>
+      <div class="footer-container footer-grid">
+        <div class="footer-col brand-col">
+          <Link href="/" class="footer-brand-logo">
+            <span class="logo-accent">E</span>COMMERCE
+          </Link>
           <p class="footer-text">
-            {{ currentLocale === 'bn' ? '১০০% আসল আমদানিকৃত এবং স্থানীয় পণ্য। এনবিআর মূসক ৬.৩ চালান ও অফিসিয়াল ওয়ারেন্টি সহ।' : '100% Genuine imported & domestic procurement with statutory NBR VAT compliance and official warranties.' }}
+            {{ currentLocale === 'bn' ? '১০০% আসল আমদানিকৃত এবং স্থানীয় পণ্য। এনবিআর মূসক ৬.৩ চালান ও অফিসিয়াল ওয়ারেন্টি সহ নিরাপদ কেনাকাটা।' : '100% Genuine imported & domestic products with statutory NBR VAT compliance, authorized warranties, and fast nationwide delivery.' }}
           </p>
+          <div class="footer-trust-pills">
+            <span class="trust-pill">🛡️ Genuine Import</span>
+            <span class="trust-pill">⚡ Fast Dispatch</span>
+            <span class="trust-pill">🧾 Mushak 6.3</span>
+          </div>
         </div>
+
         <div class="footer-col">
           <h4 class="footer-heading">Quick Links</h4>
           <ul class="footer-links">
@@ -372,20 +438,46 @@ const getCategoryThemeClass = (slug: string): string => {
             <li><Link href="/track-order">Track Order (অর্ডার ট্র্যাকিং)</Link></li>
             <li><Link href="/returns">Returns & Exchange (ফেরত নীতি)</Link></li>
             <li><Link href="/b2b">Wholesale Trade (পাইকারি একাউন্ট)</Link></li>
+            <li><Link href="/admin">Admin Portal (অ্যাডমিন হাব)</Link></li>
           </ul>
         </div>
+
         <div class="footer-col">
-          <h4 class="footer-heading">Accepted Payments & Logistics</h4>
+          <h4 class="footer-heading">Customer Care</h4>
+          <ul class="footer-links">
+            <li><span>📞 Helpline: +880 9612-000000</span></li>
+            <li><span>✉️ Email: support@ecommerce.test</span></li>
+            <li><span>⏰ 10:00 AM – 10:00 PM (Daily)</span></li>
+            <li><span>📍 Dhaka, Bangladesh</span></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">Payment & Courier Partners</h4>
+          <p class="partner-desc">Secure MFS gateways & nationwide express delivery:</p>
           <div class="partner-badges">
-            <span class="badge badge-secondary">bKash</span>
-            <span class="badge badge-secondary">Nagad</span>
-            <span class="badge badge-secondary">Steadfast</span>
-            <span class="badge badge-secondary">Pathao</span>
+            <span class="partner-pill">bKash</span>
+            <span class="partner-pill">Nagad</span>
+            <span class="partner-pill">Rocket</span>
+            <span class="partner-pill">Upay</span>
+            <span class="partner-pill">Visa / Master</span>
+            <span class="partner-pill">Cash on Delivery</span>
+            <span class="partner-pill">Steadfast</span>
+            <span class="partner-pill">Pathao</span>
+            <span class="partner-pill">RedX</span>
           </div>
         </div>
       </div>
-      <div class="container footer-bottom">
-        <p>&copy; 2026 Enterprise E-Commerce Platform. All rights reserved. NBR BIN Compliant.</p>
+
+      <div class="footer-container footer-bottom">
+        <p>&copy; {{ new Date().getFullYear() }} Enterprise E-Commerce Platform. All rights reserved. NBR BIN & VAT Registered.</p>
+        <div class="footer-bottom-links">
+          <Link href="/privacy">Privacy Policy</Link>
+          <span class="bottom-sep">•</span>
+          <Link href="/terms">Terms of Service</Link>
+          <span class="bottom-sep">•</span>
+          <Link href="/returns">Refund Policy</Link>
+        </div>
       </div>
     </footer>
 
@@ -402,9 +494,24 @@ const getCategoryThemeClass = (slug: string): string => {
   font-size: $fs-xs;
   font-weight: $fw-semibold;
   padding: $space-2 0;
+  width: 100%;
 
   .announcement-content {
     @include flex-between;
+    width: 100%;
+    max-width: 100%;
+    padding-left: $space-6;
+    padding-right: $space-6;
+
+    @media (min-width: 1440px) {
+      padding-left: $space-8;
+      padding-right: $space-8;
+    }
+
+    @media (max-width: 640px) {
+      padding-left: $space-4;
+      padding-right: $space-4;
+    }
   }
 
   .locale-toggle-btn {
@@ -429,16 +536,35 @@ const getCategoryThemeClass = (slug: string): string => {
   position: sticky;
   top: 0;
   z-index: $z-sticky;
+  width: 100%;
 
   .header-container {
     @include flex-between;
     height: 72px;
+    width: 100%;
+    max-width: 100%;
+    padding-left: $space-6;
+    padding-right: $space-6;
     gap: $space-4;
+
+    @media (min-width: 1440px) {
+      padding-left: $space-8;
+      padding-right: $space-8;
+    }
 
     @media (max-width: 900px) {
       height: 64px;
       gap: $space-2;
+      padding-left: $space-4;
+      padding-right: $space-4;
     }
+  }
+
+  .header-left-group {
+    display: flex;
+    align-items: center;
+    gap: $space-4;
+    flex-shrink: 0;
   }
 
   .brand-logo {
@@ -461,7 +587,11 @@ const getCategoryThemeClass = (slug: string): string => {
 
   .search-container {
     flex: 1;
-    max-width: 360px;
+    max-width: 520px;
+
+    @media (max-width: 1100px) {
+      max-width: 360px;
+    }
 
     @media (max-width: 640px) {
       max-width: 180px;
@@ -554,16 +684,20 @@ const getCategoryThemeClass = (slug: string): string => {
   .cat-menu-wrapper {
     position: relative;
 
+    @media (max-width: 960px) {
+      display: none;
+    }
+
     .cat-trigger-btn {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      font-size: $fs-sm;
+      gap: 8px;
+      font-size: 13.5px;
       font-weight: $fw-bold;
       color: $color-neutral-900;
       background: hsl(342, 60%, 96%);
       border: 1.5px solid hsl(342, 60%, 86%);
-      padding: 7px 14px;
+      padding: 8px 16px;
       border-radius: $radius-full;
       cursor: pointer;
       transition: all $transition-fast;
@@ -599,7 +733,7 @@ const getCategoryThemeClass = (slug: string): string => {
         background-color: $color-primary-500;
         border-color: $color-primary-600;
         color: #ffffff;
-        box-shadow: 0 3px 12px rgba(235, 40, 108, 0.25);
+        box-shadow: 0 4px 14px rgba(235, 40, 108, 0.28);
 
         .cat-grid-icon .grid-square {
           background-color: #ffffff;
@@ -614,16 +748,27 @@ const getCategoryThemeClass = (slug: string): string => {
     // --- App-Style Desktop Mega Dropdown ---
     .app-mega-dropdown {
       position: absolute;
-      top: calc(100% + 10px);
-      left: -10px;
-      width: 740px;
-      max-width: calc(100vw - 32px);
+      top: calc(100% + 8px);
+      left: 0;
+      width: 780px;
+      max-width: min(820px, calc(100vw - 40px));
       background: #ffffff;
       border-radius: 20px;
       border: 1px solid $color-neutral-200;
-      box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.16), 0 0 1px 1px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 25px 60px -10px rgba(15, 23, 42, 0.22), 0 0 1px 1px rgba(0, 0, 0, 0.05);
       z-index: $z-popover;
       overflow: hidden;
+
+      // Invisible bridge to eliminate accidental hover loss across gap
+      &::before {
+        content: '';
+        position: absolute;
+        top: -12px;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background: transparent;
+      }
 
       .mega-header {
         display: flex;
@@ -665,7 +810,7 @@ const getCategoryThemeClass = (slug: string): string => {
           font-weight: $fw-bold;
           color: $color-primary-600;
           text-decoration: none;
-          padding: 6px 12px;
+          padding: 6px 14px;
           border-radius: $radius-full;
           background: $color-primary-50;
           border: 1px solid $color-primary-200;
@@ -681,16 +826,37 @@ const getCategoryThemeClass = (slug: string): string => {
 
       .mega-cards-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
         gap: 12px;
-        padding: 18px 20px;
+        padding: 16px 20px;
         background-color: #ffffff;
+        max-height: 460px;
+        overflow-y: auto;
+
+        &::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          background-color: $color-neutral-200;
+          border-radius: $radius-full;
+
+          &:hover {
+            background-color: $color-neutral-300;
+          }
+        }
+
+        .app-category-card-wrapper {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
 
         .app-category-card {
           display: flex;
           align-items: center;
           gap: 12px;
-          padding: 10px 12px;
+          padding: 10px 14px;
           border-radius: 14px;
           border: 1.5px solid $color-neutral-100;
           background-color: $color-neutral-50;
@@ -722,7 +888,7 @@ const getCategoryThemeClass = (slug: string): string => {
               display: flex;
               align-items: center;
               justify-content: space-between;
-              gap: 4px;
+              gap: 6px;
 
               .card-title {
                 font-size: 13.5px;
@@ -739,10 +905,11 @@ const getCategoryThemeClass = (slug: string): string => {
                 font-weight: 800;
                 background: linear-gradient(135deg, #ff4757, #ff6b81);
                 color: #ffffff;
-                padding: 1px 5px;
+                padding: 1px 6px;
                 border-radius: 4px;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
+                flex-shrink: 0;
               }
             }
 
@@ -762,7 +929,7 @@ const getCategoryThemeClass = (slug: string): string => {
               margin-top: 3px;
 
               .card-count {
-                font-size: 10.5px;
+                font-size: 11px;
                 font-weight: $fw-semibold;
                 color: $color-primary-600;
               }
@@ -771,7 +938,7 @@ const getCategoryThemeClass = (slug: string): string => {
                 font-size: 11px;
                 color: $color-neutral-400;
                 font-weight: $fw-bold;
-                transition: color $transition-fast, transform $transition-fast;
+                transition: all $transition-fast;
               }
             }
           }
@@ -789,6 +956,40 @@ const getCategoryThemeClass = (slug: string): string => {
             .card-arrow-link {
               color: $color-primary-600;
               transform: translateX(3px);
+            }
+          }
+        }
+
+        .subcat-chips-row {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          padding-left: 56px;
+          flex-wrap: wrap;
+
+          .subcat-chip {
+            font-size: 10.5px;
+            color: $color-neutral-600;
+            background: $color-neutral-100;
+            padding: 2px 7px;
+            border-radius: $radius-full;
+            text-decoration: none;
+            transition: all $transition-fast;
+
+            &:hover {
+              background: $color-primary-50;
+              color: $color-primary-700;
+            }
+          }
+
+          .subcat-more {
+            font-size: 10px;
+            color: $color-neutral-400;
+            font-weight: $fw-semibold;
+            text-decoration: none;
+
+            &:hover {
+              color: $color-primary-600;
             }
           }
         }
@@ -1175,93 +1376,194 @@ const getCategoryThemeClass = (slug: string): string => {
 }
 
 .storefront-footer {
-  background: linear-gradient(180deg, hsl(342, 70%, 97.5%) 0%, hsl(342, 55%, 92.5%) 100%);
-  color: hsl(342, 35%, 32%);
-  border-top: none;
-  padding: $space-12 0 $space-6;
+  background: #0b1329;
+  color: #94a3b8;
+  border-top: 1px solid rgba(235, 40, 108, 0.2);
+  padding: $space-16 0 $space-8;
   margin-top: $space-16;
-  box-shadow: inset 0 2px 6px rgba(235, 40, 108, 0.04);
+
+  .footer-container {
+    width: 100%;
+    max-width: 100%;
+    padding-left: $space-6;
+    padding-right: $space-6;
+    margin: 0 auto;
+
+    @media (min-width: 1440px) {
+      padding-left: $space-8;
+      padding-right: $space-8;
+    }
+  }
 
   .footer-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-columns: 1.5fr 1fr 1.2fr 1.3fr;
     gap: $space-8;
 
-    @include media-down(md) {
+    @media (max-width: 1024px) {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    @media (max-width: 640px) {
       grid-template-columns: 1fr;
+      gap: $space-6;
+    }
+  }
+
+  .footer-brand-logo {
+    font-family: $font-heading;
+    font-size: $fs-2xl;
+    font-weight: $fw-extrabold;
+    color: #ffffff;
+    letter-spacing: -0.03em;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: $space-3;
+
+    .logo-accent {
+      color: $color-primary-500;
     }
   }
 
   .footer-heading {
-    color: hsl(342, 70%, 25%);
+    color: #ffffff;
     font-family: $font-heading;
-    font-size: $fs-base;
-    font-weight: $fw-extrabold;
+    font-size: 15px;
+    font-weight: $fw-bold;
     letter-spacing: -0.01em;
     margin-bottom: $space-4;
+    position: relative;
+    padding-bottom: 8px;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 28px;
+      height: 2px;
+      background: $color-primary-500;
+      border-radius: 2px;
+    }
   }
 
   .footer-text {
-    font-size: $fs-sm;
+    font-size: 13px;
     line-height: 1.7;
-    max-width: 380px;
-    color: hsl(342, 30%, 34%);
+    color: #94a3b8;
+    margin-bottom: $space-4;
+  }
+
+  .footer-trust-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    .trust-pill {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: $radius-full;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #e2e8f0;
+      font-weight: $fw-medium;
+    }
   }
 
   .footer-links {
     @include flex-column;
-    gap: $space-2;
+    gap: 10px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      font-size: 13px;
+      color: #94a3b8;
+    }
 
     a {
-      font-size: $fs-sm;
-      font-weight: $fw-semibold;
-      color: hsl(342, 55%, 30%);
+      font-size: 13px;
+      font-weight: $fw-medium;
+      color: #cbd5e1;
       text-decoration: none;
       transition: all $transition-fast;
       display: inline-flex;
       align-items: center;
 
       &:hover {
-        color: $color-primary-600;
+        color: #f43f5e;
         transform: translateX(4px);
       }
     }
   }
 
+  .partner-desc {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: $space-3;
+  }
+
   .partner-badges {
     display: flex;
-    gap: $space-2;
+    gap: 6px;
     flex-wrap: wrap;
 
-    .badge {
-      background: #ffffff;
-      border: 1.5px solid hsl(342, 60%, 82%);
-      color: hsl(342, 75%, 30%);
+    .partner-pill {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #f1f5f9;
       font-weight: $fw-bold;
-      font-size: $fs-xs;
-      padding: 6px 14px;
-      border-radius: $radius-full;
-      box-shadow: 0 2px 6px rgba(235, 40, 108, 0.08);
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: $radius-md;
       transition: all $transition-fast;
 
       &:hover {
-        background-color: $color-primary-50;
         border-color: $color-primary-400;
-        color: $color-primary-700;
+        color: #ffffff;
+        background: #334155;
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(235, 40, 108, 0.16);
       }
     }
   }
 
   .footer-bottom {
-    margin-top: $space-10;
+    margin-top: $space-12;
     padding-top: $space-6;
-    border-top: 1px solid hsl(342, 45%, 85%);
-    text-align: center;
-    font-size: $fs-xs;
-    font-weight: $fw-medium;
-    color: hsl(342, 30%, 45%);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: $space-4;
+    font-size: 12px;
+    color: #64748b;
+
+    @media (max-width: 640px) {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .footer-bottom-links {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      a {
+        color: #94a3b8;
+        text-decoration: none;
+        transition: color $transition-fast;
+
+        &:hover {
+          color: #f43f5e;
+        }
+      }
+
+      .bottom-sep {
+        color: #475569;
+      }
+    }
   }
 }
 </style>

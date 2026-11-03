@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\Logistics\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Admin\Actions\LogAuditTrailAction;
+use App\Modules\Admin\Models\AuditLog;
 use App\Modules\Logistics\Actions\BookCourierConsignmentAction;
 use App\Modules\Logistics\Actions\BulkBookCourierConsignmentsAction;
 use App\Modules\Logistics\Actions\GenerateShippingLabelHtmlAction;
@@ -32,7 +34,12 @@ class ShippingLabelController extends Controller
      */
     public function bulk(Request $request, GenerateShippingLabelHtmlAction $action): Response
     {
-        $orderIds = (array) $request->input('order_ids', []);
+        $rawOrderIds = $request->input('order_ids', []);
+        if (is_string($rawOrderIds)) {
+            $orderIds = array_filter(array_map('intval', explode(',', $rawOrderIds)));
+        } else {
+            $orderIds = array_map('intval', (array) $rawOrderIds);
+        }
         $orders = Order::whereIn('id', $orderIds)->get()->all();
 
         $html = $action($orders);
@@ -56,6 +63,15 @@ class ShippingLabelController extends Controller
         $result = $action($order, $courierCode, $options);
 
         if ($result->success) {
+            app(LogAuditTrailAction::class)(
+                event: AuditLog::EVENT_ORDER_STATUS_CHANGED,
+                description: "Booked consignment for order [{$order->order_number}] with {$courierCode}. Tracking: ".($result->trackingCode ?? $result->consignmentId),
+                auditable: $order,
+                oldValues: ['courier_code' => $order->courier_code, 'courier_tracking_code' => $order->courier_tracking_code],
+                newValues: ['courier_code' => $courierCode, 'courier_tracking_code' => $result->trackingCode, 'consignment_id' => $result->consignmentId],
+                options: ['user' => $request->user()]
+            );
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'Consignment successfully booked with courier',

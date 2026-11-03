@@ -41,6 +41,7 @@ class DatabaseSeeder extends Seeder
             CourierGatewaySeeder::class,
             SmsGatewaySeeder::class,
             AiModelSettingSeeder::class,
+            AuditLogSeeder::class,
         ]);
     }
 }

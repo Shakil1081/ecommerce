@@ -10,6 +10,7 @@ use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductVariant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -78,9 +79,11 @@ class StorefrontController extends Controller
             ->map(fn (Product $p) => $this->formatProductCard($p));
 
         $categories = fn () => Category::active()
+            ->whereNull('parent_id')
+            ->with(['children' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
             ->withCount(['products' => fn ($q) => $q->where('is_published', true)])
             ->orderBy('sort_order')
-            ->get(['id', 'name', 'slug', 'description']);
+            ->get(['id', 'name', 'slug', 'description', 'is_featured', 'sort_order']);
 
         $brands = fn () => Brand::active()
             ->withCount(['products' => fn ($q) => $q->where('is_published', true)])
@@ -108,12 +111,17 @@ class StorefrontController extends Controller
         $brandSlug = $request->input('brand');
         $search = $request->input('search');
         $sort = $request->input('sort', 'featured');
+        $color = $request->input('color');
+        $minPrice = $request->filled('min_price') ? (float) $request->input('min_price') : null;
+        $maxPrice = $request->filled('max_price') ? (float) $request->input('max_price') : null;
+        $inStock = $request->boolean('in_stock');
+        $warranty = $request->boolean('warranty');
 
         $query = Product::query()
             ->where('is_published', true)
             ->with(['category', 'brand', 'variants.stocks', 'media']);
 
-        if (! empty($categorySlug)) {
+        if (! empty($categorySlug) && $categorySlug !== 'all') {
             $query->whereHas('category', fn ($q) => $q->where('slug', $categorySlug));
         }
 
@@ -128,6 +136,32 @@ class StorefrontController extends Controller
                     ->orWhere('origin_country', 'like', "%{$search}%")
                     ->orWhereHas('brand', fn ($bq) => $bq->where('name', 'like', "%{$search}%"));
             });
+        }
+
+        if ($minPrice !== null && $minPrice > 0) {
+            $query->whereHas('variants', fn ($vq) => $vq->where('is_active', true)->where('selling_price_bdt', '>=', $minPrice));
+        }
+
+        if ($maxPrice !== null && $maxPrice > 0) {
+            $query->whereHas('variants', fn ($vq) => $vq->where('is_active', true)->where('selling_price_bdt', '<=', $maxPrice));
+        }
+
+        if (! empty($color)) {
+            $query->whereHas('variants', function ($vq) use ($color) {
+                $vq->where('is_active', true)
+                    ->where(function ($sub) use ($color) {
+                        $sub->where('attributes->Color', $color)
+                            ->orWhere('attributes->Color', 'like', "%{$color}%");
+                    });
+            });
+        }
+
+        if ($inStock) {
+            $query->whereHas('variants.stocks', fn ($sq) => $sq->where('physical_quantity', '>', 0));
+        }
+
+        if ($warranty) {
+            $query->whereNotNull('warranty_policy')->where('warranty_policy', '<>', '');
         }
 
         switch ($sort) {
@@ -166,14 +200,46 @@ class StorefrontController extends Controller
         $products = $paginated->getCollection()->map(fn (Product $p) => $this->formatProductCard($p))->values();
 
         $categories = Category::active()
+            ->whereNull('parent_id')
+            ->with(['children' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
             ->withCount(['products' => fn ($q) => $q->where('is_published', true)])
             ->orderBy('sort_order')
-            ->get(['id', 'name', 'slug', 'description']);
+            ->get(['id', 'name', 'slug', 'description', 'is_featured', 'sort_order']);
 
         $brands = Brand::active()
             ->withCount(['products' => fn ($q) => $q->where('is_published', true)])
             ->orderBy('name')
             ->get(['id', 'name', 'slug', 'origin_country']);
+
+        $availableColors = Cache::remember('storefront_shop_colors', 3600, function () {
+            $variants = ProductVariant::query()
+                ->where('is_active', true)
+                ->whereNotNull('attributes')
+                ->pluck('attributes');
+
+            $colors = [];
+            foreach ($variants as $attrs) {
+                if (is_array($attrs) && ! empty($attrs['Color'])) {
+                    $c = trim((string) $attrs['Color']);
+                    if ($c !== '' && ! in_array($c, $colors, true)) {
+                        $colors[] = $c;
+                    }
+                }
+            }
+            natcasesort($colors);
+
+            return array_values($colors);
+        });
+
+        $priceBounds = Cache::remember('storefront_shop_price_bounds', 3600, function () {
+            $min = (float) (ProductVariant::query()->where('is_active', true)->min('selling_price_bdt') ?? 0);
+            $max = (float) (ProductVariant::query()->where('is_active', true)->max('selling_price_bdt') ?? 100000);
+
+            return [
+                'min' => (int) floor($min),
+                'max' => (int) ceil($max),
+            ];
+        });
 
         return Inertia::render('Storefront/Shop', [
             'products' => $products,
@@ -191,11 +257,18 @@ class StorefrontController extends Controller
             ],
             'categories' => $categories,
             'brands' => $brands,
+            'availableColors' => $availableColors,
+            'priceBounds' => $priceBounds,
             'filters' => [
                 'category' => $categorySlug,
                 'brand' => $brandSlug,
                 'search' => $search,
                 'sort' => $sort,
+                'min_price' => $minPrice,
+                'max_price' => $maxPrice,
+                'color' => $color,
+                'in_stock' => $inStock,
+                'warranty' => $warranty,
                 'page' => $paginated->currentPage(),
             ],
         ]);

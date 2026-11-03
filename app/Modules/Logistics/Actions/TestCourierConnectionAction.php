@@ -23,7 +23,7 @@ class TestCourierConnectionAction
     public function __invoke(
         CourierGatewaySetting|string $courier,
         ?array $credentials = null,
-        bool $sandbox = false,
+        ?bool $sandbox = null,
         ?string $baseUrl = null,
     ): CourierConnectionTestResultDto {
         $setting = null;
@@ -32,13 +32,13 @@ class TestCourierConnectionAction
             $setting = $courier;
             $code = $setting->code;
             $credentials ??= $setting->credentials;
-            $sandbox = $setting->is_sandbox;
+            $sandbox ??= $setting->is_sandbox;
             $baseUrl ??= $setting->base_url;
         } else {
             $code = $courier;
             $setting = $this->manager->getSetting($code);
             $credentials ??= $setting?->credentials;
-            $sandbox = $setting ? $setting->is_sandbox : $sandbox;
+            $sandbox ??= $setting ? $setting->is_sandbox : false;
             $baseUrl ??= $setting?->base_url;
         }
 
@@ -47,18 +47,16 @@ class TestCourierConnectionAction
             $testSetting = $setting ? clone $setting : new CourierGatewaySetting([
                 'code' => $code,
                 'name' => CourierGatewaySetting::SUPPORTED_COURIERS[$code] ?? ucfirst($code),
-                'is_sandbox' => $sandbox,
+                'is_sandbox' => (bool) $sandbox,
                 'credentials' => $credentials,
-                'base_url' => $baseUrl,
+                'base_url' => ! empty($baseUrl) ? $baseUrl : null,
             ]);
 
             if ($credentials !== null) {
                 $testSetting->credentials = $credentials;
             }
-            if ($baseUrl !== null) {
-                $testSetting->base_url = $baseUrl;
-            }
-            $testSetting->is_sandbox = $sandbox;
+            $testSetting->base_url = ! empty($baseUrl) ? $baseUrl : null;
+            $testSetting->is_sandbox = (bool) $sandbox;
 
             $adapter = $this->manager->resolve($code);
             $result = $adapter->testConnection($testSetting);

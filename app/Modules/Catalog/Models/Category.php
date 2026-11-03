@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 
@@ -51,11 +52,11 @@ class Category extends Model implements HasMedia
         });
 
         static::saved(function () {
-            \Illuminate\Support\Facades\Cache::forget('storefront_shared_categories');
+            Cache::forget('storefront_shared_categories');
         });
 
         static::deleted(function () {
-            \Illuminate\Support\Facades\Cache::forget('storefront_shared_categories');
+            Cache::forget('storefront_shared_categories');
         });
     }
 

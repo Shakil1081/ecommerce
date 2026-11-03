@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import StorefrontLayout from '@/Layouts/StorefrontLayout.vue';
 import { useCartStore } from '@/Stores/cartStore';
@@ -247,6 +247,29 @@ const scrollToOrderForm = () => {
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 };
+
+const showMobileStickyBar = ref(false);
+
+const handleScroll = () => {
+  if (typeof window === 'undefined') return;
+  const el = document.getElementById('fast-order-form');
+  if (!el) {
+    showMobileStickyBar.value = window.scrollY > 300;
+    return;
+  }
+  const rect = el.getBoundingClientRect();
+  // Hide sticky bar when fast order form is actively in the viewport
+  const isFormInView = rect.top < window.innerHeight - 80 && rect.bottom > 80;
+  showMobileStickyBar.value = window.scrollY > 320 && !isFormInView;
+};
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll, { passive: true });
+});
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll);
+});
 </script>
 
 <template>
@@ -829,6 +852,43 @@ const scrollToOrderForm = () => {
           </div>
         </div>
       </div>
+
+      <!-- Mobile Sticky Bottom Floating Action Bar -->
+      <div class="mobile-sticky-bottom-bar" :class="{ visible: showMobileStickyBar }">
+        <div class="sticky-bar-content">
+          <div class="sticky-price-wrap">
+            <span class="sticky-price">
+              {{ formatPrice(selectedVariant?.selling_price_bdt || product.min_price_bdt) }}
+            </span>
+            <span class="sticky-vat">ভ্যাট অন্তর্ভুক্ত (Cash on Delivery)</span>
+          </div>
+          <div class="sticky-actions">
+            <button
+              type="button"
+              class="sticky-btn-buy"
+              :disabled="!isCurrentVariantInStock"
+              @click="scrollToOrderForm"
+            >
+              <span>⚡</span>
+              <span>সরাসরি অর্ডার</span>
+            </button>
+            <button
+              type="button"
+              class="sticky-btn-cart"
+              :disabled="!isCurrentVariantInStock || isAddingToCart"
+              @click="handleAddToCart"
+              title="ব্যাগে যোগ করুন"
+              aria-label="Add to cart"
+            >
+              <svg class="cart-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </StorefrontLayout>
 </template>
@@ -837,6 +897,10 @@ const scrollToOrderForm = () => {
 .pdp-wrapper {
   padding: $space-8 0 $space-16;
   background: $color-neutral-50;
+
+  @media (max-width: 768px) {
+    padding: $space-4 0 96px;
+  }
 }
 
 .breadcrumb-nav {
@@ -847,6 +911,12 @@ const scrollToOrderForm = () => {
   color: $color-neutral-500;
   margin-bottom: $space-6;
   flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    font-size: $fs-xs;
+    margin-bottom: $space-4;
+    gap: 6px;
+  }
 
   a {
     color: $color-neutral-600;
@@ -864,6 +934,14 @@ const scrollToOrderForm = () => {
   .current {
     color: $color-neutral-900;
     font-weight: $fw-semibold;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    @media (max-width: 640px) {
+      max-width: 220px;
+    }
   }
 }
 
@@ -875,7 +953,8 @@ const scrollToOrderForm = () => {
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
-    gap: $space-8;
+    gap: $space-6;
+    margin-bottom: $space-8;
   }
 }
 
@@ -883,6 +962,7 @@ const scrollToOrderForm = () => {
   display: flex;
   flex-direction: column;
   gap: $space-4;
+  min-width: 0;
 
   .main-image-viewport {
     position: relative;
@@ -940,6 +1020,8 @@ const scrollToOrderForm = () => {
     display: flex;
     gap: $space-3;
     overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
 
     .thumb-btn {
       width: 80px;
@@ -950,7 +1032,13 @@ const scrollToOrderForm = () => {
       overflow: hidden;
       cursor: pointer;
       padding: 0;
+      flex-shrink: 0;
       transition: all $transition-fast;
+
+      @media (max-width: 640px) {
+        width: 60px;
+        height: 60px;
+      }
 
       img {
         width: 100%;
@@ -968,6 +1056,7 @@ const scrollToOrderForm = () => {
 .info-column {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 
   .brand-category-header {
     display: flex;
@@ -1000,9 +1089,14 @@ const scrollToOrderForm = () => {
     color: $color-neutral-900;
     line-height: 1.25;
     margin-bottom: $space-2;
+    word-break: break-word;
 
     @media (max-width: 768px) {
-      font-size: $fs-2xl;
+      font-size: 1.45rem;
+    }
+
+    @media (max-width: 480px) {
+      font-size: 1.3rem;
     }
   }
 
@@ -1093,6 +1187,10 @@ const scrollToOrderForm = () => {
         color: $color-primary-700;
         letter-spacing: -0.02em;
         line-height: 1;
+
+        @media (max-width: 480px) {
+          font-size: 1.75rem;
+        }
       }
 
       .old-price {
@@ -1199,7 +1297,9 @@ const scrollToOrderForm = () => {
     .quantity-selector {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: $space-3;
+      flex-wrap: wrap;
 
       .qty-label {
         font-size: 13.5px;
@@ -1250,12 +1350,12 @@ const scrollToOrderForm = () => {
       gap: $space-3;
       margin-top: $space-1;
 
-      @media (max-width: 600px) {
+      @media (max-width: 768px) {
         grid-template-columns: 1fr;
       }
 
       .btn-order-now-jump {
-        padding: 12px 16px;
+        padding: 12px 14px;
         border-radius: $radius-xl;
         background: linear-gradient(135deg, $color-primary-500 0%, $color-primary-600 100%);
         color: #ffffff;
@@ -1269,7 +1369,14 @@ const scrollToOrderForm = () => {
         display: flex;
         align-items: center;
         justify-content: center;
-        white-space: nowrap;
+        text-align: center;
+        line-height: 1.35;
+        min-height: 44px;
+
+        @media (max-width: 480px) {
+          font-size: 14px;
+          padding: 12px 10px;
+        }
 
         &:hover:not(:disabled) {
           background: linear-gradient(135deg, $color-primary-400 0%, $color-primary-600 100%);
@@ -1285,7 +1392,7 @@ const scrollToOrderForm = () => {
       }
 
       .btn-top-add-cart {
-        padding: 12px 18px;
+        padding: 12px 14px;
         border-radius: $radius-xl;
         background: $color-neutral-0;
         color: $color-primary-600;
@@ -1298,7 +1405,13 @@ const scrollToOrderForm = () => {
         display: flex;
         align-items: center;
         justify-content: center;
-        white-space: nowrap;
+        text-align: center;
+        line-height: 1.35;
+        min-height: 44px;
+
+        @media (max-width: 480px) {
+          padding: 12px 10px;
+        }
 
         .btn-cart-content {
           display: inline-flex;
@@ -1345,6 +1458,11 @@ const scrollToOrderForm = () => {
     flex-direction: column;
     gap: $space-3;
 
+    @media (max-width: 480px) {
+      padding: 14px 12px;
+      gap: 10px;
+    }
+
     .perk-item {
       display: flex;
       align-items: flex-start;
@@ -1352,6 +1470,7 @@ const scrollToOrderForm = () => {
 
       .perk-icon {
         font-size: $fs-xl;
+        flex-shrink: 0;
       }
 
       .perk-title {
@@ -1363,6 +1482,7 @@ const scrollToOrderForm = () => {
       .perk-desc {
         font-size: $fs-xs;
         color: $color-neutral-500;
+        line-height: 1.4;
       }
     }
   }
@@ -1370,6 +1490,8 @@ const scrollToOrderForm = () => {
 
 .funnel-order-card.full-width-card {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   margin-bottom: $space-12;
   background: hsl(342, 60%, 98.5%);
   border: 2px solid hsl(342, 70%, 88%);
@@ -1379,35 +1501,54 @@ const scrollToOrderForm = () => {
 
   @media (max-width: 768px) {
     padding: $space-4;
+    border-radius: $radius-xl;
+    margin-bottom: $space-8;
+  }
+
+  @media (max-width: 480px) {
+    padding: 14px 12px;
+    border-width: 1.5px;
+    margin-bottom: $space-6;
   }
 
   .funnel-badge-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: $space-3;
     padding-bottom: $space-4;
-    margin-bottom: $space-6;
+    margin-bottom: $space-5;
     border-bottom: 1.5px dashed hsl(342, 50%, 86%);
 
     .badge-icon {
       font-size: 2.2rem;
+      line-height: 1;
       flex-shrink: 0;
       animation: pulse-icon 1.5s infinite;
+
+      @media (max-width: 480px) {
+        font-size: 1.7rem;
+      }
     }
 
     .badge-text-wrap {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 3px;
+      min-width: 0;
 
       .badge-headline {
         font-size: $fs-xl;
         font-weight: $fw-bold;
         color: hsl(342, 55%, 20%);
         font-family: $font-heading;
+        line-height: 1.3;
 
         @media (max-width: 640px) {
-          font-size: $fs-base;
+          font-size: 16px;
+        }
+
+        @media (max-width: 400px) {
+          font-size: 15px;
         }
       }
 
@@ -1415,6 +1556,11 @@ const scrollToOrderForm = () => {
         font-size: $fs-sm;
         color: $color-primary-700;
         font-weight: $fw-medium;
+        line-height: 1.35;
+
+        @media (max-width: 640px) {
+          font-size: 12.5px;
+        }
       }
     }
   }
@@ -1507,6 +1653,7 @@ const scrollToOrderForm = () => {
       justify-content: center;
       font-size: 13px;
       font-weight: $fw-bold;
+      flex-shrink: 0;
     }
   }
 
@@ -1514,12 +1661,14 @@ const scrollToOrderForm = () => {
     display: flex;
     flex-direction: column;
     gap: $space-4;
+    min-width: 0;
   }
 
   .funnel-field {
     display: flex;
     flex-direction: column;
     gap: 5px;
+    min-width: 0;
 
     .funnel-label {
       display: flex;
@@ -1538,6 +1687,7 @@ const scrollToOrderForm = () => {
     .funnel-input,
     .funnel-textarea {
       width: 100%;
+      box-sizing: border-box;
       padding: 11px 14px;
       background: #ffffff;
       border: 1.5px solid hsl(342, 35%, 85%);
@@ -1546,6 +1696,11 @@ const scrollToOrderForm = () => {
       color: $color-neutral-900;
       font-family: inherit;
       transition: all $transition-fast;
+
+      @media (max-width: 768px) {
+        font-size: 16px; // Crucial: Prevents iOS Safari auto-zoom on mobile inputs
+        padding: 10px 12px;
+      }
 
       &::placeholder {
         color: hsl(342, 15%, 65%);
@@ -1580,8 +1735,9 @@ const scrollToOrderForm = () => {
     grid-template-columns: repeat(3, 1fr);
     gap: $space-3;
 
-    @media (max-width: 450px) {
+    @media (max-width: 640px) {
       grid-template-columns: 1fr;
+      gap: 8px;
     }
 
     .zone-radio-card {
@@ -1598,6 +1754,14 @@ const scrollToOrderForm = () => {
       position: relative;
       text-align: center;
       user-select: none;
+      box-sizing: border-box;
+
+      @media (max-width: 640px) {
+        flex-direction: row;
+        justify-content: space-between;
+        padding: 11px 14px;
+        text-align: left;
+      }
 
       .zone-native-radio {
         position: absolute;
@@ -1609,6 +1773,10 @@ const scrollToOrderForm = () => {
         font-size: 13px;
         font-weight: $fw-semibold;
         color: $color-neutral-800;
+
+        @media (max-width: 640px) {
+          font-size: 13.5px;
+        }
       }
 
       .zone-rate {
@@ -1616,6 +1784,11 @@ const scrollToOrderForm = () => {
         font-weight: $fw-bold;
         color: $color-primary-600;
         margin-top: 2px;
+
+        @media (max-width: 640px) {
+          margin-top: 0;
+          font-size: 14.5px;
+        }
       }
 
       &:hover {
@@ -1644,6 +1817,12 @@ const scrollToOrderForm = () => {
     border-radius: $radius-xl;
     padding: $space-5;
     box-shadow: $shadow-sm;
+    min-width: 0;
+    box-sizing: border-box;
+
+    @media (max-width: 480px) {
+      padding: 14px 12px;
+    }
   }
 
   .funnel-product-preview-card {
@@ -1654,6 +1833,17 @@ const scrollToOrderForm = () => {
     background: hsl(342, 50%, 98%);
     border: 1px solid hsl(342, 35%, 90%);
     border-radius: $radius-lg;
+    min-width: 0;
+    box-sizing: border-box;
+
+    @media (max-width: 520px) {
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      row-gap: 8px;
+      column-gap: 12px;
+      align-items: center;
+      padding: 10px;
+    }
 
     .preview-thumb-box {
       width: 64px;
@@ -1663,6 +1853,11 @@ const scrollToOrderForm = () => {
       flex-shrink: 0;
       background: #ffffff;
       border: 1px solid $color-neutral-200;
+
+      @media (max-width: 520px) {
+        width: 56px;
+        height: 56px;
+      }
 
       .preview-img {
         width: 100%;
@@ -1683,6 +1878,17 @@ const scrollToOrderForm = () => {
         overflow: hidden;
         text-overflow: ellipsis;
         margin: 0 0 3px 0;
+
+        @media (max-width: 520px) {
+          white-space: normal;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          font-size: 13px;
+          line-height: 1.3;
+          word-break: break-word;
+        }
       }
 
       .preview-attributes {
@@ -1715,6 +1921,13 @@ const scrollToOrderForm = () => {
       border-radius: $radius-md;
       background: #ffffff;
       overflow: hidden;
+      flex-shrink: 0;
+
+      @media (max-width: 520px) {
+        grid-column: 2;
+        justify-self: start;
+        margin-top: 2px;
+      }
 
       .mini-qty-btn {
         width: 28px;
@@ -1753,12 +1966,22 @@ const scrollToOrderForm = () => {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    box-sizing: border-box;
+
+    @media (max-width: 480px) {
+      padding: 12px 10px;
+      gap: 6px;
+    }
 
     .calc-row {
       display: flex;
       justify-content: space-between;
       font-size: 13.5px;
       color: $color-neutral-600;
+
+      @media (max-width: 480px) {
+        font-size: 12.5px;
+      }
 
       .free-badge {
         color: $color-success;
@@ -1773,10 +1996,19 @@ const scrollToOrderForm = () => {
         font-weight: $fw-bold;
         color: hsl(342, 45%, 15%);
 
+        @media (max-width: 480px) {
+          font-size: 14px;
+          padding-top: 8px;
+        }
+
         .highlight-total {
           font-size: 19px;
           color: $color-primary-600;
           font-weight: $fw-extrabold;
+
+          @media (max-width: 480px) {
+            font-size: 17px;
+          }
         }
       }
     }
@@ -1786,10 +2018,16 @@ const scrollToOrderForm = () => {
       font-weight: $fw-semibold;
       color: hsl(142, 71%, 35%);
       background: hsla(142, 71%, 45%, 0.1);
-      padding: 4px 8px;
+      padding: 5px 8px;
       border-radius: $radius-sm;
       text-align: center;
       margin-top: 4px;
+      line-height: 1.35;
+
+      @media (max-width: 480px) {
+        font-size: 11px;
+        padding: 4px 6px;
+      }
     }
   }
 
@@ -1810,6 +2048,19 @@ const scrollToOrderForm = () => {
     display: flex;
     align-items: center;
     justify-content: center;
+    text-align: center;
+    line-height: 1.35;
+    box-sizing: border-box;
+
+    @media (max-width: 640px) {
+      font-size: 15.5px;
+      padding: 13px 16px;
+    }
+
+    @media (max-width: 400px) {
+      font-size: 14px;
+      padding: 12px 10px;
+    }
 
     &:hover:not(:disabled) {
       background: linear-gradient(135deg, $color-primary-400 0%, $color-primary-600 100%);
@@ -1832,15 +2083,27 @@ const scrollToOrderForm = () => {
     display: flex;
     align-items: center;
     justify-content: space-around;
-    gap: $space-2;
+    flex-wrap: wrap;
+    gap: 8px;
     margin-top: $space-1;
     padding-top: $space-3;
     border-top: 1px solid hsl(342, 35%, 92%);
+
+    @media (max-width: 480px) {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      padding-top: $space-2;
+    }
 
     .perk-pill {
       font-size: 11.5px;
       font-weight: $fw-medium;
       color: $color-neutral-600;
+
+      @media (max-width: 480px) {
+        font-size: 12px;
+      }
     }
   }
 }
@@ -1850,11 +2113,17 @@ const scrollToOrderForm = () => {
   overflow: hidden;
   margin-bottom: $space-12;
 
+  @media (max-width: 768px) {
+    border-radius: $radius-xl;
+    margin-bottom: $space-8;
+  }
+
   .tabs-header {
     display: flex;
     border-bottom: 1px solid $color-neutral-200;
     background: $color-neutral-50;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 
     .tab-btn {
       padding: $space-4 $space-6;
@@ -1867,6 +2136,11 @@ const scrollToOrderForm = () => {
       border-bottom: 2px solid transparent;
       white-space: nowrap;
 
+      @media (max-width: 640px) {
+        padding: 12px 14px;
+        font-size: 13.5px;
+      }
+
       &.active {
         color: $color-primary-600;
         border-bottom-color: $color-primary-600;
@@ -1878,6 +2152,10 @@ const scrollToOrderForm = () => {
   .tab-body {
     padding: $space-6;
     background: $color-neutral-0;
+
+    @media (max-width: 640px) {
+      padding: $space-4;
+    }
 
     .specs-table {
       width: 100%;
@@ -1895,14 +2173,20 @@ const scrollToOrderForm = () => {
         padding: $space-3 $space-4;
         font-size: $fs-sm;
 
+        @media (max-width: 640px) {
+          padding: 8px 10px;
+          font-size: 13px;
+        }
+
         &.spec-label {
-          width: 35%;
+          width: 40%;
           color: $color-neutral-500;
           font-weight: $fw-medium;
         }
 
         &.spec-value {
           color: $color-neutral-900;
+          word-break: break-word;
         }
       }
     }
@@ -1911,6 +2195,10 @@ const scrollToOrderForm = () => {
       font-size: $fs-base;
       line-height: 1.7;
       color: $color-neutral-700;
+
+      @media (max-width: 640px) {
+        font-size: $fs-sm;
+      }
     }
 
     .shipping-info-grid {
@@ -1995,6 +2283,119 @@ const scrollToOrderForm = () => {
           font-size: $fs-base;
           font-weight: $fw-extrabold;
           color: $color-primary-700;
+        }
+      }
+    }
+  }
+}
+
+.mobile-sticky-bottom-bar {
+  display: none;
+
+  @media (max-width: 768px) {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid hsl(342, 35%, 88%);
+    padding: 10px 16px;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+    transform: translateY(100%);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+    &.visible {
+      transform: translateY(0);
+    }
+
+    .sticky-bar-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      max-width: 540px;
+      margin: 0 auto;
+    }
+
+    .sticky-price-wrap {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+
+      .sticky-price {
+        font-size: 17px;
+        font-weight: $fw-extrabold;
+        color: $color-primary-700;
+        line-height: 1.15;
+      }
+
+      .sticky-vat {
+        font-size: 10.5px;
+        color: $color-neutral-500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .sticky-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+
+      .sticky-btn-buy {
+        padding: 10px 15px;
+        border-radius: $radius-xl;
+        background: linear-gradient(135deg, $color-primary-500 0%, $color-primary-600 100%);
+        color: #ffffff;
+        border: none;
+        font-size: 13.5px;
+        font-weight: $fw-bold;
+        cursor: pointer;
+        box-shadow: 0 3px 10px rgba(235, 40, 108, 0.35);
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+
+        &:active {
+          transform: scale(0.97);
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+
+      .sticky-btn-cart {
+        width: 40px;
+        height: 40px;
+        border-radius: $radius-xl;
+        background: $color-neutral-0;
+        border: 1.5px solid $color-primary-600;
+        color: $color-primary-600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+
+        .cart-btn-svg {
+          width: 18px;
+          height: 18px;
+        }
+
+        &:active {
+          transform: scale(0.97);
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
       }
     }

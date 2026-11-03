@@ -23,32 +23,81 @@ class CatalogController extends Controller
     /**
      * Display a listing of catalog products.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $products = Product::with(['category', 'brand', 'variants.stocks'])
-            ->withCount('variants')
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(fn (Product $p) => [
-                'id' => $p->id,
-                'name' => $p->name,
-                'slug' => $p->slug,
-                'hs_code' => $p->hs_code,
-                'origin_country' => $p->origin_country,
-                'warranty_policy' => $p->warranty_policy,
-                'category_name' => $p->category?->name ?? 'Uncategorized',
-                'brand_name' => $p->brand?->name ?? 'Generic',
-                'variants_count' => $p->variants_count,
-                'min_price_bdt' => $p->min_price_bdt,
-                'max_price_bdt' => $p->max_price_bdt,
-                'total_stock' => (int) $p->variants->sum(fn ($v) => $v->available_quantity),
-                'is_published' => $p->is_published,
-                'is_featured' => $p->is_featured,
-                'created_at' => $p->created_at?->format('Y-m-d H:i'),
-            ]);
+        $search = $request->query('search');
+        $categoryId = $request->query('category_id');
+        $status = $request->query('status');
+
+        $query = Product::with(['category', 'brand', 'variants.stocks', 'media'])
+            ->withCount('variants');
+
+        if (! empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhere('hs_code', 'like', "%{$search}%")
+                    ->orWhereHas('brand', function ($bq) use ($search) {
+                        $bq->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('category', function ($cq) use ($search) {
+                        $cq->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('variants', function ($vq) use ($search) {
+                        $vq->where('sku', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if (! empty($categoryId) && $categoryId !== 'all') {
+            $query->where('category_id', $categoryId);
+        }
+
+        if ($status === 'published') {
+            $query->where('is_published', true);
+        } elseif ($status === 'draft') {
+            $query->where('is_published', false);
+        }
+
+        $products = $query->orderBy('created_at', 'desc')
+            ->paginate(15)
+            ->withQueryString()
+            ->through(function (Product $p) {
+                $thumbUrl = $p->getFirstMediaUrl('products', 'thumb_300')
+                    ?: ($p->getFirstMediaUrl('products')
+                    ?: ($p->getFirstMediaUrl('thumbnail')
+                    ?: (! empty($p->specifications['image_url']) ? (string) $p->specifications['image_url'] : null)));
+
+                return [
+                    'id' => (string) $p->id,
+                    'name' => $p->name,
+                    'slug' => $p->slug,
+                    'thumbnail_url' => $thumbUrl ?: null,
+                    'hs_code' => $p->hs_code,
+                    'origin_country' => $p->origin_country,
+                    'warranty_policy' => $p->warranty_policy,
+                    'category_name' => $p->category?->name ?? 'Uncategorized',
+                    'brand_name' => $p->brand?->name ?? 'Generic',
+                    'variants_count' => $p->variants_count,
+                    'min_price_bdt' => $p->min_price_bdt,
+                    'max_price_bdt' => $p->max_price_bdt,
+                    'total_stock' => (int) $p->variants->sum(fn ($v) => $v->available_quantity),
+                    'is_published' => $p->is_published,
+                    'is_featured' => $p->is_featured,
+                    'created_at' => $p->created_at?->format('Y-m-d H:i'),
+                ];
+            });
+
+        $categories = Category::active()->orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('Admin/Catalog/ProductIndex', [
             'products' => $products,
+            'categories' => $categories,
+            'filters' => [
+                'search' => $search,
+                'category_id' => $categoryId,
+                'status' => $status,
+            ],
         ]);
     }
 
@@ -346,24 +395,37 @@ class CatalogController extends Controller
      */
     public function matrix(Product $product): Response
     {
-        $product->load(['category', 'brand', 'variants']);
+        $product->load(['category', 'brand', 'variants.stocks']);
+
+        $thumbUrl = $product->getFirstMediaUrl('products', 'thumb_300')
+            ?: ($product->getFirstMediaUrl('products')
+            ?: ($product->getFirstMediaUrl('thumbnail')
+            ?: (! empty($product->specifications['image_url']) ? (string) $product->specifications['image_url'] : null)));
+
+        $defaultVariant = $product->defaultVariant ?? $product->variants->first();
 
         return Inertia::render('Admin/Catalog/ProductMatrixEditor', [
             'product' => [
-                'id' => $product->id,
+                'id' => (string) $product->id,
                 'name' => $product->name,
                 'slug' => $product->slug,
                 'category_name' => $product->category?->name ?? 'Uncategorized',
                 'brand_name' => $product->brand?->name ?? 'Generic',
-                'variants' => $product->variants->map(fn ($v) => [
-                    'id' => $v->id,
+                'thumbnail_url' => $thumbUrl ?: null,
+                'default_selling_price' => $defaultVariant ? (float) $defaultVariant->selling_price_bdt : 0.0,
+                'default_purchase_cost' => $defaultVariant ? (float) $defaultVariant->purchase_cost_bdt : 0.0,
+                'default_weight_kg' => $defaultVariant ? (float) $defaultVariant->weight_kg : 0.5,
+                'total_stock' => (int) $product->variants->sum(fn ($v) => $v->available_quantity),
+                'variants' => $product->variants->map(fn (ProductVariant $v) => [
+                    'id' => (string) $v->id,
                     'sku' => $v->sku,
                     'barcode_ean' => $v->barcode_ean,
-                    'attributes' => $v->attributes,
+                    'attributes' => $v->attributes ?? [],
                     'purchase_cost_bdt' => (float) $v->purchase_cost_bdt,
                     'selling_price_bdt' => (float) $v->selling_price_bdt,
                     'weight_kg' => (float) $v->weight_kg,
-                    'is_active' => $v->is_active,
+                    'stock_quantity' => (int) $v->available_quantity,
+                    'is_active' => (bool) $v->is_active,
                 ]),
             ],
         ]);
@@ -378,8 +440,8 @@ class CatalogController extends Controller
         GenerateProductVariantsAction $action
     ): RedirectResponse {
         $validated = $request->validate([
-            'attributes' => ['required', 'array'],
-            'attributes.*' => ['required', 'array'],
+            'attributes' => ['required', 'array', 'min:1'],
+            'attributes.*' => ['required', 'array', 'min:1'],
             'selling_price_bdt' => ['required', 'numeric', 'min:0'],
             'purchase_cost_bdt' => ['nullable', 'numeric', 'min:0'],
             'weight_kg' => ['nullable', 'numeric', 'min:0'],
@@ -395,6 +457,22 @@ class CatalogController extends Controller
 
         return redirect()->route('admin.products.matrix', $product)
             ->with('success', 'Product variants generated successfully.');
+    }
+
+    /**
+     * Delete an individual SKU variant.
+     */
+    public function deleteVariant(Product $product, ProductVariant $variant): RedirectResponse
+    {
+        if ($variant->product_id !== $product->id) {
+            abort(404);
+        }
+
+        $sku = $variant->sku;
+        $variant->delete();
+
+        return redirect()->route('admin.products.matrix', $product)
+            ->with('success', "Variant '{$sku}' deleted successfully.");
     }
 
     /**

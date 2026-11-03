@@ -42,10 +42,11 @@ const menuGroups: MenuGroup[] = [
     title: 'Operations & Catalog',
     icon: '📦',
     items: [
+      { title: 'Categories', href: '/admin/categories', icon: '📁' },
+      { title: 'Add Category', href: '/admin/categories?action=create', icon: '➕' },
       { title: 'Product Catalog', href: '/admin/products', icon: '🏷️' },
       { title: 'Add New Product', href: '/admin/products/create', icon: '➕', highlight: true },
       { title: 'Orders & Anti-Fraud', href: '/admin/orders', icon: '🛍️' },
-      { title: 'Order Returns & RMA', href: '/admin/tax-compliance/rma', icon: '🔄' },
       { title: 'Fraud Directory', href: '/admin/fraud-directory', icon: '🛡️' },
     ],
   },
@@ -54,7 +55,10 @@ const menuGroups: MenuGroup[] = [
     title: 'Couriers & Logistics',
     icon: '🚚',
     items: [
+      { title: 'Delivery & COD Overview', href: '/admin/logistics/delivery-overview', icon: '📊', highlight: true },
       { title: 'Courier Gateways', href: '/admin/settings/couriers', icon: '⚙️' },
+      { title: 'Scan & Handover Parcels', href: '/admin/orders/scan-handover', icon: '📦' },
+      { title: 'Scan Returned Parcels', href: '/admin/orders/scan-returns', icon: '📷' },
       { title: 'Delivery Zones & Rates', href: '/admin/logistics/zones', icon: '🗺️' },
       { title: 'COD Reconciliation', href: '/admin/logistics/cod-reconciliation', icon: '💰' },
     ],
@@ -362,19 +366,21 @@ const handleLogout = () => {
 
 .admin-sidebar {
   width: 260px;
-  background: linear-gradient(180deg, hsl(342, 45%, 10%) 0%, hsl(342, 42%, 6%) 100%);
-  color: hsl(342, 20%, 80%);
+  background: #ffffff;
+  color: hsl(342, 80%, 25%);
   display: flex;
   flex-direction: column;
   transition: width $transition-base;
   flex-shrink: 0;
-  border-right: 1px solid rgba(235, 40, 108, 0.15);
+  border-right: 1px solid hsl(342, 40%, 90%);
+  box-shadow: 2px 0 10px rgba(235, 40, 108, 0.04);
 
   .sidebar-header {
     height: 64px;
     padding: 0 $space-5;
     @include flex-between;
-    border-bottom: 1px solid rgba(235, 40, 108, 0.18);
+    border-bottom: 1px solid hsl(342, 40%, 90%);
+    background: #ffffff;
 
     .sidebar-brand {
       @include flex-start;
@@ -382,7 +388,7 @@ const handleLogout = () => {
       font-family: $font-heading;
       font-weight: $fw-bold;
       font-size: $fs-lg;
-      color: #ffffff;
+      color: hsl(342, 85%, 22%);
       text-decoration: none;
 
       .brand-badge {
@@ -393,18 +399,19 @@ const handleLogout = () => {
         height: 32px;
         border-radius: $radius-lg;
         background: linear-gradient(135deg, $color-primary-500, $color-primary-600);
-        box-shadow: 0 4px 12px rgba(235, 40, 108, 0.4);
+        box-shadow: 0 4px 12px rgba(235, 40, 108, 0.3);
         font-size: 15px;
         color: #ffffff;
       }
 
       .brand-name {
         letter-spacing: -0.02em;
+        color: hsl(342, 85%, 22%);
       }
     }
 
     .sidebar-toggle-btn {
-      color: hsl(342, 25%, 70%);
+      color: hsl(342, 60%, 40%);
       font-size: $fs-sm;
       padding: $space-1 $space-2;
       border-radius: $radius-sm;
@@ -414,8 +421,8 @@ const handleLogout = () => {
       transition: all $transition-fast;
 
       &:hover {
-        background-color: rgba(235, 40, 108, 0.18);
-        color: #ffffff;
+        background-color: hsl(342, 90%, 95%);
+        color: $color-primary-700;
       }
     }
   }
@@ -428,13 +435,13 @@ const handleLogout = () => {
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: thin;
-    scrollbar-color: rgba(235, 40, 108, 0.3) transparent;
+    scrollbar-color: hsl(342, 50%, 88%) transparent;
 
     &::-webkit-scrollbar {
       width: 4px;
     }
     &::-webkit-scrollbar-thumb {
-      background: rgba(235, 40, 108, 0.3);
+      background: hsl(342, 50%, 88%);
       border-radius: 4px;
     }
 
@@ -445,7 +452,7 @@ const handleLogout = () => {
       border-radius: $radius-lg;
       font-size: $fs-sm;
       font-weight: $fw-semibold;
-      color: hsl(342, 20%, 88%);
+      color: hsl(342, 80%, 25%);
       text-decoration: none;
       transition: all $transition-fast;
       margin-bottom: $space-2;
@@ -457,15 +464,16 @@ const handleLogout = () => {
       }
 
       &:hover {
-        background-color: rgba(235, 40, 108, 0.14);
-        color: #ffffff;
+        background-color: hsl(342, 90%, 96%);
+        color: $color-primary-700;
       }
 
       &.is-active {
-        background-color: rgba($color-primary-500, 0.22);
-        color: $color-primary-200;
-        border-color: rgba($color-primary-400, 0.4);
-        box-shadow: 0 2px 8px rgba(235, 40, 108, 0.2);
+        background: linear-gradient(135deg, hsl(342, 90%, 95%) 0%, hsl(342, 85%, 92%) 100%);
+        color: $color-primary-800;
+        border-color: hsl(342, 70%, 84%);
+        box-shadow: 0 2px 8px rgba(235, 40, 108, 0.12);
+        font-weight: $fw-bold;
       }
     }
 
@@ -482,9 +490,9 @@ const handleLogout = () => {
         background: transparent;
         border: 1px solid transparent;
         border-radius: $radius-lg;
-        color: hsl(342, 15%, 82%);
+        color: hsl(342, 80%, 25%);
         font-size: $fs-sm;
-        font-weight: $fw-medium;
+        font-weight: $fw-semibold;
         cursor: pointer;
         transition: all $transition-fast;
         text-align: left;
@@ -518,44 +526,44 @@ const handleLogout = () => {
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background-color: $color-primary-400;
-            box-shadow: 0 0 8px rgba(235, 40, 108, 0.85);
+            background-color: $color-primary-600;
+            box-shadow: 0 0 6px rgba(235, 40, 108, 0.6);
           }
 
           .chevron-icon {
             width: 16px;
             height: 16px;
-            color: hsl(342, 15%, 65%);
+            color: hsl(342, 40%, 60%);
             transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 
             &.is-rotated {
               transform: rotate(180deg);
-              color: $color-primary-300;
+              color: $color-primary-600;
             }
           }
         }
 
         &:hover {
-          background-color: rgba(235, 40, 108, 0.14);
-          color: #ffffff;
+          background-color: hsl(342, 90%, 96%);
+          color: $color-primary-800;
 
           .chevron-icon {
-            color: #ffffff;
+            color: $color-primary-700;
           }
         }
 
         &.is-active {
-          color: $color-primary-200;
-          background-color: rgba($color-primary-500, 0.16);
-          border-color: rgba($color-primary-400, 0.3);
+          color: $color-primary-800;
+          background-color: hsl(342, 85%, 96%);
+          border-color: hsl(342, 70%, 88%);
 
           .nav-group-title {
-            font-weight: $fw-semibold;
+            font-weight: $fw-bold;
           }
         }
 
         &.is-open {
-          color: #ffffff;
+          color: $color-primary-900;
         }
       }
 
@@ -565,7 +573,7 @@ const handleLogout = () => {
         gap: 2px;
         padding: 4px 0 6px 14px;
         margin: 2px 0 4px 18px;
-        border-left: 1.5px solid rgba(235, 40, 108, 0.24);
+        border-left: 2px solid hsl(342, 60%, 88%);
 
         .nav-sub-item {
           display: flex;
@@ -574,17 +582,18 @@ const handleLogout = () => {
           padding: 6px 10px;
           border-radius: $radius-md;
           font-size: 12.5px;
-          color: hsl(342, 15%, 75%);
+          color: hsl(342, 70%, 30%);
           text-decoration: none;
           transition: all $transition-fast;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          font-weight: $fw-medium;
 
           .sub-item-icon {
             font-size: 13px;
             flex-shrink: 0;
-            opacity: 0.8;
+            opacity: 0.85;
           }
 
           .sub-item-title {
@@ -600,20 +609,21 @@ const handleLogout = () => {
             text-transform: uppercase;
             padding: 1px 5px;
             border-radius: $radius-full;
-            background: rgba($color-primary-500, 0.3);
-            color: $color-primary-200;
+            background: $color-primary-500;
+            color: #ffffff;
             letter-spacing: 0.05em;
           }
 
           &:hover {
-            color: #ffffff;
-            background-color: rgba(235, 40, 108, 0.18);
+            color: $color-primary-900;
+            background-color: hsl(342, 90%, 95%);
+            font-weight: $fw-semibold;
           }
 
           &.is-active {
-            color: $color-primary-200;
-            background-color: rgba($color-primary-500, 0.24);
-            font-weight: $fw-semibold;
+            color: $color-primary-800;
+            background-color: hsl(342, 85%, 93%);
+            font-weight: $fw-bold;
 
             .sub-item-icon {
               opacity: 1;
@@ -621,8 +631,8 @@ const handleLogout = () => {
           }
 
           &.is-highlight {
-            color: $color-primary-300;
-            font-weight: $fw-semibold;
+            color: $color-primary-700;
+            font-weight: $fw-bold;
           }
         }
       }
@@ -652,8 +662,8 @@ const handleLogout = () => {
   .sidebar-footer {
     margin-top: auto;
     padding: $space-4 $space-3;
-    border-top: 1px solid rgba(235, 40, 108, 0.18);
-    background-color: rgba(24, 4, 12, 0.65);
+    border-top: 1px solid hsl(342, 40%, 90%);
+    background-color: hsl(342, 60%, 98%);
     display: flex;
     flex-direction: column;
     gap: $space-3;
@@ -674,8 +684,9 @@ const handleLogout = () => {
         width: 32px;
         height: 32px;
         border-radius: 50%;
-        background: rgba($color-primary-500, 0.22);
-        border: 1px solid rgba($color-primary-400, 0.35);
+        background: hsl(342, 85%, 93%);
+        border: 1px solid hsl(342, 60%, 82%);
+        color: $color-primary-700;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -690,7 +701,7 @@ const handleLogout = () => {
         .sidebar-user-name {
           font-size: $fs-xs;
           font-weight: $fw-bold;
-          color: #ffffff;
+          color: hsl(342, 85%, 22%);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -698,7 +709,7 @@ const handleLogout = () => {
 
         .sidebar-user-email {
           font-size: $fs-2xs;
-          color: hsl(342, 20%, 75%);
+          color: hsl(342, 45%, 45%);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -713,19 +724,19 @@ const handleLogout = () => {
       gap: $space-2;
       width: 100%;
       padding: $space-2 $space-3;
-      background: rgba($color-danger, 0.12);
-      color: #fca5a5;
-      border: 1px solid rgba($color-danger, 0.25);
+      background: hsl(342, 80%, 96%);
+      color: hsl(342, 80%, 35%);
+      border: 1px solid hsl(342, 60%, 88%);
       border-radius: $radius-lg;
       font-size: $fs-xs;
-      font-weight: $fw-semibold;
+      font-weight: $fw-bold;
       cursor: pointer;
       transition: all $transition-fast;
 
       &:hover:not(:disabled) {
-        background: rgba($color-danger, 0.25);
-        color: #ffffff;
-        border-color: $color-danger;
+        background: hsl(342, 85%, 92%);
+        color: $color-primary-900;
+        border-color: hsl(342, 60%, 80%);
       }
 
       &:disabled {

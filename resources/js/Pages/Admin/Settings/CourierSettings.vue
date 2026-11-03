@@ -48,12 +48,50 @@ props.couriers.forEach((c) => {
 
 const copiedKey = ref<string | null>(null);
 
+function getFieldLabel(courierCode: string, field: string): string {
+    const f = String(field).toLowerCase();
+    if (courierCode === 'pathao') {
+        if (f === 'username') return 'Merchant Email (Username)';
+        if (f === 'password') return 'Merchant Account Password';
+        if (f === 'client_id') return 'API Client ID';
+        if (f === 'client_secret') return 'API Client Secret';
+        if (f === 'store_id') return 'Pickup Store ID (Numeric)';
+    }
+    return String(field).replace(/_/g, ' ').toUpperCase();
+}
+
+function getFieldPlaceholder(courierCode: string, field: string): string {
+    const f = String(field).toLowerCase();
+    if (courierCode === 'pathao') {
+        if (f === 'username') return 'e.g. merchant@company.com';
+        if (f === 'password') return 'Pathao merchant login password';
+        if (f === 'client_id') return 'Pathao Developer Client ID';
+        if (f === 'client_secret') return 'Pathao Developer Client Secret';
+        if (f === 'store_id') return 'e.g. 158848';
+    }
+    return 'Enter ' + String(field);
+}
+
 function copyToClipboard(text: string, key: string) {
     navigator.clipboard.writeText(text);
     copiedKey.value = key;
     setTimeout(() => {
         copiedKey.value = null;
     }, 2000);
+}
+
+function fillPathaoSandboxDemo() {
+    const form = forms.value.pathao;
+    if (!form) return;
+    form.is_sandbox = true;
+    form.base_url = 'https://courier-api-sandbox.pathao.com';
+    form.credentials = {
+        client_id: '7N1aMJQbWm',
+        client_secret: 'wRcaibZkUdSNz2EI9ZyuXLlNrnAv0TdPUPXMnD39',
+        username: 'test@pathao.com',
+        password: 'lovePathao',
+        store_id: '158848',
+    };
 }
 
 async function testConnection(courier: CourierGatewayItem) {
@@ -167,8 +205,25 @@ function saveSettings(courier: CourierGatewayItem) {
                             <input type="text" v-model="forms[courier.code].name" class="input-text" />
                         </div>
                         <div class="form-group">
-                            <label>API Base URL</label>
-                            <input type="text" v-model="forms[courier.code].base_url" placeholder="https://..." class="input-text" />
+                            <label>API Base URL <span class="url-hint-label">(Leave empty for auto-resolve)</span></label>
+                            <input
+                                type="text"
+                                v-model="forms[courier.code].base_url"
+                                :placeholder="courier.code === 'pathao' ? (forms[courier.code].is_sandbox ? 'Auto: https://courier-api-sandbox.pathao.com' : 'Auto: https://api-hermes.pathao.com') : 'https://...'"
+                                class="input-text font-mono"
+                            />
+                        </div>
+                    </div>
+
+                    <div v-if="courier.code === 'pathao'" class="courier-env-notice">
+                        <span class="notice-icon">💡</span>
+                        <div class="notice-text">
+                            <strong>Pathao Integration & Sandbox Simulator:</strong> Pathao's public test server (<code>courier-api-sandbox.pathao.com</code>) is decommissioned. To test locally without an approved live merchant account, click <strong>"Fill Sandbox Test Credentials"</strong> below—the platform will automatically activate the <strong>Built-in Pathao Sandbox Simulator</strong> allowing full consignment booking, thermal labels, and tracking simulation. For live commercial deliveries, toggle <strong>Sandbox Mode OFF</strong> and enter your production credentials from <a href="https://merchant.pathao.com" target="_blank" rel="noopener noreferrer">Pathao Merchant Dashboard</a>.
+                            <div class="notice-actions">
+                                <button type="button" @click="fillPathaoSandboxDemo" class="btn-fill-demo">
+                                    ⚡ Fill Sandbox Test Credentials (test@pathao.com)
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -179,11 +234,11 @@ function saveSettings(courier: CourierGatewayItem) {
 
                         <div class="cred-grid">
                             <div v-for="(val, field) in forms[courier.code].credentials" :key="field" class="form-group">
-                                <label>{{ String(field).replace(/_/g, ' ').toUpperCase() }}</label>
+                                <label>{{ getFieldLabel(courier.code, String(field)) }}</label>
                                 <input
                                     type="text"
                                     v-model="forms[courier.code].credentials[field]"
-                                    :placeholder="'Enter ' + String(field)"
+                                    :placeholder="getFieldPlaceholder(courier.code, String(field))"
                                     class="input-text font-mono"
                                 />
                             </div>
@@ -411,7 +466,64 @@ function saveSettings(courier: CourierGatewayItem) {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 16px;
-        padding: 20px 24px;
+        padding: 20px 24px 12px 24px;
+    }
+
+    .url-hint-label {
+        font-size: 11px;
+        font-weight: 400;
+        color: #64748b;
+        margin-left: 4px;
+    }
+
+    .courier-env-notice {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin: 0 24px 16px 24px;
+        padding: 12px 16px;
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-radius: 8px;
+        color: #0369a1;
+        font-size: 13px;
+        line-height: 1.45;
+
+        .notice-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        a {
+            color: #0284c7;
+            font-weight: 600;
+            text-decoration: underline;
+        }
+
+        .notice-actions {
+            margin-top: 8px;
+        }
+
+        .btn-fill-demo {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #0369a1;
+            background: #e0f2fe;
+            border: 1px solid #7dd3fc;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+
+            &:hover {
+                background: #bae6fd;
+                color: #075985;
+            }
+        }
     }
 
     .credentials-box, .webhook-box, .diagnostics-box {

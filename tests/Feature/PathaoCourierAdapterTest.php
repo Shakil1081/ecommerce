@@ -342,4 +342,39 @@ class PathaoCourierAdapterTest extends TestCase
         ]);
         $auth->assertOk();
     }
+
+    public function test_pathao_adapter_uses_sandbox_simulator_for_demo_credentials(): void
+    {
+        $this->setting->update([
+            'is_sandbox' => true,
+            'credentials' => [
+                'client_id' => '7N1aMJQbWm',
+                'client_secret' => 'wRcaibZkUdSNz2EI9ZyuXLlNrnAv0TdPUPXMnD39',
+                'username' => 'test@pathao.com',
+                'password' => 'lovePathao',
+                'store_id' => '158848',
+            ],
+        ]);
+
+        $adapter = app(PathaoCourierAdapter::class);
+
+        // Test connection simulator
+        $testResult = $adapter->testConnection($this->setting);
+        $this->assertTrue($testResult->success);
+        $this->assertStringContainsString('Sandbox Simulator', $testResult->message);
+        $this->assertSame(2, $testResult->details['store_count']);
+
+        // Test booking simulator
+        $order = $this->createDummyOrder();
+        $bookResult = $adapter->bookConsignment($order);
+        $this->assertTrue($bookResult->success);
+        $this->assertStringStartsWith('PT-SIM-', $bookResult->consignmentId);
+        $this->assertSame(CourierConsignment::STATUS_BOOKED, $bookResult->status);
+
+        // Test tracking simulator
+        $trackResult = $adapter->trackConsignment($bookResult->consignmentId);
+        $this->assertTrue($trackResult->success);
+        $this->assertSame(CourierConsignment::STATUS_IN_TRANSIT, $trackResult->status);
+        $this->assertNotEmpty($trackResult->events);
+    }
 }

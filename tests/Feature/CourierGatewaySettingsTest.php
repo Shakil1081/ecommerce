@@ -7,6 +7,10 @@ namespace Tests\Feature;
 use App\Modules\Common\Models\BangladeshDistrict;
 use App\Modules\Common\Models\BangladeshDivision;
 use App\Modules\Logistics\Actions\TestCourierConnectionAction;
+use App\Modules\Logistics\Contracts\CourierAdapterContract;
+use App\Modules\Logistics\DTOs\CourierBookingResultDto;
+use App\Modules\Logistics\DTOs\CourierConnectionTestResultDto;
+use App\Modules\Logistics\DTOs\CourierTrackingResultDto;
 use App\Modules\Logistics\Models\CourierConsignment;
 use App\Modules\Logistics\Models\CourierGatewaySetting;
 use App\Modules\Logistics\Services\CourierGatewayManager;
@@ -251,6 +255,66 @@ class CourierGatewaySettingsTest extends TestCase
 
         $fresh = $setting->fresh();
         $this->assertSame('failed', $fresh->last_test_status);
+    }
+
+    public function test_test_courier_connection_action_respects_sandbox_and_base_url_overrides(): void
+    {
+        $manager = app(CourierGatewayManager::class);
+
+        $adapter = new class implements CourierAdapterContract
+        {
+            public ?CourierGatewaySetting $receivedSetting = null;
+
+            public function code(): string
+            {
+                return 'mock_override';
+            }
+
+            public function name(): string
+            {
+                return 'Mock Override';
+            }
+
+            public function bookConsignment(Order $order, array $options = []): CourierBookingResultDto
+            {
+                return CourierBookingResultDto::failed('not implemented');
+            }
+
+            public function trackConsignment(string $trackingCodeOrId): CourierTrackingResultDto
+            {
+                return CourierTrackingResultDto::failed('not implemented');
+            }
+
+            public function test_connection(?CourierGatewaySetting $setting = null): CourierConnectionTestResultDto
+            {
+                $this->receivedSetting = $setting;
+
+                return CourierConnectionTestResultDto::success('OK');
+            }
+        };
+
+        $manager->registerDriver('mock_override', $adapter);
+
+        $setting = CourierGatewaySetting::create([
+            'code' => 'mock_override',
+            'name' => 'Mock Override',
+            'is_active' => true,
+            'is_sandbox' => true,
+            'base_url' => 'https://sandbox.old.com',
+            'credentials' => ['api_key' => 'key'],
+        ]);
+
+        $action = app(TestCourierConnectionAction::class);
+        $result = $action(
+            courier: $setting,
+            sandbox: false,
+            baseUrl: 'https://live.new.com',
+        );
+
+        $this->assertTrue($result->success);
+        $this->assertNotNull($adapter->receivedSetting);
+        $this->assertFalse($adapter->receivedSetting->is_sandbox);
+        $this->assertSame('https://live.new.com', $adapter->receivedSetting->base_url);
     }
 
     public function test_courier_gateway_seeder_initializes_default_couriers(): void

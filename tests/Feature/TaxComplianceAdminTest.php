@@ -11,6 +11,7 @@ use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Common\Models\BangladeshDistrict;
 use App\Modules\Common\Models\BangladeshDivision;
+use App\Modules\Inventory\Models\Warehouse;
 use App\Modules\Order\Models\Order;
 use App\Modules\Order\Models\OrderItem;
 use App\Modules\Procurement\Models\LocalPurchaseOrder;
@@ -18,7 +19,9 @@ use App\Modules\Procurement\Models\Supplier;
 use App\Modules\TaxCompliance\Actions\GenerateMushak63InvoiceAction;
 use App\Modules\TaxCompliance\Actions\GenerateMushak66CertificateAction;
 use App\Modules\TaxCompliance\Actions\GenerateMushak91ReturnAction;
+use App\Modules\TaxCompliance\Actions\IssueMushak67CreditNoteAction;
 use App\Modules\TaxCompliance\Models\ReturnMerchandiseAuthorization;
+use App\Modules\TaxCompliance\Models\RmaItem;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -321,5 +324,86 @@ final class TaxComplianceAdminTest extends TestCase
                 ->has('register61')
                 ->has('register62')
         );
+    }
+
+    public function test_admin_can_view_printable_mushak_6_7_credit_note(): void
+    {
+        $issueCreditNoteAction = app(IssueMushak67CreditNoteAction::class);
+        $orderItem = $this->order->items->first();
+
+        $creditNote = $issueCreditNoteAction(
+            order: $this->order,
+            returnedItems: [
+                ['order_item_id' => $orderItem->id, 'quantity' => 1],
+            ],
+            reasonForReturn: 'Defective compressor on inspection'
+        );
+
+        $response = $this->actingAs($this->admin)->get("/admin/tax-compliance/mushak-6-7/{$creditNote->id}");
+
+        $response->assertStatus(200);
+        $response->assertInertia(
+            fn (Assert $page) => $page
+                ->component('Admin/TaxCompliance/Mushak67Show')
+                ->where('creditNote.credit_note_number', $creditNote->credit_note_number)
+                ->where('creditNote.mushak_6_3_invoice_number', $creditNote->mushak_6_3_invoice_number)
+                ->has('creditNote.items', 1)
+        );
+    }
+
+    public function test_admin_can_inspect_rma_and_issue_mushak_6_7_credit_note(): void
+    {
+        $warehouse = Warehouse::create([
+            'name' => 'Dhaka Central Hub',
+            'code' => 'DHA-HUB-01',
+            'is_primary' => true,
+            'is_active' => true,
+        ]);
+
+        $orderItem = $this->order->items->first();
+
+        $rma = ReturnMerchandiseAuthorization::create([
+            'rma_number' => 'RMA-202611-0001',
+            'order_id' => $this->order->id,
+            'status' => 'requested',
+            'reason_category' => 'defective',
+            'refund_amount_bdt' => '0.0000',
+            'refund_status' => 'pending',
+        ]);
+
+        RmaItem::create([
+            'rma_id' => $rma->id,
+            'order_item_id' => $orderItem->id,
+            'product_id' => (string) $this->product->id,
+            'product_variant_id' => (string) $this->variant->id,
+            'item_name' => $orderItem->product_name,
+            'sku' => $this->variant->sku,
+            'quantity_requested' => 1,
+            'quantity_approved' => 1,
+            'unit_price_bdt' => $orderItem->unit_price_bdt,
+            'condition_note' => 'Minor scratch',
+        ]);
+
+        $response = $this->actingAs($this->admin)->post("/admin/tax-compliance/rma/{$rma->id}/inspect", [
+            'inspection_outcome' => 'restock_available',
+            'warehouse_id' => $warehouse->id,
+            'admin_notes' => 'Inspected and verified good for restock',
+            'refund_method' => 'bkash',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('return_merchandise_authorizations', [
+            'id' => $rma->id,
+            'status' => 'completed',
+            'inspection_outcome' => 'restock_available',
+            'refund_status' => 'processed',
+        ]);
+
+        $this->assertDatabaseHas('mushak_6_7_credit_notes', [
+            'rma_id' => $rma->id,
+            'order_id' => $this->order->id,
+        ]);
     }
 }
