@@ -98,6 +98,36 @@ class CatalogAdminTest extends TestCase
         $this->assertDatabaseHas('product_variants', ['product_id' => $product->id]);
     }
 
+    public function test_creating_product_with_duplicate_slug_resolves_unique_slug(): void
+    {
+        $payload1 = [
+            'name' => 'Brenden Ferrell',
+            'category_id' => $this->category->id,
+            'origin_country' => 'USA',
+            'default_selling_price' => 1200.00,
+        ];
+
+        $response1 = $this->post(route('admin.products.store'), $payload1);
+        $response1->assertRedirect(route('admin.products.index'));
+
+        $first = Product::where('slug', 'brenden-ferrell')->first();
+        $this->assertNotNull($first);
+
+        // Try creating with the exact same name/slug again
+        $payload2 = [
+            'name' => 'Brenden Ferrell',
+            'category_id' => $this->category->id,
+            'origin_country' => 'USA',
+            'default_selling_price' => 1200.00,
+        ];
+
+        $response2 = $this->post(route('admin.products.store'), $payload2);
+        $response2->assertRedirect(route('admin.products.index'));
+
+        $second = Product::where('slug', 'brenden-ferrell-1')->first();
+        $this->assertNotNull($second);
+    }
+
     public function test_can_create_product_with_initial_stock_saved_to_inventory(): void
     {
         $payload = [

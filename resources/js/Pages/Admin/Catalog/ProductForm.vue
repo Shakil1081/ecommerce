@@ -2,6 +2,8 @@
 import { ref, computed, watch } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import ProductImageEditorModal from '@/Components/ProductImageEditorModal.vue';
+import Swal from 'sweetalert2';
 
 interface CategoryOption {
   id: number;
@@ -61,10 +63,14 @@ const initialSpecs = props.product?.specifications && Object.keys(props.product.
 
 const specRows = ref(initialSpecs);
 
-// Image preview state
+// Image preview & editor state (0.5MB max enforcement)
 const imagePreview = ref<string>(props.product?.image_url || '');
-const imageInputMode = ref<'url' | 'upload'>('url');
+const imageInputMode = ref<'url' | 'upload'>('upload');
 const imageFileInput = ref<HTMLInputElement | null>(null);
+const showImageEditor = ref<boolean>(false);
+const editorSourceSrc = ref<string>('');
+const editorOriginalFileName = ref<string>('product-image.webp');
+const imageFileSizeKb = ref<number | null>(null);
 
 const form = useForm({
   name: props.product ? props.product.name : '',
@@ -169,23 +175,69 @@ const removeSpecRow = (index: number) => {
   specRows.value.splice(index, 1);
 };
 
-// Image handling
+// Image handling & 0.5MB limit optimization
 const handleFileChange = (e: Event) => {
   const target = e.target as HTMLInputElement;
   if (target.files && target.files[0]) {
     const file = target.files[0];
-    form.image = file;
     const reader = new FileReader();
     reader.onload = (event) => {
-      imagePreview.value = (event.target?.result as string) || '';
+      const dataUrl = (event.target?.result as string) || '';
+      editorSourceSrc.value = dataUrl;
+      editorOriginalFileName.value = file.name;
+
+      // If file exceeds 512 KB (0.5 MB), automatically prompt the image editor
+      if (file.size > 512 * 1024) {
+        showImageEditor.value = true;
+        Swal.fire({
+          icon: 'info',
+          title: 'Image Optimization Required',
+          text: `Your selected image is ${(file.size / 1024).toFixed(0)} KB. The maximum allowed limit is 0.5 MB (512 KB). Opening the Image Editor to crop & compress...`,
+          timer: 3500,
+          showConfirmButton: false,
+          toast: true,
+          position: 'top-end',
+        });
+      } else {
+        form.image = file;
+        imagePreview.value = dataUrl;
+        imageFileSizeKb.value = Math.round((file.size / 1024) * 10) / 10;
+      }
     };
     reader.readAsDataURL(file);
   }
 };
 
+const openImageEditor = () => {
+  if (imagePreview.value) {
+    editorSourceSrc.value = imagePreview.value;
+    showImageEditor.value = true;
+  } else if (imageFileInput.value) {
+    imageFileInput.value.click();
+  }
+};
+
+const handleCroppedImage = (file: File, dataUrl: string, sizeKb: number) => {
+  form.image = file;
+  imagePreview.value = dataUrl;
+  imageFileSizeKb.value = sizeKb;
+  showImageEditor.value = false;
+
+  Swal.fire({
+    icon: 'success',
+    title: 'Image Optimized!',
+    text: `Cropped and compressed to ${sizeKb} KB (under 0.5 MB limit).`,
+    toast: true,
+    position: 'top-end',
+    timer: 3000,
+    showConfirmButton: false,
+  });
+};
+
 const updateImageUrl = () => {
   if (form.image_url) {
     imagePreview.value = form.image_url;
+    imageFileSizeKb.value = null;
   }
 };
 
@@ -193,6 +245,7 @@ const clearImage = () => {
   imagePreview.value = '';
   form.image_url = '';
   form.image = null;
+  imageFileSizeKb.value = null;
   if (imageFileInput.value) {
     imageFileInput.value.value = '';
   }
@@ -200,6 +253,22 @@ const clearImage = () => {
 
 // Submit handler
 const submit = (overridePublished?: boolean) => {
+  // Validate maximum image size (0.5 MB = 512 KB)
+  if (form.image && form.image.size > 512 * 1024) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Image Exceeds 0.5 MB Limit',
+      text: `Your image file is ${(form.image.size / 1024).toFixed(0)} KB. Maximum allowed size is 512 KB (0.5 MB). Please click "✂️ Crop & Compress" to optimize before saving.`,
+      confirmButtonText: 'Open Image Editor',
+      showCancelButton: true,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        openImageEditor();
+      }
+    });
+    return;
+  }
+
   if (overridePublished !== undefined) {
     form.is_published = overridePublished;
   }
@@ -453,7 +522,7 @@ const submit = (overridePublished?: boolean) => {
                   />
                   <span class="dropzone-icon">☁️</span>
                   <p class="dropzone-text">Click to browse or drag and drop image file</p>
-                  <p class="dropzone-sub">PNG, JPG, WebP, or AVIF (Up to 10MB)</p>
+                  <p class="dropzone-sub">PNG, JPG, WebP, or AVIF (Max 0.5 MB / 512 KB allowed • Crop & Compress tool included)</p>
                 </div>
               </div>
 
@@ -465,16 +534,28 @@ const submit = (overridePublished?: boolean) => {
                 </div>
                 <div class="preview-meta">
                   <div class="meta-row">
+                    <span class="meta-label">File Size:</span>
+                    <span v-if="imageFileSizeKb !== null" :class="imageFileSizeKb <= 512 ? 'badge-size-ok' : 'badge-size-warn'">
+                      {{ imageFileSizeKb <= 512 ? '✓' : '⚠️' }} {{ imageFileSizeKb }} KB {{ imageFileSizeKb <= 512 ? '(Compliant)' : '(Exceeds 0.5MB limit!)' }}
+                    </span>
+                    <span v-else class="meta-val">External / Uncompressed</span>
+                  </div>
+                  <div class="meta-row">
                     <span class="meta-label">Format:</span>
-                    <span class="meta-val">WebP / AVIF Ready</span>
+                    <span class="meta-val">WebP / AVIF Ready (1:1 Ratio recommended)</span>
                   </div>
                   <div class="meta-row">
                     <span class="meta-label">Breakpoints:</span>
                     <span class="meta-val">thumb_300, card_600, gallery_1200, zoom_2000</span>
                   </div>
-                  <button type="button" class="btn-remove-img" @click="clearImage">
-                    🗑️ Remove Image
-                  </button>
+                  <div class="preview-actions">
+                    <button type="button" class="btn-crop-img" @click="openImageEditor">
+                      ✂️ Crop & Compress (Editor)
+                    </button>
+                    <button type="button" class="btn-remove-img" @click="clearImage">
+                      🗑️ Remove Image
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -993,6 +1074,16 @@ const submit = (overridePublished?: boolean) => {
           </button>
         </div>
       </div>
+
+      <!-- Product Image Editor & 0.5MB Compressor Modal -->
+      <ProductImageEditorModal
+        :show="showImageEditor"
+        :image-src="editorSourceSrc"
+        :initial-file-name="editorOriginalFileName"
+        :max-size-kb="512"
+        @close="showImageEditor = false"
+        @save="handleCroppedImage"
+      />
     </div>
   </AdminLayout>
 </template>
@@ -1503,22 +1594,72 @@ const submit = (overridePublished?: boolean) => {
       }
     }
 
-    .btn-remove-img {
-      align-self: flex-start;
-      margin-top: $space-1;
-      background: rgba($color-danger, 0.1);
-      border: 1px solid rgba($color-danger, 0.3);
-      color: $color-danger;
-      padding: 4px $space-3;
-      border-radius: $radius-md;
-      font-size: $fs-xs;
-      font-weight: $fw-semibold;
-      cursor: pointer;
-      transition: all $transition-fast;
+    .badge-size-ok {
+      display: inline-block;
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid #a7f3d0;
+      border-radius: $radius-sm;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: $fw-bold;
+    }
 
-      &:hover {
-        background: $color-danger;
-        color: #fff;
+    .badge-size-warn {
+      display: inline-block;
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+      border-radius: $radius-sm;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: $fw-bold;
+    }
+
+    .preview-actions {
+      display: flex;
+      gap: $space-2;
+      align-items: center;
+      margin-top: $space-2;
+      flex-wrap: wrap;
+
+      .btn-crop-img {
+        background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+        color: #ffffff;
+        border: none;
+        padding: 6px $space-3;
+        border-radius: $radius-md;
+        font-size: $fs-xs;
+        font-weight: $fw-semibold;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        box-shadow: 0 2px 6px rgba(219, 39, 119, 0.2);
+        transition: all $transition-fast;
+
+        &:hover {
+          opacity: 0.95;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 10px rgba(219, 39, 119, 0.3);
+        }
+      }
+
+      .btn-remove-img {
+        background: rgba($color-danger, 0.1);
+        border: 1px solid rgba($color-danger, 0.3);
+        color: $color-danger;
+        padding: 5px $space-3;
+        border-radius: $radius-md;
+        font-size: $fs-xs;
+        font-weight: $fw-semibold;
+        cursor: pointer;
+        transition: all $transition-fast;
+
+        &:hover {
+          background: $color-danger;
+          color: #fff;
+        }
       }
     }
   }

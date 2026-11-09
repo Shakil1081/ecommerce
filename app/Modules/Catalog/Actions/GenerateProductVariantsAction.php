@@ -26,9 +26,20 @@ class GenerateProductVariantsAction
     ): Collection {
         if (empty($attributeOptions)) {
             // Single default variant without matrix options
-            $defaultSku = strtoupper(Str::slug($product->name));
+            $baseSku = strtoupper(Str::slug($product->slug ?: $product->name));
+            if ($baseSku === '') {
+                $baseSku = 'SKU-'.strtoupper(Str::random(6));
+            }
+
+            $sku = $baseSku;
+            $counter = 1;
+            while (ProductVariant::where('sku', $sku)->where('product_id', '!=', $product->id)->exists()) {
+                $sku = "{$baseSku}-{$counter}";
+                $counter++;
+            }
+
             $variant = ProductVariant::firstOrCreate(
-                ['product_id' => $product->id, 'sku' => $defaultSku],
+                ['product_id' => $product->id, 'sku' => $sku],
                 [
                     'attributes' => [],
                     'purchase_cost_bdt' => $defaultPurchaseCost,

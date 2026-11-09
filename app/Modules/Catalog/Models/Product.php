@@ -51,10 +51,35 @@ class Product extends Model implements HasMedia
     protected static function booted(): void
     {
         static::creating(function (Product $product) {
-            if (empty($product->slug)) {
-                $product->slug = Str::slug($product->name);
+            $source = ! empty($product->slug) ? $product->slug : $product->name;
+            $product->slug = static::generateUniqueSlug($source);
+        });
+
+        static::updating(function (Product $product) {
+            if ($product->isDirty('slug') && ! empty($product->slug)) {
+                $product->slug = static::generateUniqueSlug($product->slug, (string) $product->id);
             }
         });
+    }
+
+    /**
+     * Generate an always-unique URL slug with incremental counter fallback.
+     */
+    public static function generateUniqueSlug(string $name, ?string $excludeId = null): string
+    {
+        $base = Str::slug($name);
+        if ($base === '') {
+            $base = 'product-'.Str::lower(Str::random(6));
+        }
+
+        $slug = $base;
+        $counter = 1;
+        while (static::where('slug', $slug)->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))->exists()) {
+            $slug = "{$base}-{$counter}";
+            $counter++;
+        }
+
+        return $slug;
     }
 
     /**

@@ -14,7 +14,6 @@ use App\Modules\Inventory\Models\InventoryStock;
 use App\Modules\Inventory\Models\Warehouse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -171,11 +170,11 @@ class CatalogController extends Controller
             'seo_title' => ['nullable', 'string', 'max:255'],
             'seo_description' => ['nullable', 'string', 'max:500'],
             'image_url' => ['nullable', 'string'],
+            'image' => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp,avif', 'max:512'],
         ]);
 
-        $productSlug = ! empty($validated['slug'])
-            ? Str::slug($validated['slug'])
-            : Str::slug($validated['name']);
+        $rawSlug = ! empty($validated['slug']) ? $validated['slug'] : $validated['name'];
+        $productSlug = Product::generateUniqueSlug($rawSlug);
 
         $product = Product::create([
             'name' => $validated['name'],
@@ -217,7 +216,14 @@ class CatalogController extends Controller
         if ($baseVariant) {
             $variantUpdates = [];
             if (! empty($validated['sku'])) {
-                $variantUpdates['sku'] = strtoupper($validated['sku']);
+                $baseCustomSku = strtoupper($validated['sku']);
+                $customSku = $baseCustomSku;
+                $skuCounter = 1;
+                while (ProductVariant::where('sku', $customSku)->where('id', '!=', $baseVariant->id)->exists()) {
+                    $customSku = "{$baseCustomSku}-{$skuCounter}";
+                    $skuCounter++;
+                }
+                $variantUpdates['sku'] = $customSku;
             }
             if (! empty($validated['barcode_ean'])) {
                 $variantUpdates['barcode_ean'] = $validated['barcode_ean'];
@@ -322,10 +328,11 @@ class CatalogController extends Controller
             'barcode_ean' => ['nullable', 'string', 'max:100'],
             'weight_kg' => ['nullable', 'numeric', 'min:0'],
             'stock_quantity' => ['nullable', 'integer', 'min:0'],
+            'image' => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp,avif', 'max:512'],
         ]);
 
         if (! empty($validated['slug'])) {
-            $validated['slug'] = Str::slug($validated['slug']);
+            $validated['slug'] = Product::generateUniqueSlug($validated['slug'], (string) $product->id);
         }
 
         $product->update($validated);
