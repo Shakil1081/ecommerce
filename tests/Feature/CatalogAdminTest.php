@@ -9,6 +9,8 @@ use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductVariant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CatalogAdminTest extends TestCase
@@ -126,6 +128,29 @@ class CatalogAdminTest extends TestCase
 
         $second = Product::where('slug', 'brenden-ferrell-1')->first();
         $this->assertNotNull($second);
+    }
+
+    public function test_can_create_product_with_uploaded_media_image(): void
+    {
+        Storage::fake('public');
+
+        $file = UploadedFile::fake()->image('headphone.jpg', 600, 600)->size(300);
+
+        $payload = [
+            'name' => 'Bose QuietComfort 45',
+            'category_id' => $this->category->id,
+            'origin_country' => 'USA',
+            'default_selling_price' => 32000.00,
+            'image' => $file,
+        ];
+
+        $response = $this->post(route('admin.products.store'), $payload);
+
+        $response->assertRedirect(route('admin.products.index'));
+
+        $product = Product::where('name', 'Bose QuietComfort 45')->first();
+        $this->assertNotNull($product);
+        $this->assertTrue($product->hasMedia('products'));
     }
 
     public function test_can_create_product_with_initial_stock_saved_to_inventory(): void
