@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import StorefrontLayout from '@/Layouts/StorefrontLayout.vue';
 import { useCartStore } from '@/Stores/cartStore';
+import { isColorAttribute, getColorHex, isLightColor } from '@/Utils/colorHelper';
 
 interface VariantItem {
   id: string;
@@ -378,17 +379,64 @@ onUnmounted(() => {
                 :key="optionName"
                 class="option-group"
               >
-                <!-- If multiple choices: show stylish, clean pills -->
+                <!-- If multiple choices: show stylish, clean pills or visual color swatches -->
                 <template v-if="options.length > 1">
                   <div class="option-header">
                     <span class="option-name">{{ optionName }}:</span>
-                    <span class="selected-value">{{ selectedAttributes[optionName] }}</span>
+                    <span class="selected-value">
+                      <!-- If it's a color option, show selected color preview badge -->
+                      <span
+                        v-if="isColorAttribute(optionName) && selectedAttributes[optionName]"
+                        class="header-color-preview-dot"
+                        :style="{ backgroundColor: getColorHex(selectedAttributes[optionName]) }"
+                        :class="{ 'is-light': isLightColor(getColorHex(selectedAttributes[optionName])) }"
+                      ></span>
+                      {{ selectedAttributes[optionName] }}
+                    </span>
                   </div>
 
-                  <div class="option-values-row">
+                  <!-- SPECIAL VISUAL COLOR SWATCHES ROW WHEN ATTRIBUTE IS COLOR -->
+                  <div v-if="isColorAttribute(optionName)" class="color-swatches-row">
                     <button
                       v-for="optVal in options"
                       :key="optVal"
+                      type="button"
+                      class="color-swatch-btn"
+                      :class="{
+                        active: selectedAttributes[optionName] === optVal,
+                        'is-light': isLightColor(getColorHex(optVal))
+                      }"
+                      :title="optVal"
+                      @click="selectAttributeValue(optionName, optVal)"
+                    >
+                      <span
+                        class="swatch-color-circle"
+                        :style="{ backgroundColor: getColorHex(optVal) }"
+                      >
+                        <svg
+                          v-if="selectedAttributes[optionName] === optVal"
+                          class="swatch-check-icon"
+                          :class="{ 'check-dark': isLightColor(getColorHex(optVal)) }"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="3"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      </span>
+                      <span class="swatch-label-text">{{ optVal }}</span>
+                    </button>
+                  </div>
+
+                  <!-- REGULAR PILLS ROW FOR OTHER ATTRIBUTES (Size, Storage, Material, etc.) -->
+                  <div v-else class="option-values-row">
+                    <button
+                      v-for="optVal in options"
+                      :key="optVal"
+                      type="button"
                       class="option-val-btn"
                       :class="{ active: selectedAttributes[optionName] === optVal }"
                       @click="selectAttributeValue(optionName, optVal)"
@@ -401,7 +449,15 @@ onUnmounted(() => {
                 <!-- If only 1 option: show clean subtle line rather than redundant button -->
                 <div v-else class="single-option-line">
                   <span class="opt-label">{{ optionName }}:</span>
-                  <span class="opt-val">{{ options[0] }}</span>
+                  <span class="opt-val">
+                    <span
+                      v-if="isColorAttribute(optionName)"
+                      class="header-color-preview-dot"
+                      :style="{ backgroundColor: getColorHex(options[0]) }"
+                      :class="{ 'is-light': isLightColor(getColorHex(options[0])) }"
+                    ></span>
+                    {{ options[0] }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -1236,8 +1292,101 @@ onUnmounted(() => {
         }
 
         .selected-value {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
           color: $color-primary-600;
           font-weight: $fw-bold;
+        }
+      }
+
+      .header-color-preview-dot {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+        vertical-align: middle;
+
+        &.is-light {
+          box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.08);
+        }
+      }
+
+      .color-swatches-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 2px;
+        margin-bottom: $space-2;
+
+        .color-swatch-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 14px 6px 8px;
+          border-radius: $radius-full;
+          border: 1.5px solid $color-neutral-300;
+          background: $color-neutral-0;
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          user-select: none;
+
+          .swatch-color-circle {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+            transition: transform 0.2s ease;
+
+            .swatch-check-icon {
+              width: 12px;
+              height: 12px;
+              stroke: #ffffff;
+              filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
+
+              &.check-dark {
+                stroke: #18181b;
+                filter: none;
+              }
+            }
+          }
+
+          .swatch-label-text {
+            font-size: 13px;
+            font-weight: $fw-semibold;
+            color: $color-neutral-800;
+            white-space: nowrap;
+          }
+
+          &:hover {
+            border-color: $color-primary-400;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+
+            .swatch-color-circle {
+              transform: scale(1.08);
+            }
+          }
+
+          &.active {
+            border-color: $color-primary-600;
+            background: #fff;
+            box-shadow: 0 0 0 2px #fff, 0 0 0 4px $color-primary-500, 0 3px 8px rgba($color-primary-500, 0.2);
+
+            .swatch-label-text {
+              color: $color-primary-700;
+              font-weight: $fw-bold;
+            }
+          }
+
+          &.is-light .swatch-color-circle {
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.1);
+          }
         }
       }
 

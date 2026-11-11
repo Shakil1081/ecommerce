@@ -2,6 +2,12 @@
 import { ref, computed } from 'vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import {
+  isColorAttribute,
+  getColorHex,
+  isLightColor,
+  ADMIN_COLOR_PRESETS
+} from '@/Utils/colorHelper';
 
 interface VariantItem {
   id: string;
@@ -134,6 +140,27 @@ const handleTagKeydown = (e: KeyboardEvent, row: AttributeRow) => {
     e.preventDefault();
     addTag(row);
   }
+};
+
+// Color Swatch Matrix Controls
+const customColorHex = ref('#ef4444');
+const customColorName = ref('');
+const activeColorCategory = ref<string>('👜 Bags, Leather & Neutrals');
+
+const addPresetColor = (row: AttributeRow, colorName: string) => {
+  if (!row.values.includes(colorName)) {
+    row.values.push(colorName);
+  }
+};
+
+const addCustomColor = (row: AttributeRow) => {
+  const name = customColorName.value.trim();
+  if (!name) return;
+
+  if (!row.values.includes(name)) {
+    row.values.push(name);
+  }
+  customColorName.value = '';
 };
 
 // Calculate total Cartesian combinations
@@ -453,6 +480,77 @@ const formatCurrency = (val: string | number) => {
                   <span class="values-count-badge">{{ row.values.length }} values defined</span>
                 </div>
 
+                <!-- SPECIAL COLOR PALETTE & QUICK-PICKER (Shown when attribute is Color) -->
+                <div v-if="isColorAttribute(row.name)" class="color-picker-palette-box">
+                  <div class="palette-header">
+                    <div class="palette-title">
+                      <span>🎨 Quick Color Swatch Selector</span>
+                      <small class="text-muted">Click colors to add directly into variant matrix options</small>
+                    </div>
+                    
+                    <!-- Category Tabs -->
+                    <div class="palette-tabs">
+                      <button
+                        v-for="cat in ADMIN_COLOR_PRESETS"
+                        :key="cat.category"
+                        type="button"
+                        class="palette-tab-btn"
+                        :class="{ active: activeColorCategory === cat.category }"
+                        @click="activeColorCategory = cat.category"
+                      >
+                        {{ cat.category }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Swatches in active category -->
+                  <div class="palette-swatches-grid">
+                    <button
+                      v-for="c in (ADMIN_COLOR_PRESETS.find(p => p.category === activeColorCategory)?.colors || [])"
+                      :key="c.name"
+                      type="button"
+                      class="palette-color-chip"
+                      :class="{
+                        'already-added': row.values.includes(c.name),
+                        'is-light': isLightColor(c.hex)
+                      }"
+                      :title="`Add ${c.name} (${c.hex})`"
+                      @click="addPresetColor(row, c.name)"
+                    >
+                      <span class="chip-color-dot" :style="{ backgroundColor: c.hex }">
+                        <span v-if="row.values.includes(c.name)" class="chip-check">✓</span>
+                      </span>
+                      <span class="chip-name">{{ c.name }}</span>
+                    </button>
+                  </div>
+
+                  <!-- Custom Color Picker Tool -->
+                  <div class="custom-color-tool">
+                    <span class="custom-label">Custom Shade:</span>
+                    <input
+                      v-model="customColorHex"
+                      type="color"
+                      class="custom-color-input"
+                      title="Pick custom hex color"
+                    />
+                    <input
+                      v-model="customColorName"
+                      type="text"
+                      class="custom-name-input"
+                      placeholder="Color name (e.g. Sage Green, Ruby Red)..."
+                      @keydown.enter.prevent="addCustomColor(row)"
+                    />
+                    <button
+                      type="button"
+                      class="btn-add-custom-color"
+                      :disabled="!customColorName.trim()"
+                      @click="addCustomColor(row)"
+                    >
+                      ➕ Add Custom Color
+                    </button>
+                  </div>
+                </div>
+
                 <!-- Tag Container -->
                 <div class="tags-input-container" @click="($event.currentTarget as HTMLElement).querySelector('input')?.focus()">
                   <!-- Rendered Value Tags -->
@@ -460,7 +558,15 @@ const formatCurrency = (val: string | number) => {
                     v-for="(tag, tagIdx) in row.values"
                     :key="tagIdx"
                     class="tag-pill"
+                    :class="{ 'color-tag-pill': isColorAttribute(row.name) }"
                   >
+                    <!-- Visual color circle for Color attribute -->
+                    <span
+                      v-if="isColorAttribute(row.name)"
+                      class="tag-color-circle"
+                      :style="{ backgroundColor: getColorHex(tag) }"
+                      :class="{ 'is-light': isLightColor(getColorHex(tag)) }"
+                    ></span>
                     <span class="tag-text">{{ tag }}</span>
                     <button
                       type="button"
@@ -477,14 +583,19 @@ const formatCurrency = (val: string | number) => {
                     v-model="row.inputValue"
                     type="text"
                     class="tag-inline-input"
-                    placeholder="Type value & press Enter or comma..."
+                    :placeholder="isColorAttribute(row.name) ? 'Or type color name / hex & press Enter...' : 'Type value & press Enter or comma...'"
                     @keydown="handleTagKeydown($event, row)"
                     @blur="addTag(row)"
                   />
                 </div>
 
                 <div class="field-help-text">
-                  Press <strong>Enter</strong> or <strong>comma (,)</strong> to create tag pills (e.g. <code>Midnight Black</code>, <code>Glacier Silver</code>).
+                  <span v-if="isColorAttribute(row.name)">
+                    💡 Click swatches above or type names like <code>Red</code>, <code>Caramel Tan</code>, <code>Soft Lilac</code>, <code>Onyx Black</code>, or hex <code>#ef4444</code>.
+                  </span>
+                  <span v-else>
+                    Press <strong>Enter</strong> or <strong>comma (,)</strong> to create tag pills (e.g. <code>S, M, L, XL</code>).
+                  </span>
                 </div>
               </div>
             </div>
@@ -601,6 +712,12 @@ const formatCurrency = (val: string | number) => {
                         :key="k"
                         class="preview-chip"
                       >
+                        <span
+                          v-if="isColorAttribute(String(k))"
+                          class="chip-color-circle"
+                          :style="{ backgroundColor: getColorHex(String(val)) }"
+                          :class="{ 'is-light': isLightColor(getColorHex(String(val))) }"
+                        ></span>
                         <strong>{{ k }}:</strong> {{ val }}
                       </span>
                     </div>
@@ -698,6 +815,12 @@ const formatCurrency = (val: string | number) => {
                       :key="key"
                       class="attr-chip"
                     >
+                      <span
+                        v-if="isColorAttribute(String(key))"
+                        class="chip-color-circle"
+                        :style="{ backgroundColor: getColorHex(String(val)) }"
+                        :class="{ 'is-light': isLightColor(getColorHex(String(val))) }"
+                      ></span>
                       <span class="attr-key">{{ key }}:</span>
                       <strong class="attr-val">{{ val }}</strong>
                     </span>
@@ -1252,6 +1375,197 @@ const formatCurrency = (val: string | number) => {
             }
           }
 
+          .color-picker-palette-box {
+            background: #fdf2f8;
+            border: 1px solid #fbcfe8;
+            border-radius: $radius-md;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+
+            .palette-header {
+              display: flex;
+              flex-wrap: wrap;
+              justify-content: space-between;
+              align-items: center;
+              gap: 8px;
+
+              .palette-title {
+                display: flex;
+                flex-direction: column;
+                font-size: 12px;
+                font-weight: 700;
+                color: $color-primary-800;
+
+                small {
+                  font-weight: normal;
+                  font-size: 11px;
+                }
+              }
+
+              .palette-tabs {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4px;
+
+                .palette-tab-btn {
+                  background: #fff;
+                  border: 1px solid #fbcfe8;
+                  border-radius: $radius-full;
+                  padding: 3px 10px;
+                  font-size: 11px;
+                  font-weight: 600;
+                  color: #475569;
+                  cursor: pointer;
+                  transition: all $transition-fast;
+
+                  &:hover {
+                    background: #fce7f3;
+                    color: $color-primary-700;
+                  }
+
+                  &.active {
+                    background: $color-primary-600;
+                    color: #fff;
+                    border-color: $color-primary-600;
+                    box-shadow: 0 1px 3px rgba(235, 40, 108, 0.3);
+                  }
+                }
+              }
+            }
+
+            .palette-swatches-grid {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 6px;
+
+              .palette-color-chip {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: $radius-full;
+                padding: 4px 10px 4px 5px;
+                font-size: 11.5px;
+                font-weight: 600;
+                color: #1e293b;
+                cursor: pointer;
+                transition: all 0.15s ease;
+
+                .chip-color-dot {
+                  width: 16px;
+                  height: 16px;
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+
+                  .chip-check {
+                    color: #fff;
+                    font-size: 9px;
+                    font-weight: 900;
+                    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
+                  }
+                }
+
+                &:hover {
+                  border-color: $color-primary-400;
+                  transform: translateY(-1px);
+                  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
+                }
+
+                &.already-added {
+                  background: #fdf2f8;
+                  border-color: #f472b6;
+                  color: $color-primary-800;
+                }
+
+                &.is-light .chip-color-dot {
+                  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+
+                  .chip-check {
+                    color: #18181b;
+                    filter: none;
+                  }
+                }
+              }
+            }
+
+            .custom-color-tool {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              background: #fff;
+              border: 1px solid #fbcfe8;
+              border-radius: $radius-md;
+              padding: 6px 10px;
+
+              .custom-label {
+                font-size: 11px;
+                font-weight: 700;
+                color: #64748b;
+                white-space: nowrap;
+              }
+
+              .custom-color-input {
+                width: 28px;
+                height: 28px;
+                border: none;
+                border-radius: 50%;
+                cursor: pointer;
+                padding: 0;
+                background: transparent;
+
+                &::-webkit-color-swatch-wrapper {
+                  padding: 0;
+                }
+                &::-webkit-color-swatch {
+                  border: 1px solid rgba(0, 0, 0, 0.2);
+                  border-radius: 50%;
+                }
+              }
+
+              .custom-name-input {
+                flex: 1;
+                border: 1px solid #cbd5e1;
+                border-radius: $radius-sm;
+                padding: 4px 8px;
+                font-size: 12px;
+                color: #1e293b;
+
+                &:focus {
+                  outline: none;
+                  border-color: $color-primary-500;
+                }
+              }
+
+              .btn-add-custom-color {
+                background: $color-primary-600;
+                color: #fff;
+                border: none;
+                border-radius: $radius-sm;
+                padding: 5px 12px;
+                font-size: 11.5px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: background $transition-fast;
+                white-space: nowrap;
+
+                &:hover:not(:disabled) {
+                  background: $color-primary-700;
+                }
+
+                &:disabled {
+                  opacity: 0.5;
+                  cursor: not-allowed;
+                }
+              }
+            }
+          }
+
           .tags-input-container {
             min-height: 44px;
             background: #ffffff;
@@ -1281,6 +1595,23 @@ const formatCurrency = (val: string | number) => {
               display: inline-flex;
               align-items: center;
               gap: 6px;
+
+              .tag-color-circle {
+                width: 14px;
+                height: 14px;
+                border-radius: 50%;
+                display: inline-block;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+                flex-shrink: 0;
+
+                &.is-light {
+                  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+                }
+              }
+
+              &.color-tag-pill {
+                padding-left: 6px;
+              }
 
               .tag-close-btn {
                 background: none;
@@ -1546,6 +1877,22 @@ const formatCurrency = (val: string | number) => {
             padding: 1px 6px;
             border-radius: 3px;
             font-size: 11px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+
+            .chip-color-circle {
+              width: 10px;
+              height: 10px;
+              border-radius: 50%;
+              display: inline-block;
+              box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+              flex-shrink: 0;
+
+              &.is-light {
+                box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+              }
+            }
           }
         }
       }
@@ -1736,6 +2083,22 @@ const formatCurrency = (val: string | number) => {
         padding: 2px 7px;
         font-size: 11px;
         color: $color-primary-800;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+
+        .chip-color-circle {
+          width: 11px;
+          height: 11px;
+          border-radius: 50%;
+          display: inline-block;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+          flex-shrink: 0;
+
+          &.is-light {
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+          }
+        }
 
         .attr-key {
           color: #64748b;
