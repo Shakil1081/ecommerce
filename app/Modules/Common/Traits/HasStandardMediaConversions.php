@@ -20,7 +20,7 @@ trait HasStandardMediaConversions
      */
     public function registerMediaConversions(?Media $media = null): void
     {
-        $shouldQueue = (bool) config('media-library.queue_conversions_by_default', true);
+        $shouldQueue = (bool) config('media-library.queue_conversions_by_default', true) && ! app()->environment('local');
 
         // Thumbnail: 300x300 (Cart, lists, autocomplete)
         $thumb = $this->addMediaConversion('thumb_300')

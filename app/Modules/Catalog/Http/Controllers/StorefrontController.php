@@ -306,8 +306,8 @@ class StorefrontController extends Controller
         if ($mediaItems->isNotEmpty()) {
             foreach ($mediaItems as $media) {
                 $gallery[] = [
-                    'thumb' => $media->getUrl('thumb_300') ?: $media->getUrl(),
-                    'full' => $media->getUrl('gallery_1200') ?: $media->getUrl(),
+                    'thumb' => ($media->hasGeneratedConversion('thumb_300') ? $media->getUrl('thumb_300') : null) ?: $media->getUrl(),
+                    'full' => ($media->hasGeneratedConversion('gallery_1200') ? $media->getUrl('gallery_1200') : null) ?: $media->getUrl(),
                 ];
             }
         } elseif (! empty($product->specifications['image_url'])) {
@@ -415,9 +415,12 @@ class StorefrontController extends Controller
             default => 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80',
         };
 
-        $imageUrl = $p->getFirstMediaUrl('products', 'card_600');
-        if (empty($imageUrl)) {
-            $imageUrl = $p->getFirstMediaUrl('products') ?: ($p->specifications['image_url'] ?? $defaultThumb);
+        $firstMedia = $p->getFirstMedia('products');
+        $imageUrl = null;
+        if ($firstMedia) {
+            $imageUrl = ($firstMedia->hasGeneratedConversion('card_600') ? $firstMedia->getUrl('card_600') : null) ?: $firstMedia->getUrl();
+        } else {
+            $imageUrl = $p->getFirstMediaUrl('thumbnail') ?: ($p->specifications['image_url'] ?? $defaultThumb);
         }
 
         $totalStock = $variants->sum(fn ($v) => $v->available_quantity);

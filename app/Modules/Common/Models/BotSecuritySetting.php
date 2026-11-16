@@ -79,7 +79,31 @@ class BotSecuritySetting extends Model
         /** @var self|null $active */
         $active = self::query()->where('is_active', true)->first();
 
-        return $active;
+        if ($active !== null) {
+            return $active;
+        }
+
+        // If the table is completely empty (first run), initialize with default Google reCAPTCHA v2 configuration
+        if (self::query()->count() === 0) {
+            $siteKey = (string) env('RECAPTCHA_SITE_KEY', env('GOOGLE_RECAPTCHA_SITE_KEY', '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'));
+            $secretKey = (string) env('RECAPTCHA_SECRET_KEY', env('GOOGLE_RECAPTCHA_SECRET_KEY', '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'));
+            $provider = (string) env('RECAPTCHA_PROVIDER', self::PROVIDER_RECAPTCHA_V2);
+
+            try {
+                return self::create([
+                    'provider' => $provider,
+                    'site_key' => $siteKey,
+                    'secret_key' => $secretKey,
+                    'is_active' => true,
+                    'score_threshold' => 0.50,
+                    'pages_enabled' => [self::PAGE_LOGIN, self::PAGE_CHECKOUT, self::PAGE_REGISTER],
+                ]);
+            } catch (\Throwable) {
+                return null;
+            }
+        }
+
+        return null;
     }
 
     /**

@@ -5,12 +5,16 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title inertia>{{ config('app.name', 'Enterprise E-Commerce') }}</title>
+        <title inertia>{{ config('app.name', 'Pick & Pearl') }}</title>
+
+        <!-- Favicon -->
+        <link rel="icon" type="image/png" href="/favicon.png">
+        <link rel="apple-touch-icon" href="/favicon.png">
 
         <!-- Google Fonts Preconnect -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
         <!-- Scripts & Styles -->
         @vite(['resources/scss/app.scss', 'resources/js/app.ts'])

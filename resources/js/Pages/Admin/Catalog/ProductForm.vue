@@ -16,6 +16,27 @@ interface BrandOption {
   origin_country: string;
 }
 
+interface ExistingMediaItem {
+  id: string | number;
+  file_name: string;
+  url: string;
+  full_url: string;
+  thumb_url: string;
+  size_kb: number | null;
+  is_primary: boolean;
+  is_media: boolean;
+}
+
+interface StagedGalleryItem {
+  id: string;
+  file?: File;
+  previewUrl: string;
+  name: string;
+  sizeKb: number;
+  isCompliant: boolean;
+  fromUrl?: boolean;
+}
+
 interface ProductData {
   id: string;
   name: string;
@@ -32,6 +53,7 @@ interface ProductData {
   seo_title?: string | null;
   seo_description?: string | null;
   image_url?: string | null;
+  media_gallery?: ExistingMediaItem[];
   default_selling_price?: number;
   default_purchase_cost?: number;
   compare_at_price?: number;
@@ -72,6 +94,17 @@ const editorSourceSrc = ref<string>('');
 const editorOriginalFileName = ref<string>('product-image.webp');
 const imageFileSizeKb = ref<number | null>(null);
 
+// Additional Gallery Photos state
+const existingGallery = ref<ExistingMediaItem[]>(
+  props.product?.media_gallery ? [...props.product.media_gallery] : []
+);
+const deletedMediaIds = ref<(string | number)[]>([]);
+const stagedGallery = ref<StagedGalleryItem[]>([]);
+const galleryFileInput = ref<HTMLInputElement | null>(null);
+const newGalleryUrlInput = ref<string>('');
+const showGalleryUrlInput = ref<boolean>(false);
+const editingGalleryIndex = ref<number | null>(null);
+
 const form = useForm({
   name: props.product ? props.product.name : '',
   slug: props.product ? (props.product.slug || '') : '',
@@ -95,6 +128,9 @@ const form = useForm({
   seo_description: props.product?.seo_description ?? '',
   image_url: props.product?.image_url ?? '',
   image: null as File | null,
+  gallery_images: [] as File[],
+  gallery_urls: [] as string[],
+  deleted_media_ids: [] as (string | number)[],
 });
 
 // Auto-generate slug when name changes (unless manually edited)
@@ -218,18 +254,177 @@ const openImageEditor = () => {
 };
 
 const handleCroppedImage = (file: File, dataUrl: string, sizeKb: number) => {
-  form.image = file;
-  imagePreview.value = dataUrl;
-  imageFileSizeKb.value = sizeKb;
-  showImageEditor.value = false;
+  if (editingGalleryIndex.value !== null && stagedGallery.value[editingGalleryIndex.value]) {
+    const item = stagedGallery.value[editingGalleryIndex.value];
+    item.file = file;
+    item.previewUrl = dataUrl;
+    item.sizeKb = sizeKb;
+    item.isCompliant = sizeKb <= 512;
+    editingGalleryIndex.value = null;
 
+    Swal.fire({
+      icon: 'success',
+      title: 'Gallery Photo Optimized!',
+      text: `Cropped and compressed to ${sizeKb} KB (under 0.5 MB limit).`,
+      toast: true,
+      position: 'top-end',
+      timer: 3000,
+      showConfirmButton: false,
+    });
+  } else {
+    form.image = file;
+    imagePreview.value = dataUrl;
+    imageFileSizeKb.value = sizeKb;
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Primary Image Optimized!',
+      text: `Cropped and compressed to ${sizeKb} KB (under 0.5 MB limit).`,
+      toast: true,
+      position: 'top-end',
+      timer: 3000,
+      showConfirmButton: false,
+    });
+  }
+  showImageEditor.value = false;
+};
+
+const handleCloseEditor = () => {
+  showImageEditor.value = false;
+  editingGalleryIndex.value = null;
+};
+
+// Gallery multiple file upload handling
+const handleGalleryFilesChange = (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  if (!target.files || target.files.length === 0) return;
+
+  const files = Array.from(target.files);
+  let oversizedCount = 0;
+
+  files.forEach((file) => {
+    const sizeKb = Math.round((file.size / 1024) * 10) / 10;
+    const isCompliant = file.size <= 512 * 1024;
+    if (!isCompliant) oversizedCount++;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      stagedGallery.value.push({
+        id: 'new_' + Math.random().toString(36).substring(2, 9),
+        file,
+        previewUrl: (event.target?.result as string) || '',
+        name: file.name,
+        sizeKb,
+        isCompliant,
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+
+  if (target) {
+    target.value = '';
+  }
+
+  if (oversizedCount > 0) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Large Images Detected',
+      text: `${oversizedCount} image(s) exceed 0.5 MB (512 KB). You can click "✂️ Crop" on any flagged photo to compress it before saving.`,
+      toast: true,
+      position: 'top-end',
+      timer: 5000,
+      showConfirmButton: false,
+    });
+  }
+};
+
+const addGalleryUrl = () => {
+  const url = newGalleryUrlInput.value.trim();
+  if (!url) return;
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Invalid URL',
+      text: 'Please enter a valid HTTP or HTTPS image URL.',
+    });
+    return;
+  }
+
+  stagedGallery.value.push({
+    id: 'url_' + Math.random().toString(36).substring(2, 9),
+    previewUrl: url,
+    name: url.split('/').pop()?.split('?')[0] || 'remote-gallery-image.webp',
+    sizeKb: 0,
+    isCompliant: true,
+    fromUrl: true,
+  });
+
+  newGalleryUrlInput.value = '';
+  showGalleryUrlInput.value = false;
+};
+
+const removeStagedGalleryItem = (index: number) => {
+  stagedGallery.value.splice(index, 1);
+};
+
+const openGalleryEditor = (index: number) => {
+  const item = stagedGallery.value[index];
+  if (!item) return;
+
+  editingGalleryIndex.value = index;
+  editorSourceSrc.value = item.previewUrl;
+  editorOriginalFileName.value = item.name;
+  showImageEditor.value = true;
+};
+
+const deleteExistingMedia = async (mediaItem: ExistingMediaItem, index: number) => {
+  const result = await Swal.fire({
+    title: 'Delete Gallery Photo?',
+    text: `Are you sure you want to remove "${mediaItem.file_name}" from this product?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#eb286c',
+    confirmButtonText: 'Yes, delete',
+  });
+
+  if (!result.isConfirmed) return;
+
+  if (props.product && mediaItem.is_media && (typeof mediaItem.id === 'string' || typeof mediaItem.id === 'number')) {
+    try {
+      const response = await fetch(`/admin/products/${props.product.id}/media/${mediaItem.id}`, {
+        method: 'DELETE',
+        headers: {
+          'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+          'Accept': 'application/json',
+        },
+      });
+      if (response.ok) {
+        existingGallery.value.splice(index, 1);
+        Swal.fire({
+          icon: 'success',
+          title: 'Deleted',
+          text: 'Photo removed from product gallery.',
+          toast: true,
+          position: 'top-end',
+          timer: 2500,
+          showConfirmButton: false,
+        });
+        return;
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  deletedMediaIds.value.push(mediaItem.id);
+  existingGallery.value.splice(index, 1);
   Swal.fire({
-    icon: 'success',
-    title: 'Image Optimized!',
-    text: `Cropped and compressed to ${sizeKb} KB (under 0.5 MB limit).`,
+    icon: 'info',
+    title: 'Marked for Deletion',
+    text: 'Photo will be removed when saving.',
     toast: true,
     position: 'top-end',
-    timer: 3000,
+    timer: 2500,
     showConfirmButton: false,
   });
 };
@@ -253,12 +448,12 @@ const clearImage = () => {
 
 // Submit handler
 const submit = (overridePublished?: boolean) => {
-  // Validate maximum image size (0.5 MB = 512 KB)
+  // Validate maximum image size (0.5 MB = 512 KB) for primary image
   if (form.image && form.image.size > 512 * 1024) {
     Swal.fire({
       icon: 'error',
-      title: 'Image Exceeds 0.5 MB Limit',
-      text: `Your image file is ${(form.image.size / 1024).toFixed(0)} KB. Maximum allowed size is 512 KB (0.5 MB). Please click "✂️ Crop & Compress" to optimize before saving.`,
+      title: 'Primary Image Exceeds 0.5 MB Limit',
+      text: `Your primary image file is ${(form.image.size / 1024).toFixed(0)} KB. Maximum allowed size is 512 KB (0.5 MB). Please click "✂️ Crop & Compress" to optimize before saving.`,
       confirmButtonText: 'Open Image Editor',
       showCancelButton: true,
     }).then((result) => {
@@ -268,6 +463,35 @@ const submit = (overridePublished?: boolean) => {
     });
     return;
   }
+
+  // Validate gallery image sizes
+  const oversizedGalleryItem = stagedGallery.value.find((item) => item.sizeKb > 512);
+  if (oversizedGalleryItem) {
+    const oversizedIndex = stagedGallery.value.indexOf(oversizedGalleryItem);
+    Swal.fire({
+      icon: 'error',
+      title: 'Gallery Photo Exceeds 0.5 MB Limit',
+      text: `"${oversizedGalleryItem.name}" is ${oversizedGalleryItem.sizeKb} KB. Maximum allowed size is 512 KB (0.5 MB). Please click "✂️ Crop" on that photo to optimize it before saving.`,
+      confirmButtonText: 'Open Image Editor',
+      showCancelButton: true,
+    }).then((result) => {
+      if (result.isConfirmed && oversizedIndex >= 0) {
+        openGalleryEditor(oversizedIndex);
+      }
+    });
+    return;
+  }
+
+  // Bind gallery files & URLs to form
+  form.gallery_images = stagedGallery.value
+    .filter((item) => item.file instanceof File)
+    .map((item) => item.file as File);
+
+  form.gallery_urls = stagedGallery.value
+    .filter((item) => item.fromUrl && !item.file)
+    .map((item) => item.previewUrl);
+
+  form.deleted_media_ids = deletedMediaIds.value;
 
   if (overridePublished !== undefined) {
     form.is_published = overridePublished;
@@ -296,9 +520,9 @@ const submit = (overridePublished?: boolean) => {
   const parsedStock = parseInt(String(form.stock_quantity), 10);
   form.stock_quantity = !isNaN(parsedStock) ? Math.max(0, parsedStock) : 0;
 
-  const hasFile = form.image instanceof File;
+  const hasFiles = (form.image instanceof File) || (form.gallery_images && form.gallery_images.length > 0);
   if (isEditing && props.product) {
-    if (hasFile) {
+    if (hasFiles) {
       form.transform((data) => ({ ...data, _method: 'put' })).post(`/admin/products/${props.product.id}`, {
         forceFormData: true,
       });
@@ -306,7 +530,7 @@ const submit = (overridePublished?: boolean) => {
       form.put(`/admin/products/${props.product.id}`);
     }
   } else {
-    if (hasFile) {
+    if (hasFiles) {
       form.post('/admin/products', {
         forceFormData: true,
       });
@@ -468,93 +692,239 @@ const submit = (overridePublished?: boolean) => {
               <span class="card-icon">🖼️</span>
               <div>
                 <h2 class="card-heading">Media & Photography Assets</h2>
-                <p class="card-subheading">High-definition product photography. Automatically converted to WebP & AVIF.</p>
+                <p class="card-subheading">High-definition product photography. Automatically converted to WebP & AVIF with 0.5 MB limit enforcement.</p>
               </div>
             </div>
 
             <div class="card-body">
-              <!-- Upload Mode Selector -->
-              <div class="media-tabs">
-                <button
-                  type="button"
-                  class="media-tab"
-                  :class="{ active: imageInputMode === 'url' }"
-                  @click="imageInputMode = 'url'"
-                >
-                  🔗 Image URL (Fast Link)
-                </button>
-                <button
-                  type="button"
-                  class="media-tab"
-                  :class="{ active: imageInputMode === 'upload' }"
-                  @click="imageInputMode = 'upload'"
-                >
-                  📁 File Upload
-                </button>
-              </div>
+              <!-- Subsection 1: Primary Cover Photo -->
+              <div class="media-sub-section">
+                <div class="section-sub-header">
+                  <div>
+                    <span class="sub-header-title">⭐ Primary Product Cover</span>
+                    <p class="sub-header-desc">Main thumbnail shown on catalog cards, cart drawer, and the primary PDP hero view.</p>
+                  </div>
+                  <span class="badge-required">Required</span>
+                </div>
 
-              <!-- Mode A: Direct URL Input -->
-              <div v-if="imageInputMode === 'url'" class="form-field">
-                <div class="url-input-row">
-                  <input
-                    v-model="form.image_url"
-                    type="url"
-                    class="field-input"
-                    placeholder="https://images.unsplash.com/... or supplier image URL"
-                    @blur="updateImageUrl"
-                  />
-                  <button type="button" class="btn btn-secondary btn-sm" @click="updateImageUrl">
-                    Preview
+                <!-- Upload Mode Selector -->
+                <div class="media-tabs">
+                  <button
+                    type="button"
+                    class="media-tab"
+                    :class="{ active: imageInputMode === 'url' }"
+                    @click="imageInputMode = 'url'"
+                  >
+                    🔗 Image URL (Fast Link)
+                  </button>
+                  <button
+                    type="button"
+                    class="media-tab"
+                    :class="{ active: imageInputMode === 'upload' }"
+                    @click="imageInputMode = 'upload'"
+                  >
+                    📁 File Upload
                   </button>
                 </div>
-                <p class="field-hint">Supports external image links from Unsplash, Cloudinary, AWS S3, or manufacturer CDN.</p>
+
+                <!-- Mode A: Direct URL Input -->
+                <div v-if="imageInputMode === 'url'" class="form-field">
+                  <div class="url-input-row">
+                    <input
+                      v-model="form.image_url"
+                      type="url"
+                      class="field-input"
+                      placeholder="https://images.unsplash.com/... or supplier image URL"
+                      @blur="updateImageUrl"
+                    />
+                    <button type="button" class="btn btn-secondary btn-sm" @click="updateImageUrl">
+                      Preview
+                    </button>
+                  </div>
+                  <p class="field-hint">Supports external image links from Unsplash, Cloudinary, AWS S3, or manufacturer CDN.</p>
+                </div>
+
+                <!-- Mode B: File Upload -->
+                <div v-else class="form-field">
+                  <div class="file-dropzone" @click="imageFileInput?.click()">
+                    <input
+                      ref="imageFileInput"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/avif"
+                      class="hidden-file-input"
+                      @change="handleFileChange"
+                    />
+                    <span class="dropzone-icon">☁️</span>
+                    <p class="dropzone-text">Click to browse or drag and drop primary cover image</p>
+                    <p class="dropzone-sub">PNG, JPG, WebP, or AVIF (Max 0.5 MB / 512 KB allowed • Crop & Compress tool included)</p>
+                  </div>
+                </div>
+
+                <!-- Live Primary Image Preview Banner -->
+                <div v-if="imagePreview" class="image-preview-card">
+                  <div class="preview-img-box">
+                    <img :src="imagePreview" alt="Product preview" class="preview-img" />
+                    <span class="preview-badge">Primary Cover</span>
+                  </div>
+                  <div class="preview-meta">
+                    <div class="meta-row">
+                      <span class="meta-label">File Size:</span>
+                      <span v-if="imageFileSizeKb !== null" :class="imageFileSizeKb <= 512 ? 'badge-size-ok' : 'badge-size-warn'">
+                        {{ imageFileSizeKb <= 512 ? '✓' : '⚠️' }} {{ imageFileSizeKb }} KB {{ imageFileSizeKb <= 512 ? '(Compliant)' : '(Exceeds 0.5MB limit!)' }}
+                      </span>
+                      <span v-else class="meta-val">External / Uncompressed</span>
+                    </div>
+                    <div class="meta-row">
+                      <span class="meta-label">Format:</span>
+                      <span class="meta-val">WebP / AVIF Ready (1:1 Ratio recommended)</span>
+                    </div>
+                    <div class="meta-row">
+                      <span class="meta-label">Breakpoints:</span>
+                      <span class="meta-val">thumb_300, card_600, gallery_1200, zoom_2000</span>
+                    </div>
+                    <div class="preview-actions">
+                      <button type="button" class="btn-crop-img" @click="openImageEditor">
+                        ✂️ Crop & Compress (Editor)
+                      </button>
+                      <button type="button" class="btn-remove-img" @click="clearImage">
+                        🗑️ Remove Cover
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <!-- Mode B: File Upload -->
-              <div v-else class="form-field">
-                <div class="file-dropzone" @click="imageFileInput?.click()">
+              <!-- Subsection 2: Product Gallery (Multiple Additional Photos) -->
+              <div class="media-sub-section gallery-section">
+                <div class="section-sub-header">
+                  <div>
+                    <span class="sub-header-title">📸 Product Photo Gallery (Multiple Additional Images)</span>
+                    <p class="sub-header-desc">
+                      Upload multiple product photos (angle shots, close-ups, packaging, material details). Customers can switch through them on the Storefront PDP thumbnail strip.
+                    </p>
+                  </div>
+                  <div class="gallery-header-actions">
+                    <button
+                      type="button"
+                      class="btn-sm btn-outline-pink"
+                      @click="showGalleryUrlInput = !showGalleryUrlInput"
+                    >
+                      🔗 {{ showGalleryUrlInput ? 'Hide URL Input' : '+ Add via URL' }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- URL input for gallery -->
+                <div v-if="showGalleryUrlInput" class="url-input-row gallery-url-row">
                   <input
-                    ref="imageFileInput"
+                    v-model="newGalleryUrlInput"
+                    type="url"
+                    class="field-input"
+                    placeholder="Enter external image URL (e.g. https://...)"
+                    @keyup.enter="addGalleryUrl"
+                  />
+                  <button type="button" class="btn btn-secondary btn-sm" @click="addGalleryUrl">
+                    + Add to Gallery
+                  </button>
+                  <button type="button" class="btn-cancel-sm" @click="showGalleryUrlInput = false">
+                    Cancel
+                  </button>
+                </div>
+
+                <!-- Multi-File Gallery Dropzone -->
+                <div class="file-dropzone multi-dropzone" @click="galleryFileInput?.click()">
+                  <input
+                    ref="galleryFileInput"
                     type="file"
+                    multiple
                     accept="image/png,image/jpeg,image/webp,image/avif"
                     class="hidden-file-input"
-                    @change="handleFileChange"
+                    @change="handleGalleryFilesChange"
                   />
-                  <span class="dropzone-icon">☁️</span>
-                  <p class="dropzone-text">Click to browse or drag and drop image file</p>
-                  <p class="dropzone-sub">PNG, JPG, WebP, or AVIF (Max 0.5 MB / 512 KB allowed • Crop & Compress tool included)</p>
+                  <span class="dropzone-icon">🖼️</span>
+                  <p class="dropzone-text">Click to browse or drag and drop multiple gallery photos</p>
+                  <p class="dropzone-sub">
+                    You can select multiple photos at once • Max 0.5 MB (512 KB) per photo • Built-in Crop & Compress editor
+                  </p>
                 </div>
-              </div>
 
-              <!-- Live Image Preview Banner -->
-              <div v-if="imagePreview" class="image-preview-card">
-                <div class="preview-img-box">
-                  <img :src="imagePreview" alt="Product preview" class="preview-img" />
-                  <span class="preview-badge">Primary Storefront Thumbnail</span>
+                <!-- Existing Saved Gallery Photos (in Edit Mode) -->
+                <div v-if="existingGallery.length > 0" class="gallery-block">
+                  <div class="gallery-block-header">
+                    <span class="gallery-block-title">Currently Saved Photos ({{ existingGallery.length }})</span>
+                    <span class="gallery-block-hint">Saved in high-performance storage disk</span>
+                  </div>
+                  <div class="gallery-grid">
+                    <div
+                      v-for="(item, idx) in existingGallery"
+                      :key="item.id"
+                      class="gallery-card"
+                    >
+                      <div class="gallery-thumb-box">
+                        <img :src="item.thumb_url || item.url" :alt="item.file_name" class="gallery-thumb" />
+                        <span v-if="idx === 0" class="badge-role-cover">Cover</span>
+                        <span v-else class="badge-role-gallery">#{{ idx + 1 }}</span>
+                      </div>
+                      <div class="gallery-card-body">
+                        <span class="gallery-file-name" :title="item.file_name">{{ item.file_name }}</span>
+                        <span v-if="item.size_kb" class="gallery-file-size">{{ item.size_kb }} KB</span>
+                      </div>
+                      <div class="gallery-card-actions">
+                        <button
+                          type="button"
+                          class="btn-gallery-delete"
+                          title="Delete photo from gallery"
+                          @click="deleteExistingMedia(item, idx)"
+                        >
+                          🗑️ Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div class="preview-meta">
-                  <div class="meta-row">
-                    <span class="meta-label">File Size:</span>
-                    <span v-if="imageFileSizeKb !== null" :class="imageFileSizeKb <= 512 ? 'badge-size-ok' : 'badge-size-warn'">
-                      {{ imageFileSizeKb <= 512 ? '✓' : '⚠️' }} {{ imageFileSizeKb }} KB {{ imageFileSizeKb <= 512 ? '(Compliant)' : '(Exceeds 0.5MB limit!)' }}
-                    </span>
-                    <span v-else class="meta-val">External / Uncompressed</span>
+
+                <!-- Newly Staged Gallery Photos -->
+                <div v-if="stagedGallery.length > 0" class="gallery-block staged-block">
+                  <div class="gallery-block-header">
+                    <span class="gallery-block-title">New Photos Ready to Upload ({{ stagedGallery.length }})</span>
+                    <span class="gallery-block-hint">Will be uploaded upon saving product</span>
                   </div>
-                  <div class="meta-row">
-                    <span class="meta-label">Format:</span>
-                    <span class="meta-val">WebP / AVIF Ready (1:1 Ratio recommended)</span>
-                  </div>
-                  <div class="meta-row">
-                    <span class="meta-label">Breakpoints:</span>
-                    <span class="meta-val">thumb_300, card_600, gallery_1200, zoom_2000</span>
-                  </div>
-                  <div class="preview-actions">
-                    <button type="button" class="btn-crop-img" @click="openImageEditor">
-                      ✂️ Crop & Compress (Editor)
-                    </button>
-                    <button type="button" class="btn-remove-img" @click="clearImage">
-                      🗑️ Remove Image
-                    </button>
+                  <div class="gallery-grid">
+                    <div
+                      v-for="(item, idx) in stagedGallery"
+                      :key="item.id"
+                      class="gallery-card staged-card"
+                    >
+                      <div class="gallery-thumb-box">
+                        <img :src="item.previewUrl" :alt="item.name" class="gallery-thumb" />
+                        <span class="badge-role-staged">New #{{ idx + 1 }}</span>
+                      </div>
+                      <div class="gallery-card-body">
+                        <span class="gallery-file-name" :title="item.name">{{ item.name }}</span>
+                        <span :class="item.isCompliant ? 'badge-size-ok-sm' : 'badge-size-warn-sm'">
+                          {{ item.isCompliant ? '✓' : '⚠️' }} {{ item.sizeKb > 0 ? `${item.sizeKb} KB` : 'External Link' }}
+                        </span>
+                      </div>
+                      <div class="gallery-card-actions">
+                        <button
+                          v-if="item.file"
+                          type="button"
+                          class="btn-gallery-crop"
+                          title="Crop & Compress to 0.5MB"
+                          @click="openGalleryEditor(idx)"
+                        >
+                          ✂️ Crop
+                        </button>
+                        <button
+                          type="button"
+                          class="btn-gallery-remove"
+                          title="Remove from upload queue"
+                          @click="removeStagedGalleryItem(idx)"
+                        >
+                          ✕ Remove
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1081,7 +1451,7 @@ const submit = (overridePublished?: boolean) => {
         :image-src="editorSourceSrc"
         :initial-file-name="editorOriginalFileName"
         :max-size-kb="512"
-        @close="showImageEditor = false"
+        @close="handleCloseEditor"
         @save="handleCroppedImage"
       />
     </div>
@@ -1660,6 +2030,281 @@ const submit = (overridePublished?: boolean) => {
           background: $color-danger;
           color: #fff;
         }
+      }
+    }
+  }
+}
+
+// Subsections & Multi-Image Gallery Styling
+.media-sub-section {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.gallery-section {
+  margin-top: $space-5;
+  padding-top: $space-5;
+  border-top: 1px dashed $color-neutral-200;
+}
+
+.section-sub-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: $space-3;
+
+  .sub-header-title {
+    font-size: $fs-sm;
+    font-weight: $fw-bold;
+    color: $color-neutral-800;
+    display: block;
+  }
+
+  .sub-header-desc {
+    font-size: $fs-xs;
+    color: $color-neutral-500;
+    margin: 2px 0 0;
+  }
+
+  .sub-header-tag {
+    font-size: $fs-2xs;
+    background: $color-neutral-100;
+    color: $color-neutral-600;
+    padding: 2px 8px;
+    border-radius: $radius-full;
+    font-weight: $fw-semibold;
+  }
+
+  .badge-required {
+    font-size: 10px;
+    background: #fdf2f8;
+    color: #db2777;
+    border: 1px solid #fbcfe8;
+    padding: 2px 8px;
+    border-radius: $radius-full;
+    font-weight: $fw-bold;
+    text-transform: uppercase;
+  }
+}
+
+.gallery-header-actions {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+}
+
+.btn-outline-pink {
+  background: #fff;
+  border: 1px solid #f472b6;
+  color: #db2777;
+  padding: 4px 10px;
+  border-radius: $radius-md;
+  font-size: $fs-xs;
+  font-weight: $fw-semibold;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: #fdf2f8;
+    border-color: #db2777;
+  }
+}
+
+.gallery-url-row {
+  display: flex;
+  gap: $space-2;
+  align-items: center;
+  background: $color-neutral-50;
+  padding: $space-3;
+  border-radius: $radius-md;
+  border: 1px solid $color-neutral-200;
+
+  .btn-cancel-sm {
+    background: transparent;
+    border: none;
+    color: $color-neutral-500;
+    font-size: $fs-xs;
+    cursor: pointer;
+
+    &:hover {
+      color: $color-neutral-800;
+    }
+  }
+}
+
+.multi-dropzone {
+  border-color: #f472b6;
+  background: #fdf2f8;
+
+  &:hover {
+    border-color: #db2777;
+    background: #fce7f3;
+  }
+}
+
+.gallery-block {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  margin-top: $space-2;
+
+  .gallery-block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .gallery-block-title {
+      font-size: $fs-xs;
+      font-weight: $fw-bold;
+      color: $color-neutral-700;
+    }
+
+    .gallery-block-hint {
+      font-size: 11px;
+      color: $color-neutral-400;
+    }
+  }
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: $space-3;
+}
+
+.gallery-card {
+  background: #ffffff;
+  border: 1px solid $color-neutral-200;
+  border-radius: $radius-md;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow $transition-fast;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  &.staged-card {
+    border-color: #fbcfe8;
+    background: #fffdfd;
+  }
+
+  .gallery-thumb-box {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #f1f5f9;
+    overflow: hidden;
+
+    .gallery-thumb {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .badge-role-cover {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      background: #db2777;
+      color: #fff;
+      font-size: 9px;
+      font-weight: $fw-bold;
+      padding: 1px 6px;
+      border-radius: $radius-sm;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .badge-role-gallery,
+    .badge-role-staged {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      background: rgba(15, 23, 42, 0.75);
+      color: #fff;
+      font-size: 9px;
+      font-weight: $fw-bold;
+      padding: 1px 6px;
+      border-radius: $radius-sm;
+    }
+
+    .badge-role-staged {
+      background: #0284c7;
+    }
+  }
+
+  .gallery-card-body {
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+
+    .gallery-file-name {
+      font-size: 11px;
+      font-weight: $fw-semibold;
+      color: $color-neutral-800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .gallery-file-size {
+      font-size: 10px;
+      color: $color-neutral-400;
+    }
+
+    .badge-size-ok-sm {
+      font-size: 10px;
+      color: #059669;
+      font-weight: $fw-bold;
+    }
+
+    .badge-size-warn-sm {
+      font-size: 10px;
+      color: #dc2626;
+      font-weight: $fw-bold;
+    }
+  }
+
+  .gallery-card-actions {
+    padding: 4px 8px 8px;
+    display: flex;
+    gap: 4px;
+
+    button {
+      flex: 1;
+      padding: 4px;
+      border-radius: $radius-sm;
+      font-size: 11px;
+      font-weight: $fw-semibold;
+      cursor: pointer;
+      border: none;
+      transition: all $transition-fast;
+    }
+
+    .btn-gallery-crop {
+      background: #fdf2f8;
+      color: #db2777;
+      border: 1px solid #fbcfe8;
+
+      &:hover {
+        background: #db2777;
+        color: #fff;
+      }
+    }
+
+    .btn-gallery-remove,
+    .btn-gallery-delete {
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+
+      &:hover {
+        background: #dc2626;
+        color: #fff;
       }
     }
   }

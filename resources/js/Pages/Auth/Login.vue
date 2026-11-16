@@ -42,60 +42,119 @@ const fillDemoAdmin = () => {
 onMounted(() => {
   if (props.botSecurity?.enabled && props.botSecurity.site_key) {
     if (props.botSecurity.provider === 'turnstile') {
-      const script = document.createElement('script');
-      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
-        isScriptLoaded.value = true;
+      const renderTurnstile = () => {
         // @ts-expect-error Turnstile global
         if (window.turnstile) {
-          // @ts-expect-error Turnstile global
-          window.turnstile.render('#turnstile-widget', {
-            sitekey: props.botSecurity?.site_key,
-            callback: (token: string) => {
-              form.captcha_token = token;
-              form['g-recaptcha-response'] = token;
-            },
-          });
+          const container = document.getElementById('turnstile-widget');
+          if (container && !container.hasChildNodes()) {
+            // @ts-expect-error Turnstile global
+            window.turnstile.render(container, {
+              sitekey: props.botSecurity?.site_key,
+              callback: (token: string) => {
+                form.captcha_token = token;
+                form['g-recaptcha-response'] = token;
+                form.clearErrors('captcha');
+              },
+            });
+          }
         }
       };
-      document.head.appendChild(script);
+
+      // @ts-expect-error Turnstile global
+      if (window.turnstile) {
+        renderTurnstile();
+      } else if (!document.querySelector('script[src*="turnstile/v0/api.js"]')) {
+        const script = document.createElement('script');
+        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+        script.async = true;
+        script.defer = true;
+        script.onload = () => {
+          isScriptLoaded.value = true;
+          renderTurnstile();
+        };
+        document.head.appendChild(script);
+      }
     } else if (props.botSecurity.provider === 'recaptcha_v2') {
-      const script = document.createElement('script');
-      script.src = 'https://www.google.com/recaptcha/api.js?onload=onGoogleRecaptchaLoaded&render=explicit';
-      script.async = true;
-      script.defer = true;
-      // @ts-expect-error Window callback
-      window.onGoogleRecaptchaLoaded = () => {
-        isScriptLoaded.value = true;
+      const renderRecaptchaV2 = () => {
         // @ts-expect-error grecaptcha global
-        if (window.grecaptcha) {
-          // @ts-expect-error grecaptcha global
-          recaptchaWidgetId.value = window.grecaptcha.render('recaptcha-v2-container', {
-            sitekey: props.botSecurity?.site_key,
-            callback: (response: string) => {
-              form['g-recaptcha-response'] = response;
-              form.captcha_token = response;
-            },
-          });
+        if (window.grecaptcha && window.grecaptcha.render) {
+          const container = document.getElementById('recaptcha-v2-container');
+          if (container && !container.hasChildNodes()) {
+            try {
+              // @ts-expect-error grecaptcha global
+              recaptchaWidgetId.value = window.grecaptcha.render(container, {
+                sitekey: props.botSecurity?.site_key,
+                callback: (response: string) => {
+                  form['g-recaptcha-response'] = response;
+                  form.captcha_token = response;
+                  form.clearErrors('captcha');
+                },
+                'expired-callback': () => {
+                  form['g-recaptcha-response'] = '';
+                  form.captcha_token = '';
+                },
+              });
+              isScriptLoaded.value = true;
+            } catch (err) {
+              console.warn('reCAPTCHA render notice:', err);
+            }
+          }
         }
       };
-      document.head.appendChild(script);
+
+      // @ts-expect-error Window callback
+      window.onGoogleRecaptchaLoaded = renderRecaptchaV2;
+
+      // Check if grecaptcha already loaded on window (e.g. client navigation)
+      // @ts-expect-error grecaptcha global
+      if (window.grecaptcha && window.grecaptcha.render) {
+        renderRecaptchaV2();
+      } else if (!document.querySelector('script[src*="recaptcha/api.js"]')) {
+        const script = document.createElement('script');
+        script.src = 'https://www.google.com/recaptcha/api.js?onload=onGoogleRecaptchaLoaded&render=explicit';
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      }
     } else if (props.botSecurity.provider === 'recaptcha_v3') {
-      const script = document.createElement('script');
-      script.src = `https://www.google.com/recaptcha/api.js?render=${props.botSecurity.site_key}`;
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
+      if (!document.querySelector(`script[src*="render=${props.botSecurity.site_key}"]`)) {
+        const script = document.createElement('script');
+        script.src = `https://www.google.com/recaptcha/api.js?render=${props.botSecurity.site_key}`;
+        script.async = true;
+        script.defer = true;
+        script.onload = () => {
+          isScriptLoaded.value = true;
+        };
+        document.head.appendChild(script);
+      } else {
         isScriptLoaded.value = true;
-      };
-      document.head.appendChild(script);
+      }
     }
   }
 });
 
 const submit = async () => {
+  // Validate reCAPTCHA v2 checkbox is completed
+  if (
+    props.botSecurity?.enabled &&
+    props.botSecurity.provider === 'recaptcha_v2' &&
+    !form['g-recaptcha-response'] &&
+    !form.captcha_token
+  ) {
+    form.setError('captcha', 'Please check the box to confirm you are not a robot.');
+    return;
+  }
+
+  // Validate Turnstile token is completed
+  if (
+    props.botSecurity?.enabled &&
+    props.botSecurity.provider === 'turnstile' &&
+    !form.captcha_token
+  ) {
+    form.setError('captcha', 'Please complete the Cloudflare security verification.');
+    return;
+  }
+
   // Execute reCAPTCHA v3 invisible execution if applicable
   if (
     props.botSecurity?.enabled &&
@@ -123,6 +182,8 @@ const submit = async () => {
       if (recaptchaWidgetId.value !== null && window.grecaptcha) {
         // @ts-expect-error grecaptcha global
         window.grecaptcha.reset(recaptchaWidgetId.value);
+        form['g-recaptcha-response'] = '';
+        form.captcha_token = '';
       }
     },
   });
@@ -256,8 +317,11 @@ const submit = async () => {
           v-if="botSecurity?.enabled && botSecurity.provider === 'recaptcha_v2'"
           class="captcha-wrapper"
         >
-          <div id="recaptcha-v2-container" />
-          <span v-if="form.errors.captcha" class="form-error">{{ form.errors.captcha }}</span>
+          <div class="captcha-label-row">
+            <span class="captcha-title">🤖 Bot Protection &amp; Verification</span>
+          </div>
+          <div id="recaptcha-v2-container" class="recaptcha-box" />
+          <span v-if="form.errors.captcha" class="form-error captcha-error">{{ form.errors.captcha }}</span>
         </div>
 
         <!-- Cloudflare Turnstile Container -->
@@ -584,7 +648,38 @@ const submit = async () => {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: $space-2 0;
+    margin: $space-3 0;
+    padding: $space-3;
+    background: hsl(342, 60%, 98%);
+    border: 1px solid hsl(342, 40%, 90%);
+    border-radius: $radius-lg;
+
+    .captcha-label-row {
+      width: 100%;
+      text-align: left;
+      margin-bottom: $space-2;
+
+      .captcha-title {
+        font-size: $fs-2xs;
+        font-weight: $fw-bold;
+        color: hsl(342, 70%, 35%);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+    }
+
+    .recaptcha-box {
+      min-height: 78px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .captcha-error {
+      margin-top: $space-2;
+      text-align: center;
+      width: 100%;
+    }
   }
 
   .form-error {

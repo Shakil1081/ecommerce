@@ -155,6 +155,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('products/{product}/matrix', [CatalogController::class, 'matrix'])->name('products.matrix');
     Route::post('products/{product}/generate-variants', [CatalogController::class, 'generateVariants'])->name('products.generate-variants');
     Route::delete('products/{product}/variants/{variant}', [CatalogController::class, 'deleteVariant'])->name('products.variants.destroy');
+    Route::delete('products/{product}/media/{media}', [CatalogController::class, 'destroyMedia'])->name('products.media.destroy');
 
     // Order Lifecycle Management & Dispatch
     Route::get('/orders', [OrderAdminController::class, 'index'])->name('orders.index');

@@ -540,8 +540,7 @@ onUnmounted(() => {
 
         <!-- Full-Width Fast Funnel Order Card (Spanning 100% Width Below Product Grid) -->
         <div id="fast-order-form" class="funnel-order-card full-width-card">
-          <div class="funnel-badge-header">
-            <span class="badge-icon">⚡</span>
+          <div class="funnel-badge-header">            
             <div class="badge-text-wrap">
               <span class="badge-headline">অর্ডার করতে নিচের তথ্য দিন (ক্যাশ অন ডেলিভারি)</span>
               <span class="badge-sub">কোনো অগ্রিম পেমেন্ট লাগবে না • পণ্য হাতে পেয়ে মূল্য পরিশোধ করুন</span>

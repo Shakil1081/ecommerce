@@ -12,6 +12,7 @@ use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Inventory\Models\InventoryStock;
 use App\Modules\Inventory\Models\Warehouse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -171,6 +172,10 @@ class CatalogController extends Controller
             'seo_description' => ['nullable', 'string', 'max:500'],
             'image_url' => ['nullable', 'string'],
             'image' => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp,avif', 'max:512'],
+            'gallery_images' => ['nullable', 'array'],
+            'gallery_images.*' => ['file', 'mimes:jpeg,png,jpg,webp,avif', 'max:512'],
+            'gallery_urls' => ['nullable', 'array'],
+            'gallery_urls.*' => ['nullable', 'string'],
         ]);
 
         $rawSlug = ! empty($validated['slug']) ? $validated['slug'] : $validated['name'];
@@ -192,7 +197,7 @@ class CatalogController extends Controller
             'seo_description' => $validated['seo_description'] ?? null,
         ]);
 
-        // Attach image if uploaded or URL provided
+        // Attach primary image if uploaded or URL provided
         if ($request->hasFile('image')) {
             $product->addMediaFromRequest('image')->toMediaCollection('products');
         } elseif (! empty($validated['image_url'])) {
@@ -200,6 +205,26 @@ class CatalogController extends Controller
                 $product->addMediaFromUrl($validated['image_url'])->toMediaCollection('products');
             } catch (\Throwable) {
                 // Ignore if sandbox or network blocks external image fetch
+            }
+        }
+
+        // Attach additional gallery images if uploaded
+        if ($request->hasFile('gallery_images')) {
+            foreach ($request->file('gallery_images') as $galleryFile) {
+                if ($galleryFile && $galleryFile->isValid()) {
+                    $product->addMedia($galleryFile)->toMediaCollection('products');
+                }
+            }
+        }
+        if (! empty($validated['gallery_urls']) && is_array($validated['gallery_urls'])) {
+            foreach ($validated['gallery_urls'] as $galleryUrl) {
+                if (! empty($galleryUrl) && filter_var($galleryUrl, FILTER_VALIDATE_URL)) {
+                    try {
+                        $product->addMediaFromUrl($galleryUrl)->toMediaCollection('products');
+                    } catch (\Throwable) {
+                        // Ignore if fetch fails
+                    }
+                }
             }
         }
 
@@ -254,6 +279,40 @@ class CatalogController extends Controller
             $defaultVariant->loadMissing('stocks');
         }
 
+        $mediaItems = $product->getMedia('products');
+        $galleryList = [];
+        if ($mediaItems->isNotEmpty()) {
+            $galleryList = $mediaItems->map(fn ($m, $index) => [
+                'id' => (string) $m->id,
+                'file_name' => $m->file_name,
+                'url' => ($m->hasGeneratedConversion('card_600') ? $m->getUrl('card_600') : null) ?: $m->getUrl(),
+                'full_url' => ($m->hasGeneratedConversion('gallery_1200') ? $m->getUrl('gallery_1200') : null) ?: $m->getUrl(),
+                'thumb_url' => ($m->hasGeneratedConversion('thumb_300') ? $m->getUrl('thumb_300') : null) ?: $m->getUrl(),
+                'size_kb' => round($m->size / 1024),
+                'is_primary' => $index === 0,
+                'is_media' => true,
+            ])->values()->all();
+        } elseif (! empty($product->specifications['gallery_urls']) && is_array($product->specifications['gallery_urls'])) {
+            $galleryList = collect($product->specifications['gallery_urls'])->map(fn ($url, $index) => [
+                'id' => 'spec_' . $index,
+                'file_name' => 'external-photo-' . ($index + 1),
+                'url' => $url,
+                'full_url' => $url,
+                'thumb_url' => $url,
+                'size_kb' => null,
+                'is_primary' => $index === 0,
+                'is_media' => false,
+            ])->values()->all();
+        }
+
+        $firstMedia = $product->getFirstMedia('products');
+        $primaryImageUrl = '';
+        if ($firstMedia) {
+            $primaryImageUrl = ($firstMedia->hasGeneratedConversion('thumb_300') ? $firstMedia->getUrl('thumb_300') : null) ?: $firstMedia->getUrl();
+        } else {
+            $primaryImageUrl = $product->getFirstMediaUrl('thumbnail') ?: ($product->specifications['image_url'] ?? '');
+        }
+
         return Inertia::render('Admin/Catalog/ProductForm', [
             'product' => [
                 'id' => $product->id,
@@ -270,7 +329,8 @@ class CatalogController extends Controller
                 'is_featured' => $product->is_featured,
                 'seo_title' => $product->seo_title,
                 'seo_description' => $product->seo_description,
-                'image_url' => $product->getFirstMediaUrl('products') ?: ($product->getFirstMediaUrl('thumbnail') ?: ($product->specifications['image_url'] ?? '')),
+                'image_url' => $primaryImageUrl,
+                'media_gallery' => $galleryList,
                 'default_selling_price' => $defaultVariant ? (float) $defaultVariant->selling_price_bdt : 0,
                 'default_purchase_cost' => $defaultVariant ? (float) $defaultVariant->purchase_cost_bdt : 0,
                 'compare_at_price' => $defaultVariant ? (float) ($defaultVariant->compare_at_price_bdt ?? 0) : 0,
@@ -329,6 +389,12 @@ class CatalogController extends Controller
             'weight_kg' => ['nullable', 'numeric', 'min:0'],
             'stock_quantity' => ['nullable', 'integer', 'min:0'],
             'image' => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp,avif', 'max:512'],
+            'gallery_images' => ['nullable', 'array'],
+            'gallery_images.*' => ['file', 'mimes:jpeg,png,jpg,webp,avif', 'max:512'],
+            'gallery_urls' => ['nullable', 'array'],
+            'gallery_urls.*' => ['nullable', 'string'],
+            'deleted_media_ids' => ['nullable', 'array'],
+            'deleted_media_ids.*' => ['nullable'],
         ]);
 
         if (! empty($validated['slug'])) {
@@ -337,15 +403,52 @@ class CatalogController extends Controller
 
         $product->update($validated);
 
+        // Delete any marked media items
+        if (! empty($validated['deleted_media_ids']) && is_array($validated['deleted_media_ids'])) {
+            foreach ($validated['deleted_media_ids'] as $delId) {
+                if (is_numeric($delId)) {
+                    $product->media()->where('id', $delId)->delete();
+                }
+            }
+        }
+
+        // Handle Primary Image replacement without deleting rest of gallery
+        $existingMedia = $product->getMedia('products');
         if ($request->hasFile('image')) {
-            $product->clearMediaCollection('products');
+            if ($existingMedia->isNotEmpty()) {
+                $firstMedia = $existingMedia->first();
+                $firstMedia->delete();
+            }
             $product->addMediaFromRequest('image')->toMediaCollection('products');
         } elseif (! empty($validated['image_url']) && $validated['image_url'] !== $product->getFirstMediaUrl('products')) {
             try {
-                $product->clearMediaCollection('products');
+                if ($existingMedia->isNotEmpty()) {
+                    $firstMedia = $existingMedia->first();
+                    $firstMedia->delete();
+                }
                 $product->addMediaFromUrl($validated['image_url'])->toMediaCollection('products');
             } catch (\Throwable) {
                 // Ignore if sandbox or network blocks external image fetch
+            }
+        }
+
+        // Attach new gallery images
+        if ($request->hasFile('gallery_images')) {
+            foreach ($request->file('gallery_images') as $galleryFile) {
+                if ($galleryFile && $galleryFile->isValid()) {
+                    $product->addMedia($galleryFile)->toMediaCollection('products');
+                }
+            }
+        }
+        if (! empty($validated['gallery_urls']) && is_array($validated['gallery_urls'])) {
+            foreach ($validated['gallery_urls'] as $galleryUrl) {
+                if (! empty($galleryUrl) && filter_var($galleryUrl, FILTER_VALIDATE_URL)) {
+                    try {
+                        $product->addMediaFromUrl($galleryUrl)->toMediaCollection('products');
+                    } catch (\Throwable) {
+                        // Ignore if fetch fails
+                    }
+                }
             }
         }
 
@@ -383,6 +486,25 @@ class CatalogController extends Controller
 
         return redirect()->route('admin.products.index')
             ->with('success', "Product '{$product->name}' updated successfully.");
+    }
+
+    /**
+     * Delete an individual media item from a product.
+     */
+    public function destroyMedia(Product $product, int|string $mediaId): JsonResponse
+    {
+        $media = $product->media()->where('id', $mediaId)->first();
+        if (! $media) {
+            return response()->json(['success' => false, 'message' => 'Image not found.'], 404);
+        }
+
+        $media->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Gallery photo deleted successfully.',
+            'remaining_count' => $product->getMedia('products')->count(),
+        ]);
     }
 
     /**

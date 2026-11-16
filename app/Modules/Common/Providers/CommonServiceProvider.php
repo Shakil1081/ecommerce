@@ -56,7 +56,7 @@ class CommonServiceProvider extends ServiceProvider
         Config::set('filesystems.disks.media', [
             'driver' => 'local',
             'root' => storage_path('app/public/media'),
-            'url' => config('app.url').'/storage/media',
+            'url' => '/storage/media',
             'visibility' => 'public',
         ]);
     }

@@ -185,6 +185,9 @@ class Product extends Model implements HasMedia
      */
     public function registerMediaCollections(): void
     {
+        $this->addMediaCollection('products')
+            ->useDisk((string) config('media-library.disk_name', 'media'));
+
         $this->addMediaCollection('thumbnail')
             ->singleFile()
             ->useDisk((string) config('media-library.disk_name', 'media'));

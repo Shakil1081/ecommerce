@@ -5,7 +5,7 @@ import createServer from '@inertiajs/vue3/server';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createPinia } from 'pinia';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Enterprise E-Commerce';
+const appName = import.meta.env.VITE_APP_NAME || 'Pick & Pearl';
 
 createServer((page) =>
     createInertiaApp({

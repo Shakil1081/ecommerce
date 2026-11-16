@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import Chart from 'chart.js/auto';
 
 interface CategoryBreakdownItem {
   category_name: string;
@@ -89,32 +90,333 @@ const formatCurrency = (val: string | number) => {
   return new Intl.NumberFormat('en-BD', { style: 'currency', currency: 'BDT', minimumFractionDigits: 2 }).format(num || 0);
 };
 
-const handlePrint = () => {
-  window.print();
+// --- Interactive Executive Charts Engine ---
+const trendCanvasRef = ref<HTMLCanvasElement | null>(null);
+const categoryCanvasRef = ref<HTMLCanvasElement | null>(null);
+const waterfallCanvasRef = ref<HTMLCanvasElement | null>(null);
+
+let trendChart: Chart | null = null;
+let categoryChart: Chart | null = null;
+let waterfallChart: Chart | null = null;
+
+const destroyCharts = () => {
+  if (trendChart) {
+    trendChart.destroy();
+    trendChart = null;
+  }
+  if (categoryChart) {
+    categoryChart.destroy();
+    categoryChart = null;
+  }
+  if (waterfallChart) {
+    waterfallChart.destroy();
+    waterfallChart = null;
+  }
 };
+
+const formatDateLabel = (dateStr: string) => {
+  try {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const mIdx = parseInt(parts[1], 10) - 1;
+      return `${months[mIdx] || parts[1]} ${parts[2]}`;
+    }
+  } catch {
+    // fallback
+  }
+  return dateStr;
+};
+
+const renderTrendChart = () => {
+  if (!trendCanvasRef.value) return;
+
+  const items = props.pnl.dailyTrend || [];
+  const labels = items.length > 0
+    ? items.map((i) => formatDateLabel(i.date))
+    : ['Start', 'End'];
+  const revenues = items.length > 0
+    ? items.map((i) => Number(i.revenue_bdt))
+    : [0, 0];
+  const cogs = items.length > 0
+    ? items.map((i) => Number(i.cogs_bdt))
+    : [0, 0];
+  const profits = items.length > 0
+    ? items.map((i) => Number(i.profit_bdt))
+    : [0, 0];
+
+  trendChart = new Chart(trendCanvasRef.value, {
+    data: {
+      labels,
+      datasets: [
+        {
+          type: 'line',
+          label: 'Net Sales Revenue (৳)',
+          data: revenues,
+          borderColor: '#eb286c',
+          backgroundColor: 'rgba(235, 40, 108, 0.08)',
+          fill: true,
+          tension: 0.35,
+          pointRadius: 4,
+          pointHoverRadius: 7,
+          pointBackgroundColor: '#eb286c',
+          borderWidth: 2.5,
+          order: 2,
+        },
+        {
+          type: 'line',
+          label: 'Landed COGS (৳)',
+          data: cogs,
+          borderColor: '#f59e0b',
+          backgroundColor: 'transparent',
+          borderDash: [5, 4],
+          tension: 0.35,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#f59e0b',
+          borderWidth: 2,
+          order: 3,
+        },
+        {
+          type: 'bar',
+          label: 'Gross Trading Profit (৳)',
+          data: profits,
+          backgroundColor: 'rgba(16, 185, 129, 0.75)',
+          hoverBackgroundColor: '#10b981',
+          borderRadius: 6,
+          barPercentage: 0.45,
+          order: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+          align: 'end',
+          labels: {
+            boxWidth: 12,
+            boxHeight: 12,
+            usePointStyle: true,
+            font: {
+              size: 11,
+              weight: 'bold',
+            },
+            color: '#475569',
+          },
+        },
+        tooltip: {
+          backgroundColor: 'rgba(15, 23, 42, 0.92)',
+          padding: 12,
+          cornerRadius: 8,
+          titleFont: { size: 12, weight: 'bold' },
+          bodyFont: { size: 12 },
+          callbacks: {
+            label: (ctx) => {
+              const label = ctx.dataset.label || '';
+              const val = Number(ctx.parsed.y || 0);
+              return ` ${label}: ৳${val.toLocaleString('en-BD', { minimumFractionDigits: 2 })}`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: '#64748b', font: { size: 11 } },
+        },
+        y: {
+          grid: { color: 'rgba(226, 232, 240, 0.6)' },
+          ticks: {
+            color: '#64748b',
+            font: { size: 11 },
+            callback: (val) => `৳${Number(val).toLocaleString('en-BD')}`,
+          },
+        },
+      },
+    },
+  });
+};
+
+const renderCategoryChart = () => {
+  if (!categoryCanvasRef.value) return;
+
+  const cats = props.pnl.categoryBreakdown || [];
+  const labels = cats.length > 0 ? cats.map((c) => c.category_name) : ['No Categories'];
+  const profits = cats.length > 0 ? cats.map((c) => Number(c.gross_profit_bdt)) : [0];
+  const colors = [
+    '#eb286c',
+    '#3b82f6',
+    '#10b981',
+    '#f59e0b',
+    '#8b5cf6',
+    '#06b6d4',
+    '#ec4899',
+    '#f97316',
+  ];
+
+  categoryChart = new Chart(categoryCanvasRef.value, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [
+        {
+          data: profits,
+          backgroundColor: colors.slice(0, Math.max(1, cats.length)),
+          hoverOffset: 6,
+          borderWidth: 2,
+          borderColor: '#ffffff',
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '62%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            boxWidth: 10,
+            boxHeight: 10,
+            usePointStyle: true,
+            padding: 12,
+            font: { size: 11, weight: 'bold' },
+            color: '#475569',
+          },
+        },
+        tooltip: {
+          backgroundColor: 'rgba(15, 23, 42, 0.92)',
+          padding: 10,
+          cornerRadius: 8,
+          callbacks: {
+            label: (ctx) => {
+              const val = Number(ctx.parsed || 0);
+              const total = (ctx.dataset.data as number[]).reduce((a, b) => a + b, 0);
+              const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0';
+              return ` Gross Profit: ৳${val.toLocaleString('en-BD')} (${pct}%)`;
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
+const renderWaterfallChart = () => {
+  if (!waterfallCanvasRef.value) return;
+
+  const labels = [
+    'Landed COGS',
+    'Net Operating Profit',
+    'Gateway Fees',
+    'Shipping Variance',
+    'RMA Scrap',
+  ];
+  const values = [
+    Number(props.pnl.totalCogsBdt || 0),
+    Math.max(0, Number(props.pnl.netOperatingProfitBdt || 0)),
+    Number(props.pnl.gatewayFeesBdt || 0),
+    Math.abs(Number(props.pnl.shippingVarianceBdt || 0)),
+    Number(props.pnl.returnLossesBdt || 0),
+  ];
+  const colors = [
+    '#f59e0b',
+    '#10b981',
+    '#3b82f6',
+    '#8b5cf6',
+    '#ef4444',
+  ];
+
+  waterfallChart = new Chart(waterfallCanvasRef.value, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          axis: 'y',
+          label: 'Amount (BDT ৳)',
+          data: values,
+          backgroundColor: colors,
+          borderRadius: 6,
+          barPercentage: 0.65,
+        },
+      ],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(15, 23, 42, 0.92)',
+          padding: 10,
+          cornerRadius: 8,
+          callbacks: {
+            label: (ctx) => {
+              const val = Number(ctx.parsed.x || 0);
+              const turnover = Number(props.pnl.netSalesRevenueBdt || 1);
+              const pct = turnover > 0 ? ((val / turnover) * 100).toFixed(1) : '0';
+              return ` ৳${val.toLocaleString('en-BD', { minimumFractionDigits: 2 })} (${pct}% of Turnover)`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(226, 232, 240, 0.6)' },
+          ticks: {
+            color: '#64748b',
+            font: { size: 10.5 },
+            callback: (val) => `৳${Number(val).toLocaleString('en-BD')}`,
+          },
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: '#334155', font: { size: 11, weight: 'bold' } },
+        },
+      },
+    },
+  });
+};
+
+const renderAllCharts = async () => {
+  destroyCharts();
+  await nextTick();
+  renderTrendChart();
+  renderCategoryChart();
+  renderWaterfallChart();
+};
+
+onMounted(() => {
+  renderAllCharts();
+});
+
+watch(
+  () => props.pnl,
+  () => {
+    renderAllCharts();
+  },
+  { deep: true }
+);
+
+onUnmounted(() => {
+  destroyCharts();
+});
 </script>
 
 <template>
-  <AdminLayout>
+  <AdminLayout title="Executive Trading Profit & Loss (P&L)">
     <Head title="Executive Trading Profit & Loss (P&L)" />
 
     <div class="trading-pnl-page">
-      <!-- Header Bar -->
-      <div class="header-section no-print">
-        <div>
-          <div class="breadcrumb">
-            <Link href="/admin">Dashboard</Link> / <span>Analytics</span> / <span>Trading P&L</span>
-          </div>
-          <h1 class="page-title">Executive Trading Profit & Loss (P&L)</h1>
-          <p class="page-subtitle">Consolidated commercial trading economics in BDT (৳) factoring dual-sourcing landed COGS, VAT, logistics variance, and gateway costs.</p>
-        </div>
-        <div class="header-actions">
-          <button class="btn btn-secondary" @click="handlePrint">
-            Print P&L Report
-          </button>
-        </div>
-      </div>
-
       <!-- Controls & Period Filter Bar -->
       <div class="filter-controls-card no-print">
         <div class="period-pills">
@@ -221,6 +523,91 @@ const handlePrint = () => {
           <span class="margin-badge margin-high">
             Net Margin: {{ pnl.netMarginPercent }}%
           </span>
+        </div>
+      </div>
+
+      <!-- 📊 Interactive Executive Charts Section -->
+      <div class="charts-section no-print">
+        <!-- Top: Daily Revenue, Landed COGS & Gross Profit Dynamics (Timeline Area Chart) -->
+        <div class="chart-card main-chart-card">
+          <div class="chart-card-header">
+            <div>
+              <div class="chart-badge">Timeline Performance</div>
+              <h2 class="chart-title">Revenue, Landed COGS & Gross Profit Dynamics</h2>
+              <p class="chart-subtitle">Daily trading trends, cost trajectory, and margin velocity in BDT (৳)</p>
+            </div>
+            <!-- Quick KPI Pills in header -->
+            <div class="chart-kpis-row">
+              <div class="mini-kpi">
+                <span class="kpi-dot dot-revenue"></span>
+                <span class="kpi-label">Revenue:</span>
+                <span class="kpi-val font-mono">{{ formatCurrency(pnl.netSalesRevenueBdt) }}</span>
+              </div>
+              <div class="mini-kpi">
+                <span class="kpi-dot dot-cogs"></span>
+                <span class="kpi-label">COGS:</span>
+                <span class="kpi-val font-mono">{{ formatCurrency(pnl.totalCogsBdt) }}</span>
+              </div>
+              <div class="mini-kpi">
+                <span class="kpi-dot dot-profit"></span>
+                <span class="kpi-label">Gross Profit:</span>
+                <span class="kpi-val font-mono text-success">{{ formatCurrency(pnl.grossTradingProfitBdt) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-canvas-wrapper">
+            <canvas ref="trendCanvasRef" />
+          </div>
+        </div>
+
+        <!-- Bottom Charts Subgrid: Category Share & Cost Waterfall -->
+        <div class="charts-subgrid">
+          <!-- Category Profit Contribution Doughnut -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div>
+                <div class="chart-badge">Category Share</div>
+                <h3 class="chart-title">Category Revenue & Profit Share</h3>
+                <p class="chart-subtitle">Gross profit contribution by product department</p>
+              </div>
+            </div>
+            <div class="chart-canvas-wrapper doughnut-wrapper">
+              <canvas ref="categoryCanvasRef" />
+            </div>
+          </div>
+
+          <!-- Commercial Waterfall & Cost Absorption Bar -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div>
+                <div class="chart-badge">Economics Waterfall</div>
+                <h3 class="chart-title">Gross Turnover Cost Distribution</h3>
+                <p class="chart-subtitle">Allocation of gross revenue into COGS, logistics, gateway & net margin</p>
+              </div>
+            </div>
+            <div class="chart-canvas-wrapper waterfall-wrapper">
+              <canvas ref="waterfallCanvasRef" />
+            </div>
+            <!-- Cost Breakdown Legend Bar -->
+            <div class="cost-absorption-summary">
+              <div class="absorption-item">
+                <span class="abs-dot dot-cogs"></span>
+                <span class="abs-name">Landed COGS:</span>
+                <span class="abs-pct font-mono">{{ Number(pnl.netSalesRevenueBdt) > 0 ? ((Number(pnl.totalCogsBdt) / Number(pnl.netSalesRevenueBdt)) * 100).toFixed(1) : 0 }}%</span>
+              </div>
+              <div class="absorption-item">
+                <span class="abs-dot dot-margin"></span>
+                <span class="abs-name">Net Margin:</span>
+                <span class="abs-pct font-mono text-success">{{ pnl.netMarginPercent }}%</span>
+              </div>
+              <div class="absorption-item">
+                <span class="abs-dot dot-gateway"></span>
+                <span class="abs-name">Fees & Variance:</span>
+                <span class="abs-pct font-mono">{{ Number(pnl.netSalesRevenueBdt) > 0 ? (((Number(pnl.gatewayFeesBdt) + Number(pnl.returnLossesBdt) + Math.abs(Number(pnl.shippingVarianceBdt))) / Number(pnl.netSalesRevenueBdt)) * 100).toFixed(1) : 0 }}%</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -520,6 +907,156 @@ const handlePrint = () => {
   &.card-net-profit {
     border-color: #93c5fd;
     background: #eff6ff;
+  }
+}
+
+/* 📊 Charts Section */
+.charts-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+
+  .chart-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 1.25rem 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: box-shadow 0.2s ease;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .chart-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+
+      .chart-badge {
+        display: inline-block;
+        font-size: 0.6875rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #eb286c;
+        background: #fdf2f8;
+        padding: 0.2rem 0.55rem;
+        border-radius: 9999px;
+        margin-bottom: 0.35rem;
+      }
+
+      .chart-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+      }
+
+      .chart-subtitle {
+        font-size: 0.8125rem;
+        color: #64748b;
+        margin: 0.25rem 0 0 0;
+      }
+    }
+
+    .chart-kpis-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+
+      .mini-kpi {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.375rem;
+        padding: 0.3rem 0.65rem;
+        font-size: 0.75rem;
+
+        .kpi-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+
+          &.dot-revenue { background-color: #eb286c; }
+          &.dot-cogs { background-color: #f59e0b; }
+          &.dot-profit { background-color: #10b981; }
+        }
+
+        .kpi-label {
+          color: #64748b;
+          font-weight: 600;
+        }
+
+        .kpi-val {
+          font-weight: 700;
+          color: #0f172a;
+        }
+      }
+    }
+
+    .chart-canvas-wrapper {
+      position: relative;
+      width: 100%;
+      height: 320px;
+
+      &.doughnut-wrapper {
+        height: 280px;
+      }
+
+      &.waterfall-wrapper {
+        height: 230px;
+      }
+    }
+  }
+
+  .charts-subgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .cost-absorption-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: space-around;
+    padding-top: 1rem;
+    margin-top: 0.75rem;
+    border-top: 1px dashed #e2e8f0;
+
+    .absorption-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+
+      .abs-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+
+        &.dot-cogs { background-color: #f59e0b; }
+        &.dot-margin { background-color: #10b981; }
+        &.dot-gateway { background-color: #3b82f6; }
+      }
+
+      .abs-name {
+        color: #64748b;
+        font-weight: 600;
+      }
+
+      .abs-pct {
+        font-weight: 700;
+      }
+    }
   }
 }
 

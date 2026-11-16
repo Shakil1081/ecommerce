@@ -42,6 +42,7 @@ class DatabaseSeeder extends Seeder
             SmsGatewaySeeder::class,
             AiModelSettingSeeder::class,
             AuditLogSeeder::class,
+            BotSecuritySettingSeeder::class,
         ]);
     }
 }

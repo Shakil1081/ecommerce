@@ -288,6 +288,29 @@ const handleLogout = () => {
 
       <!-- Sidebar User Profile & Logout -->
       <div class="sidebar-footer" :class="{ 'collapsed': sidebarCollapsed }">
+        <!-- Version & System Updates Card -->
+        <Link
+          href="/admin/settings/system"
+          class="sidebar-version-card"
+          :class="{ 'is-active': isPathActive('/admin/settings/system') }"
+          :title="sidebarCollapsed ? 'TradingHub v0.1.0 Alpha - System Info & Updates' : undefined"
+        >
+          <div class="version-card-top">
+            <div class="version-status-pill">
+              <span class="status-indicator-dot"></span>
+              <span class="version-code font-mono">v0.1.0 Alpha</span>
+            </div>
+            <span v-if="!sidebarCollapsed" class="version-state-badge">Stable</span>
+          </div>
+          <div v-if="!sidebarCollapsed" class="version-card-bottom">
+            <span class="version-meta-label">
+              <span class="meta-icon">ℹ️</span> System Updates
+            </span>
+            <span class="version-meta-arrow">→</span>
+          </div>
+        </Link>
+
+        <!-- Sidebar User Profile -->
         <div v-if="!sidebarCollapsed" class="sidebar-user-card">
           <span class="user-avatar-badge">👤</span>
           <div class="sidebar-user-details">
@@ -321,7 +344,6 @@ const handleLogout = () => {
           <Link href="/shop" class="topbar-storefront-link" title="Open Storefront">
             <span>🛍️</span> Storefront
           </Link>
-          <span class="version-tag badge badge-primary">v0.1.0 Alpha</span>
           <div class="user-profile">
             <span class="user-avatar">👤</span>
             <span class="user-name">{{ page.props.auth?.user?.name || 'Administrator' }}</span>
@@ -671,6 +693,123 @@ const handleLogout = () => {
     &.collapsed {
       padding: $space-3 $space-2;
       align-items: center;
+
+      .sidebar-version-card {
+        padding: 8px 6px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: $radius-md;
+
+        .version-card-top {
+          justify-content: center;
+
+          .version-status-pill {
+            justify-content: center;
+
+            .status-indicator-dot {
+              width: 8px;
+              height: 8px;
+            }
+          }
+        }
+      }
+    }
+
+    .sidebar-version-card {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 8px 10px;
+      background: hsl(342, 85%, 96%);
+      border: 1px solid hsl(342, 60%, 88%);
+      border-radius: $radius-lg;
+      text-decoration: none;
+      transition: all $transition-fast;
+
+      &:hover {
+        background: #ffffff;
+        border-color: $color-primary-400;
+        box-shadow: 0 2px 8px rgba(235, 40, 108, 0.12);
+        transform: translateY(-1px);
+
+        .version-card-bottom .version-meta-arrow {
+          transform: translateX(2px);
+          color: $color-primary-700;
+        }
+      }
+
+      &.is-active {
+        background: #ffffff;
+        border-color: $color-primary-500;
+        box-shadow: 0 0 0 2px rgba(235, 40, 108, 0.15);
+      }
+
+      .version-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        .version-status-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+
+          .status-indicator-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+            flex-shrink: 0;
+          }
+
+          .version-code {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: $color-primary-800;
+            letter-spacing: -0.01em;
+          }
+        }
+
+        .version-state-badge {
+          font-size: 9.5px;
+          font-weight: 800;
+          text-transform: uppercase;
+          background: hsl(342, 80%, 90%);
+          color: $color-primary-700;
+          padding: 1px 6px;
+          border-radius: $radius-full;
+          letter-spacing: 0.04em;
+        }
+      }
+
+      .version-card-bottom {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 11px;
+        color: hsl(342, 35%, 45%);
+        padding-top: 4px;
+        border-top: 1px dashed hsl(342, 40%, 88%);
+
+        .version-meta-label {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          font-weight: 600;
+
+          .meta-icon {
+            font-size: 11px;
+          }
+        }
+
+        .version-meta-arrow {
+          font-weight: 700;
+          transition: transform $transition-fast, color $transition-fast;
+        }
+      }
     }
 
     .sidebar-user-card {

@@ -157,7 +157,11 @@ const getCategoryThemeClass = (slug: string): string => {
         <div class="header-left-group">
           <!-- Logo -->
           <Link href="/" class="brand-logo">
-            <span class="logo-accent">E</span>COMMERCE
+            <img src="/images/logo.jpg" alt="Pick & Pearl" class="brand-logo-img" />
+            <div class="brand-text-wrap">
+              <span class="brand-name-main">PICK & PEARL</span>
+              <span class="brand-tagline">JEWELRY • FASHION • ACCESSORIES</span>
+            </div>
           </Link>
 
           <!-- App-Style Category Menu Trigger with Hover & Click Dropdown (Desktop) -->
@@ -295,9 +299,6 @@ const getCategoryThemeClass = (slug: string): string => {
           <Link href="/track-order" class="header-nav-link">
             <span>🚚</span> {{ currentLocale === 'bn' ? 'অর্ডার ট্র্যাকিং' : 'Track Order' }}
           </Link>
-          <Link href="/admin" class="header-nav-link admin-pill-link">
-            <span>⚡</span> {{ currentLocale === 'bn' ? 'অ্যাডমিন হাব' : 'Admin Hub' }}
-          </Link>
         </nav>
 
         <!-- Navigation Actions -->
@@ -334,10 +335,10 @@ const getCategoryThemeClass = (slug: string): string => {
             <!-- Sheet Header -->
             <div class="sheet-header">
               <div class="sheet-title-group">
-                <span class="sheet-logo-accent">E</span>
+                <img src="/images/logo.jpg" alt="Pick & Pearl" class="sheet-logo-img" />
                 <div>
-                  <h3 class="sheet-heading">{{ currentLocale === 'bn' ? 'সকল ক্যাটাগরি' : 'All Categories' }}</h3>
-                  <p class="sheet-sub">{{ currentLocale === 'bn' ? 'মোবাইল অ্যাপ শপিং মেনু' : 'App-Style Category Explorer' }}</p>
+                  <h3 class="sheet-heading">Pick & Pearl</h3>
+                  <p class="sheet-sub">{{ currentLocale === 'bn' ? 'সকল কালেকশন ও ক্যাটাগরি' : 'Jewelry • Fashion • Accessories' }}</p>
                 </div>
               </div>
               <button
@@ -357,9 +358,6 @@ const getCategoryThemeClass = (slug: string): string => {
               </Link>
               <Link href="/track-order" class="quick-chip" @click="mobileCatDrawerOpen = false">
                 <span>🚚</span> {{ currentLocale === 'bn' ? 'অর্ডার ট্র্যাকিং' : 'Track Order' }}
-              </Link>
-              <Link href="/admin" class="quick-chip admin-chip" @click="mobileCatDrawerOpen = false">
-                <span>⚡</span> {{ currentLocale === 'bn' ? 'অ্যাডমিন হাব' : 'Admin Hub' }}
               </Link>
             </div>
 
@@ -419,10 +417,14 @@ const getCategoryThemeClass = (slug: string): string => {
       <div class="footer-container footer-grid">
         <div class="footer-col brand-col">
           <Link href="/" class="footer-brand-logo">
-            <span class="logo-accent">E</span>COMMERCE
+            <img src="/images/logo.jpg" alt="Pick & Pearl" class="footer-logo-img" />
+            <div class="footer-text-wrap">
+              <span class="footer-brand-name">PICK & PEARL</span>
+              <span class="footer-brand-tagline">JEWELRY • FASHION • ACCESSORIES</span>
+            </div>
           </Link>
           <p class="footer-text">
-            {{ currentLocale === 'bn' ? '১০০% আসল আমদানিকৃত এবং স্থানীয় পণ্য। এনবিআর মূসক ৬.৩ চালান ও অফিসিয়াল ওয়ারেন্টি সহ নিরাপদ কেনাকাটা।' : '100% Genuine imported & domestic products with statutory NBR VAT compliance, authorized warranties, and fast nationwide delivery.' }}
+            {{ currentLocale === 'bn' ? '১০০% আসল প্রিমিয়াম জুয়েলারি, ব্যাগ ও লাক্সারি ফ্যাশন এক্সেসরিজ। এনবিআর মূসক ৬.৩ চালান ও অফিসিয়াল ওয়ারেন্টি সহ নিরাপদ কেনাকাটা।' : '100% Genuine premium jewelry, luxury bags, and fashion accessories with statutory NBR VAT compliance, authorized warranties, and fast nationwide delivery.' }}
           </p>
           <div class="footer-trust-pills">
             <span class="trust-pill">🛡️ Genuine Import</span>
@@ -470,7 +472,7 @@ const getCategoryThemeClass = (slug: string): string => {
       </div>
 
       <div class="footer-container footer-bottom">
-        <p>&copy; {{ new Date().getFullYear() }} Enterprise E-Commerce Platform. All rights reserved. NBR BIN & VAT Registered.</p>
+        <p>&copy; {{ new Date().getFullYear() }} Pick & Pearl. All rights reserved. NBR BIN & VAT Registered.</p>
         <div class="footer-bottom-links">
           <Link href="/privacy">Privacy Policy</Link>
           <span class="bottom-sep">•</span>
@@ -568,20 +570,55 @@ const getCategoryThemeClass = (slug: string): string => {
   }
 
   .brand-logo {
-    font-family: $font-heading;
-    font-size: $fs-2xl;
-    font-weight: $fw-extrabold;
-    color: $color-neutral-900;
-    letter-spacing: -0.03em;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
     flex-shrink: 0;
     text-decoration: none;
 
-    @media (max-width: 640px) {
-      font-size: $fs-xl;
+    .brand-logo-img {
+      width: 42px;
+      height: 42px;
+      border-radius: $radius-full;
+      object-fit: cover;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      border: 1.5px solid #d4af37;
+      transition: transform $transition-fast;
     }
 
-    .logo-accent {
-      color: $color-primary-600;
+    &:hover .brand-logo-img {
+      transform: scale(1.05);
+    }
+
+    .brand-text-wrap {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+
+      .brand-name-main {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 1.25rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        color: $color-neutral-900;
+
+        @media (max-width: 640px) {
+          font-size: 1.05rem;
+        }
+      }
+
+      .brand-tagline {
+        font-size: 8.5px;
+        letter-spacing: 0.12em;
+        color: $color-neutral-500;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-top: 1px;
+
+        @media (max-width: 640px) {
+          display: none;
+        }
+      }
     }
   }
 
@@ -1124,18 +1161,13 @@ const getCategoryThemeClass = (slug: string): string => {
         align-items: center;
         gap: $space-3;
 
-        .sheet-logo-accent {
-          font-family: $font-heading;
-          font-weight: $fw-extrabold;
-          font-size: 20px;
-          color: #ffffff;
-          background: $color-primary-600;
-          width: 36px;
-          height: 36px;
-          border-radius: $radius-lg;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+        .sheet-logo-img {
+          width: 38px;
+          height: 38px;
+          border-radius: $radius-full;
+          object-fit: cover;
+          border: 1.5px solid #d4af37;
+          flex-shrink: 0;
         }
 
         .sheet-heading {
@@ -1411,17 +1443,47 @@ const getCategoryThemeClass = (slug: string): string => {
   }
 
   .footer-brand-logo {
-    font-family: $font-heading;
-    font-size: $fs-2xl;
-    font-weight: $fw-extrabold;
-    color: #ffffff;
-    letter-spacing: -0.03em;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
     text-decoration: none;
-    display: inline-block;
-    margin-bottom: $space-3;
+    margin-bottom: $space-4;
 
-    .logo-accent {
-      color: $color-primary-500;
+    .footer-logo-img {
+      width: 48px;
+      height: 48px;
+      border-radius: $radius-full;
+      object-fit: cover;
+      border: 1.5px solid #d4af37;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: transform $transition-fast;
+    }
+
+    &:hover .footer-logo-img {
+      transform: scale(1.05);
+    }
+
+    .footer-text-wrap {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+    }
+
+    .footer-brand-name {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.05em;
+    }
+
+    .footer-brand-tagline {
+      font-size: 8.5px;
+      letter-spacing: 0.12em;
+      color: #d4af37;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-top: 2px;
     }
   }
 

@@ -6,7 +6,7 @@ import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createPinia } from 'pinia';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Enterprise E-Commerce';
+const appName = import.meta.env.VITE_APP_NAME || 'Pick & Pearl';
 
 createInertiaApp({
     title: (title) => title ? `${title} | ${appName}` : appName,
