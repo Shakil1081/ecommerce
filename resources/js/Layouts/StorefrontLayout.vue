@@ -132,6 +132,14 @@ const getCategoryThemeClass = (slug: string): string => {
   if (s.includes('watch')) return 'theme-amber';
   return 'theme-indigo';
 };
+
+const formatPrice = (amount: number): string => {
+  return new Intl.NumberFormat('en-BD', {
+    style: 'currency',
+    currency: 'BDT',
+    maximumFractionDigits: 0,
+  }).format(amount).replace('BDT', '৳');
+};
 </script>
 
 <template>
@@ -301,7 +309,7 @@ const getCategoryThemeClass = (slug: string): string => {
           </div>
         </nav>
 
-        <!-- Navigation Actions -->
+        <!-- Navigation Actions (Mobile Menu Trigger) -->
         <nav class="header-nav-actions">
           <!-- Mobile App Category Trigger Button (Visible on screens < 900px) -->
           <button
@@ -312,12 +320,6 @@ const getCategoryThemeClass = (slug: string): string => {
           >
             <span class="action-icon">☰</span>
             <span class="action-label">{{ currentLocale === 'bn' ? 'ক্যাটাগরি' : 'Categories' }}</span>
-          </button>
-
-          <button type="button" class="header-action-btn cart-btn" @click="cartStore.openDrawer">
-            <span class="action-icon">🛒</span>
-            <span class="action-label">{{ currentLocale === 'bn' ? 'কার্ট' : 'Cart' }}</span>
-            <span v-if="cartStore.totalItemsCount > 0" class="cart-badge-count">{{ cartStore.totalItemsCount }}</span>
           </button>
         </nav>
       </div>
@@ -482,6 +484,42 @@ const getCategoryThemeClass = (slug: string): string => {
         </div>
       </div>
     </footer>
+
+    <!-- Floating Bottom Cart Button (Nice Luxury Pill / Dock) -->
+    <teleport to="body">
+      <transition name="floating-cart-pop">
+        <div
+          v-if="!cartStore.isOpen"
+          class="floating-cart-pill"
+          :class="{ 'has-items': cartStore.totalItemsCount > 0 }"
+          @click="cartStore.openDrawer"
+          role="button"
+          tabindex="0"
+          :aria-label="currentLocale === 'bn' ? 'শপিং ব্যাগ খুলুন' : 'Open Shopping Bag'"
+        >
+          <div class="cart-pill-icon-wrap">
+            <span class="pill-cart-icon">🛒</span>
+            <span v-if="cartStore.totalItemsCount > 0" class="pill-badge">
+              {{ cartStore.totalItemsCount }}
+            </span>
+          </div>
+
+          <div class="cart-pill-details">
+            <span class="pill-title">{{ currentLocale === 'bn' ? 'শপিং ব্যাগ' : 'Shopping Bag' }}</span>
+            <span class="pill-sub">
+              {{ cartStore.totalItemsCount > 0 
+                  ? `${cartStore.totalItemsCount} ${currentLocale === 'bn' ? 'টি পণ্য' : 'Items'} • ${formatPrice(cartStore.total)}` 
+                  : (currentLocale === 'bn' ? 'ব্যাগে পণ্য নেই' : 'Bag is empty') }}
+            </span>
+          </div>
+
+          <div class="cart-pill-action">
+            <span class="action-text">{{ currentLocale === 'bn' ? 'দেখুন' : 'View Bag' }}</span>
+            <span class="action-arrow">→</span>
+          </div>
+        </div>
+      </transition>
+    </teleport>
 
     <!-- Interactive Slide-Out Cart Drawer -->
     <CartDrawer />
@@ -1628,5 +1666,153 @@ const getCategoryThemeClass = (slug: string): string => {
       }
     }
   }
+}
+
+// --- Floating Bottom Cart Pill Button (Pick & Pearl Luxury Design) ---
+.floating-cart-pill {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 999;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 18px 8px 10px;
+  border-radius: $radius-full;
+  background: linear-gradient(135deg, hsl(342, 85%, 44%) 0%, hsl(342, 90%, 34%) 100%);
+  border: 1.5px solid rgba(212, 175, 55, 0.85);
+  color: #ffffff;
+  box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.28), 0 4px 14px rgba(235, 40, 108, 0.35);
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(8px);
+
+  &:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.35), 0 6px 20px rgba(235, 40, 108, 0.45);
+    border-color: #ffd700;
+  }
+
+  &:active {
+    transform: translateY(-1px) scale(0.99);
+  }
+
+  .cart-pill-icon-wrap {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    border-radius: $radius-full;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+
+    .pill-cart-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .pill-badge {
+      position: absolute;
+      top: -4px;
+      right: -6px;
+      background: #ffd700;
+      color: #0f172a;
+      font-size: 10px;
+      font-weight: 800;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 4px;
+      border-radius: $radius-full;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      animation: pill-badge-pop 0.3s ease;
+    }
+  }
+
+  .cart-pill-details {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+    text-align: left;
+
+    .pill-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #ffffff;
+      font-family: 'Playfair Display', Georgia, serif;
+    }
+
+    .pill-sub {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      white-space: nowrap;
+    }
+  }
+
+  .cart-pill-action {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 6px 12px;
+    border-radius: $radius-full;
+    font-size: 11.5px;
+    font-weight: 700;
+    margin-left: 2px;
+    transition: background 0.2s ease;
+
+    .action-arrow {
+      font-size: 13px;
+      transition: transform 0.2s ease;
+    }
+  }
+
+  &:hover .cart-pill-action {
+    background: rgba(255, 255, 255, 0.25);
+
+    .action-arrow {
+      transform: translateX(3px);
+    }
+  }
+
+  @media (max-width: 640px) {
+    bottom: 16px;
+    right: 14px;
+    padding: 8px 14px;
+
+    &.has-items {
+      left: 14px;
+      right: 14px;
+      justify-content: space-between;
+    }
+  }
+}
+
+// Fade/slide transition for the floating cart pill
+.floating-cart-pop-enter-active,
+.floating-cart-pop-leave-active {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.floating-cart-pop-enter-from,
+.floating-cart-pop-leave-to {
+  opacity: 0;
+  transform: translateY(20px) scale(0.9);
+}
+
+@keyframes pill-badge-pop {
+  0% { transform: scale(0.7); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 </style>
