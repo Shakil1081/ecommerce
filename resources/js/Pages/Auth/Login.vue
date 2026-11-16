@@ -192,7 +192,7 @@ const submit = async () => {
 
 <template>
   <div class="login-page">
-    <Head title="Secure Sign In - Admin Portal" />
+    <Head title="Secure Sign In - Pick & Pearl Admin Portal" />
 
     <div class="login-card-container">
       <!-- Security Badge Strip -->
@@ -211,8 +211,11 @@ const submit = async () => {
       <!-- Brand & Header -->
       <div class="login-header">
         <Link href="/" class="brand-link">
-          <span class="brand-badge">⚡</span>
-          <span class="brand-title">Trading<span class="title-accent">Hub</span></span>
+          <img src="/images/logo.jpg" alt="Pick & Pearl" class="login-brand-logo" />
+          <div class="brand-text-block">
+            <span class="brand-title">Pick & Pearl</span>
+            <span class="brand-subtitle">Jewelry • Fashion • Accessories</span>
+          </div>
         </Link>
         <h1 class="login-title">Secure Admin Sign In</h1>
         <p class="login-subtitle">
@@ -446,23 +449,44 @@ const submit = async () => {
   .brand-link {
     display: inline-flex;
     align-items: center;
-    gap: $space-2;
+    gap: 12px;
     text-decoration: none;
     margin-bottom: $space-3;
 
-    .brand-badge {
-      font-size: 1.75rem;
+    .login-brand-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: $radius-full;
+      object-fit: cover;
+      border: 1.5px solid #d4af37;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: transform $transition-fast;
     }
 
-    .brand-title {
-      font-family: $font-heading;
-      font-size: $fs-2xl;
-      font-weight: $fw-extrabold;
-      color: $color-neutral-900;
-      letter-spacing: -0.02em;
+    &:hover .login-brand-logo {
+      transform: scale(1.05);
+    }
 
-      .title-accent {
-        color: $color-primary-600;
+    .brand-text-block {
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+      line-height: 1.15;
+
+      .brand-title {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: $color-neutral-900;
+        letter-spacing: 0.04em;
+      }
+
+      .brand-subtitle {
+        font-size: 8.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #d4af37;
+        font-weight: 700;
       }
     }
   }

@@ -185,14 +185,17 @@ const handleLogout = () => {
 
 <template>
   <div class="admin-shell" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
-    <Head :title="title ? `${title} - Admin Hub` : 'Admin Hub'" />
+    <Head :title="title ? `${title} - Pick & Pearl Admin` : 'Pick & Pearl Admin'" />
 
     <!-- Sidebar Navigation -->
     <aside class="admin-sidebar">
       <div class="sidebar-header">
         <Link href="/admin/dashboard" class="sidebar-brand">
-          <span class="brand-badge">⚡</span>
-          <span v-if="!sidebarCollapsed" class="brand-name">TradingHub</span>
+          <img src="/images/logo.jpg" alt="Pick & Pearl" class="admin-sidebar-logo" />
+          <div v-if="!sidebarCollapsed" class="admin-brand-info">
+            <span class="brand-name">Pick & Pearl</span>
+            <span class="brand-sub">Management Hub</span>
+          </div>
         </Link>
         <button
           type="button"
@@ -293,7 +296,7 @@ const handleLogout = () => {
           href="/admin/settings/system"
           class="sidebar-version-card"
           :class="{ 'is-active': isPathActive('/admin/settings/system') }"
-          :title="sidebarCollapsed ? 'TradingHub v0.1.0 Alpha - System Info & Updates' : undefined"
+          :title="sidebarCollapsed ? 'Pick & Pearl v0.1.0 Alpha - System Info & Updates' : undefined"
         >
           <div class="version-card-top">
             <div class="version-status-pill">
@@ -406,29 +409,40 @@ const handleLogout = () => {
 
     .sidebar-brand {
       @include flex-start;
-      gap: $space-3;
-      font-family: $font-heading;
-      font-weight: $fw-bold;
-      font-size: $fs-lg;
-      color: hsl(342, 85%, 22%);
+      gap: 10px;
       text-decoration: none;
 
-      .brand-badge {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 32px;
-        height: 32px;
-        border-radius: $radius-lg;
-        background: linear-gradient(135deg, $color-primary-500, $color-primary-600);
-        box-shadow: 0 4px 12px rgba(235, 40, 108, 0.3);
-        font-size: 15px;
-        color: #ffffff;
+      .admin-sidebar-logo {
+        width: 36px;
+        height: 36px;
+        border-radius: $radius-full;
+        object-fit: cover;
+        border: 1.5px solid #d4af37;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        flex-shrink: 0;
       }
 
-      .brand-name {
-        letter-spacing: -0.02em;
-        color: hsl(342, 85%, 22%);
+      .admin-brand-info {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.15;
+
+        .brand-name {
+          font-family: 'Playfair Display', Georgia, serif;
+          font-size: 1.05rem;
+          font-weight: 800;
+          letter-spacing: 0.02em;
+          color: hsl(342, 85%, 22%);
+          white-space: nowrap;
+        }
+
+        .brand-sub {
+          font-size: 8.5px;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          font-weight: 700;
+          color: hsl(342, 40%, 55%);
+        }
       }
     }
 

@@ -138,8 +138,8 @@ const formatPrice = (amount: number): string => {
 
 <template>
   <StorefrontLayout
-    title="Premium Commercial Trading Platform - Direct Imports & Genuine Local Brands"
-    meta-description="Shop 100% genuine imported electronics, lifestyle, smartphones and appliances in Bangladesh. Statutory NBR Mushak 6.3 invoices & Nationwide Cash on Delivery."
+    title="Pick & Pearl - Luxury Jewelry, Fashion & Accessories in Bangladesh"
+    meta-description="Shop 100% genuine luxury jewelry, designer handbags, fashion accessories, and premium lifestyle collections at Pick & Pearl Bangladesh. Statutory NBR Mushak 6.3 invoices & Nationwide Cash on Delivery."
   >
     <div class="home-page-container">
       <!-- 1. Hero Banner Section -->
@@ -147,13 +147,13 @@ const formatPrice = (amount: number): string => {
         <div class="container hero-inner">
           <div class="hero-text-col">
             <div class="hero-pill-badge">
-              <span>🌟</span> Direct Global Imports & Genuine Domestic Brands
+              <span>💎</span> Pick & Pearl • Luxury Jewelry & Designer Fashion
             </div>
             <h1 class="hero-title">
-              Authentic Products at <span class="highlight-pink">Fair Direct Prices</span> in Bangladesh
+              Elegance Redefined with <span class="highlight-pink">Pick & Pearl</span>
             </h1>
             <p class="hero-description">
-              Finished commercial goods sourced straight from global and domestic manufacturers. Complete with customs Bill of Entry (BOE), statutory NBR Mushak 6.3 VAT tax invoices, and Cash on Delivery nationwide.
+              Exquisite jewelry, designer handbags, and premium fashion accessories curated for timeless sophistication. Complete with statutory NBR Mushak 6.3 VAT tax invoices, official warranty, and Cash on Delivery nationwide.
             </p>
 
             <div class="hero-actions-row">

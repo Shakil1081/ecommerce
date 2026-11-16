@@ -20,7 +20,7 @@ class SystemInfoController extends Controller
         $activeStorage = MediaStorageSetting::where('is_active', true)->first();
 
         $systemInfo = [
-            'appName' => (string) config('app.name', 'TradingHub E-Commerce'),
+            'appName' => (string) config('app.name', 'Pick & Pearl'),
             'appVersion' => '0.1.0-alpha',
             'environment' => app()->environment(),
             'debug' => (bool) config('app.debug', false),
