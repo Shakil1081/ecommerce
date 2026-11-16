@@ -153,7 +153,7 @@ const getCategoryThemeClass = (slug: string): string => {
     <!-- Storefront Navigation Header -->
     <header class="storefront-header">
       <div class="header-container">
-        <!-- Brand & Category Trigger Group -->
+        <!-- Brand Group -->
         <div class="header-left-group">
           <!-- Logo -->
           <Link href="/" class="brand-logo">
@@ -162,6 +162,29 @@ const getCategoryThemeClass = (slug: string): string => {
               <span class="brand-name-main">PICK & PEARL</span>
               <span class="brand-tagline">JEWELRY • FASHION • ACCESSORIES</span>
             </div>
+          </Link>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-container">
+          <form @submit.prevent="handleHeaderSearch" class="header-search-form">
+            <span class="search-icon">🔍</span>
+            <input
+              v-model="headerSearchQuery"
+              type="search"
+              :placeholder="currentLocale === 'bn' ? 'পণ্য, ব্র্যান্ড বা এসকেইউ খুঁজুন...' : 'Search products, brands or SKU...'"
+              class="header-search-input"
+            >
+          </form>
+        </div>
+
+        <!-- Main Storefront Nav Links -->
+        <nav class="header-nav-links">
+          <Link href="/shop" class="header-nav-link">
+            <span>🛍️</span> {{ currentLocale === 'bn' ? 'শপ' : 'Shop Catalog' }}
+          </Link>
+          <Link href="/track-order" class="header-nav-link">
+            <span>🚚</span> {{ currentLocale === 'bn' ? 'অর্ডার ট্র্যাকিং' : 'Track Order' }}
           </Link>
 
           <!-- App-Style Category Menu Trigger with Hover & Click Dropdown (Desktop) -->
@@ -276,29 +299,6 @@ const getCategoryThemeClass = (slug: string): string => {
               </div>
             </transition>
           </div>
-        </div>
-
-        <!-- Search Bar -->
-        <div class="search-container">
-          <form @submit.prevent="handleHeaderSearch" class="header-search-form">
-            <span class="search-icon">🔍</span>
-            <input
-              v-model="headerSearchQuery"
-              type="search"
-              :placeholder="currentLocale === 'bn' ? 'পণ্য, ব্র্যান্ড বা এসকেইউ খুঁজুন...' : 'Search products, brands or SKU...'"
-              class="header-search-input"
-            >
-          </form>
-        </div>
-
-        <!-- Main Storefront Nav Links -->
-        <nav class="header-nav-links">
-          <Link href="/shop" class="header-nav-link">
-            <span>🛍️</span> {{ currentLocale === 'bn' ? 'শপ' : 'Shop Catalog' }}
-          </Link>
-          <Link href="/track-order" class="header-nav-link">
-            <span>🚚</span> {{ currentLocale === 'bn' ? 'অর্ডার ট্র্যাকিং' : 'Track Order' }}
-          </Link>
         </nav>
 
         <!-- Navigation Actions -->
@@ -786,7 +786,8 @@ const getCategoryThemeClass = (slug: string): string => {
     .app-mega-dropdown {
       position: absolute;
       top: calc(100% + 8px);
-      left: 0;
+      right: 0;
+      left: auto;
       width: 780px;
       max-width: min(820px, calc(100vw - 40px));
       background: #ffffff;
