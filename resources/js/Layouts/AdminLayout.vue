@@ -340,9 +340,7 @@ const handleLogout = () => {
     <div class="admin-main-wrap">
       <!-- Topbar Header -->
       <header class="admin-topbar">
-        <div class="topbar-left">
-          <h2 class="page-title">{{ title || 'Dashboard' }}</h2>
-        </div>
+        <div class="topbar-left"></div>
         <div class="topbar-right">
           <Link href="/shop" class="topbar-storefront-link" title="Open Storefront">
             <span>🛍️</span> Storefront
