@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Middleware\TrustProxies;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -27,5 +31,34 @@ class AppServiceProvider extends ServiceProvider
         Gate::before(function ($user, $ability) {
             return method_exists($user, 'hasRole') && $user->hasRole('Super Admin') ? true : null;
         });
+
+        $this->configureRateLimiting();
+        $this->configureTrustedProxies();
+    }
+
+    /**
+     * Resolve the real client IP behind Cloudflare / nginx / load balancers (config/security.php).
+     */
+    private function configureTrustedProxies(): void
+    {
+        $proxies = config('security.trusted_proxies');
+
+        if (! is_string($proxies) || trim($proxies) === '') {
+            return;
+        }
+
+        TrustProxies::at(trim($proxies) === '*' ? '*' : array_map('trim', explode(',', $proxies)));
+    }
+
+    /**
+     * Anti-abuse throttles for public storefront write endpoints.
+     */
+    private function configureRateLimiting(): void
+    {
+        // Order submission: blocks scripted fake-order floods and stock-exhaustion attacks
+        RateLimiter::for('checkout', fn (Request $request): Limit => Limit::perMinute(6)->by($request->ip()));
+
+        // Coupon brute-force and order-tracking enumeration (order ID + phone guessing)
+        RateLimiter::for('storefront-lookup', fn (Request $request): Limit => Limit::perMinute(15)->by($request->ip()));
     }
 }

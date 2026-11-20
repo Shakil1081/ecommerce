@@ -20,6 +20,11 @@ use Throwable;
 
 class NagadPaymentAdapter implements PaymentGatewayContract
 {
+    /** Gateway API timeouts: never let a stalled gateway hang a worker or hold a payment row lock. */
+    private const CONNECT_TIMEOUT_SECONDS = 5;
+
+    private const TIMEOUT_SECONDS = 20;
+
     public const SANDBOX_BASE_URL = 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0/api/dfs';
 
     public const LIVE_BASE_URL = 'https://api.mynagad.com/api/dfs';
@@ -96,7 +101,7 @@ class NagadPaymentAdapter implements PaymentGatewayContract
             $encryptedInit = $this->crypto->encryptWithPublicKey($initData, $pubKey);
             $signatureInit = $this->crypto->generateSignature($initData, $privKey);
 
-            $initResponse = Http::withHeaders([
+            $initResponse = Http::connectTimeout(self::CONNECT_TIMEOUT_SECONDS)->timeout(self::TIMEOUT_SECONDS)->withHeaders([
                 'X-KM-Api-Version' => 'v-0.2',
                 'X-KM-IP-V4' => '127.0.0.1',
                 'X-KM-Client-Type' => 'PC_WEB',
@@ -137,7 +142,7 @@ class NagadPaymentAdapter implements PaymentGatewayContract
             $encryptedComplete = $this->crypto->encryptWithPublicKey($completeData, $pubKey);
             $signatureComplete = $this->crypto->generateSignature($completeData, $privKey);
 
-            $completeResponse = Http::withHeaders([
+            $completeResponse = Http::connectTimeout(self::CONNECT_TIMEOUT_SECONDS)->timeout(self::TIMEOUT_SECONDS)->withHeaders([
                 'X-KM-Api-Version' => 'v-0.2',
                 'X-KM-IP-V4' => '127.0.0.1',
                 'X-KM-Client-Type' => 'PC_WEB',
@@ -222,7 +227,7 @@ class NagadPaymentAdapter implements PaymentGatewayContract
             $sandbox = $config['is_sandbox'];
             $baseUrl = $this->getBaseUrl($sandbox);
 
-            $verifyResponse = Http::withHeaders([
+            $verifyResponse = Http::connectTimeout(self::CONNECT_TIMEOUT_SECONDS)->timeout(self::TIMEOUT_SECONDS)->withHeaders([
                 'X-KM-Api-Version' => 'v-0.2',
                 'X-KM-IP-V4' => '127.0.0.1',
                 'X-KM-Client-Type' => 'PC_WEB',

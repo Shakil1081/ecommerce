@@ -12,6 +12,7 @@ use App\Modules\Common\Models\BangladeshDivision;
 use App\Modules\Common\Security\HoneypotTimingGuardService;
 use App\Modules\Customer\Rules\BangladeshPhoneNumberRule;
 use App\Modules\Inventory\Actions\ReserveStockForOrderAction;
+use App\Modules\Logistics\Actions\CalculateShippingRateAction;
 use App\Modules\Order\Actions\CreateOrderFromCartAction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -28,7 +29,8 @@ final class CheckoutController extends Controller
     public function index(
         Request $request,
         GetActiveCartAction $getCart,
-        HoneypotTimingGuardService $timingGuard
+        HoneypotTimingGuardService $timingGuard,
+        CalculateShippingRateAction $shippingRateCalculator
     ): Response|RedirectResponse {
         $token = $request->cookie('ecommerce_guest_token') ?: $request->header('X-Guest-Token');
         $cart = $getCart($request->user(), is_string($token) ? $token : null);
@@ -50,11 +52,10 @@ final class CheckoutController extends Controller
             'divisions' => $divisions,
             'timingToken' => $timingToken,
             'freeShippingThreshold' => (float) CartResource::FREE_SHIPPING_THRESHOLD,
-            'shippingRates' => [
-                'inside_dhaka' => 60.0,
-                'dhaka_suburbs' => 100.0,
-                'outside_dhaka' => 130.0,
-            ],
+            'shippingRates' => array_map(
+                static fn (string $rate): float => (float) $rate,
+                $shippingRateCalculator->baseRatesByZone()
+            ),
         ]);
     }
 

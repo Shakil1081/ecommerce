@@ -46,7 +46,7 @@ class CommunicationAdminTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($this->admin)->get(route('admin.communication.mail'));
+        $response = $this->actingAsSuperAdmin($this->admin)->get(route('admin.communication.mail'));
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
@@ -61,7 +61,7 @@ class CommunicationAdminTest extends TestCase
 
     public function test_update_mail_settings_stores_and_configures_dynamic_mailer(): void
     {
-        $response = $this->actingAs($this->admin)->post(route('admin.communication.mail.update'), [
+        $response = $this->actingAsSuperAdmin($this->admin)->post(route('admin.communication.mail.update'), [
             'driver' => 'smtp',
             'host' => 'smtp.sendgrid.net',
             'port' => 587,
@@ -101,7 +101,7 @@ class CommunicationAdminTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($this->admin)->postJson(route('admin.communication.mail.test'), [
+        $response = $this->actingAsSuperAdmin($this->admin)->postJson(route('admin.communication.mail.test'), [
             'recipient_email' => 'dev@ecommerce.test',
         ]);
 
@@ -113,7 +113,7 @@ class CommunicationAdminTest extends TestCase
 
     public function test_sms_settings_page_loads_with_default_gateways(): void
     {
-        $response = $this->actingAs($this->admin)->get(route('admin.communication.sms'));
+        $response = $this->actingAsSuperAdmin($this->admin)->get(route('admin.communication.sms'));
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
@@ -136,7 +136,7 @@ class CommunicationAdminTest extends TestCase
             'sort_order' => 1,
         ]);
 
-        $response = $this->actingAs($this->admin)->post(route('admin.communication.sms.update', $setting), [
+        $response = $this->actingAsSuperAdmin($this->admin)->post(route('admin.communication.sms.update', $setting), [
             'is_active' => true,
             'is_sandbox' => false,
             'sender_id' => '8809612000000',
@@ -172,7 +172,7 @@ class CommunicationAdminTest extends TestCase
         ]);
 
         // Test connection
-        $connResponse = $this->actingAs($this->admin)->postJson(route('admin.communication.sms.test'), [
+        $connResponse = $this->actingAsSuperAdmin($this->admin)->postJson(route('admin.communication.sms.test'), [
             'code' => 'greenweb',
             'phone' => '01712345678',
         ]);
@@ -180,7 +180,7 @@ class CommunicationAdminTest extends TestCase
         $connResponse->assertJson(['success' => true]);
 
         // Test balance query
-        $balResponse = $this->actingAs($this->admin)->postJson(route('admin.communication.sms.balance'), [
+        $balResponse = $this->actingAsSuperAdmin($this->admin)->postJson(route('admin.communication.sms.balance'), [
             'code' => 'greenweb',
         ]);
         $balResponse->assertOk();
@@ -215,7 +215,7 @@ class CommunicationAdminTest extends TestCase
             'duration_seconds' => 45,
         ]);
 
-        $response = $this->actingAs($this->admin)->get(route('admin.communication.voice'));
+        $response = $this->actingAsSuperAdmin($this->admin)->get(route('admin.communication.voice'));
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
@@ -241,7 +241,7 @@ class CommunicationAdminTest extends TestCase
             'credentials' => ['account_sid' => 'AC_old', 'auth_token' => 'auth_old', 'from_number' => '+100'],
         ]);
 
-        $response = $this->actingAs($this->admin)->post(route('admin.communication.voice.update', $setting), [
+        $response = $this->actingAsSuperAdmin($this->admin)->post(route('admin.communication.voice.update', $setting), [
             'provider' => 'twilio',
             'is_active' => true,
             'is_sandbox' => false,
@@ -291,7 +291,7 @@ class CommunicationAdminTest extends TestCase
             'credentials' => ['account_sid' => 'AC123', 'auth_token' => 'sec456', 'from_number' => '+1555000'],
         ]);
 
-        $response = $this->actingAs($this->admin)->postJson(route('admin.communication.voice.test'), [
+        $response = $this->actingAsSuperAdmin($this->admin)->postJson(route('admin.communication.voice.test'), [
             'phone' => '+8801712345678',
         ]);
 
@@ -322,7 +322,7 @@ class CommunicationAdminTest extends TestCase
             'dispatched_at' => now()->subHour(),
         ]);
 
-        $response = $this->actingAs($this->admin)->get(route('admin.marketing.cart-recovery'));
+        $response = $this->actingAsSuperAdmin($this->admin)->get(route('admin.marketing.cart-recovery'));
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
@@ -338,7 +338,7 @@ class CommunicationAdminTest extends TestCase
 
     public function test_trigger_manual_recovery_executes_action(): void
     {
-        $response = $this->actingAs($this->admin)->post(route('admin.marketing.cart-recovery.trigger'));
+        $response = $this->actingAsSuperAdmin($this->admin)->post(route('admin.marketing.cart-recovery.trigger'));
 
         $response->assertRedirect();
         $response->assertSessionHas('success');

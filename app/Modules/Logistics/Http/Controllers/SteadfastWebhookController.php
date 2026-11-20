@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Logistics\Adapters\SteadfastCourierAdapter;
 use App\Modules\Logistics\Models\CourierConsignment;
 use App\Modules\Logistics\Models\CourierGatewaySetting;
+use App\Modules\Logistics\Services\CourierWebhookAuthenticator;
 use App\Modules\Order\Models\Order;
 use App\Modules\Order\Models\OrderStatusHistory;
 use Illuminate\Http\JsonResponse;
@@ -16,18 +17,12 @@ use Illuminate\Support\Facades\Log;
 
 class SteadfastWebhookController extends Controller
 {
-    public function __invoke(Request $request, SteadfastCourierAdapter $adapter): JsonResponse
+    public function __invoke(Request $request, SteadfastCourierAdapter $adapter, CourierWebhookAuthenticator $authenticator): JsonResponse
     {
         $setting = CourierGatewaySetting::where('code', CourierGatewaySetting::CODE_STEADFAST)->first();
 
-        // Optional webhook secret verification if configured
-        if ($setting && ! empty($setting->webhook_secret)) {
-            $headerToken = $request->header('X-Webhook-Secret') ?? $request->query('secret');
-            if ($headerToken !== $setting->webhook_secret) {
-                Log::warning('Steadfast webhook rejected: invalid secret token');
-
-                return response()->json(['status' => 'error', 'message' => 'Unauthorized webhook secret'], 401);
-            }
+        if (! $authenticator->isAuthentic($request, $setting, ['X-Webhook-Secret'])) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized webhook secret'], 401);
         }
 
         $payload = $request->all();

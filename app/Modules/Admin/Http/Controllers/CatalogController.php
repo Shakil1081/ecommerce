@@ -294,8 +294,8 @@ class CatalogController extends Controller
             ])->values()->all();
         } elseif (! empty($product->specifications['gallery_urls']) && is_array($product->specifications['gallery_urls'])) {
             $galleryList = collect($product->specifications['gallery_urls'])->map(fn ($url, $index) => [
-                'id' => 'spec_' . $index,
-                'file_name' => 'external-photo-' . ($index + 1),
+                'id' => 'spec_'.$index,
+                'file_name' => 'external-photo-'.($index + 1),
                 'url' => $url,
                 'full_url' => $url,
                 'thumb_url' => $url,

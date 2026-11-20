@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Back-office access control**: every `/admin` route now requires an authenticated session, a staff role (`EnsureUserIsStaff`), and the matching Spatie module permission (`.view` for reads, specific write permissions for mutations). Previously the admin area was reachable without login.
+- New permissions `analytics.view` and `audit.view` (re-run `RolesAndPermissionsSeeder` on deploy).
+- `/admin` now lands each staff member on the first module their role can access.
+- Order IP address is resolved via the proxy-aware `request()->ip()` instead of trusting a raw client `X-Forwarded-For` header (prevented velocity-limit bypass).
+- **Payment settlement integrity** (`SettleGatewayPaymentAction`, shared by bKash, Nagad and SSLCommerz callbacks/IPN): the transaction row is locked during verify + apply so replayed or racing callbacks can no longer double-count advance delivery charges; the gateway-confirmed amount must cover the expected amount; a fail/cancel redirect can no longer downgrade a settled transaction.
+- SSLCommerz: a validated `val_id` must belong to the callback's `tran_id` (blocks replaying a cheap payment's `val_id` against an expensive order).
+- Courier webhooks (Steadfast, Pathao) now fail closed in production when no `webhook_secret` is configured, compare secrets in constant time, and also accept `Authorization: Bearer`.
+- Checkout and 1-click fast orders now enforce the `ensure.human` honeypot + signed timing guard; the product page issues the timing token.
+- Rate limits: `checkout` (6/min per IP) on order submission; `storefront-lookup` (15/min per IP) on coupon apply and order tracking.
+- **Security headers** (`SecurityHeaders` middleware, `config/security.php`): `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`; HSTS in production over HTTPS; nonce-based CSP shared with Vite, shipped Report-Only until `CSP_ENFORCE=true`.
+- Configurable trusted proxies (`TRUSTED_PROXIES`) so the real customer IP is used behind Cloudflare/nginx.
+- Payment gateway API calls (bKash, Nagad, SSLCommerz) now use 5s connect / 20s total timeouts.
+
+### Fixed
+- Checkout, 1-click fast orders, and the checkout UI now all use the admin-configured shipping zone rates (`CalculateShippingRateAction`) instead of hard-coded ৳60/৳100/৳130 values.
+- Fast-order totals are computed with fixed-precision `bcmath` instead of floats.
+- Fraud scoring (external courier history APIs) runs before the order DB transaction, and courier intelligence calls now use a 3s connect timeout.
+
 ---
 
 ## [1.0.0] - 2026-10-30

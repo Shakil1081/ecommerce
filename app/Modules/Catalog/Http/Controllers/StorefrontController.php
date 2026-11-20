@@ -9,6 +9,7 @@ use App\Modules\Catalog\Models\Brand;
 use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductVariant;
+use App\Modules\Common\Security\HoneypotTimingGuardService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
@@ -277,7 +278,7 @@ class StorefrontController extends Controller
     /**
      * Display the Product Detail Page (PDP) with matrix variants, swatches, and specifications.
      */
-    public function show(string $slug): Response
+    public function show(string $slug, HoneypotTimingGuardService $timingGuard): Response
     {
         $product = Product::where('slug', $slug)
             ->where('is_published', true)
@@ -347,6 +348,8 @@ class StorefrontController extends Controller
             ->map(fn (Product $p) => $this->formatProductCard($p));
 
         return Inertia::render('Storefront/ProductDetail', [
+            // Signed render timestamp for the 1-click fast-order bot timing guard (ensure.human)
+            'timingToken' => $timingGuard->generateTimingToken(),
             'product' => [
                 'id' => $product->id,
                 'name' => $product->name,

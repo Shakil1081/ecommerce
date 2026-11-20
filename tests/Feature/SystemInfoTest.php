@@ -26,7 +26,7 @@ class SystemInfoTest extends TestCase
 
     public function test_admin_can_access_system_updates_and_diagnostics_page(): void
     {
-        $response = $this->get(route('admin.settings.system'));
+        $response = $this->actingAsSuperAdmin()->get(route('admin.settings.system'));
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page

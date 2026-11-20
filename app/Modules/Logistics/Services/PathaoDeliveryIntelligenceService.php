@@ -39,7 +39,8 @@ final class PathaoDeliveryIntelligenceService implements CourierDeliveryIntellig
         }
 
         try {
-            $response = Http::timeout(5)
+            $response = Http::connectTimeout(3)
+                ->timeout(5)
                 ->withToken($this->token)
                 ->withHeaders([
                     'Accept' => 'application/json',

@@ -64,7 +64,7 @@ class CourierAdminTest extends TestCase
         $this->seed(CourierGatewaySeeder::class);
         $admin = $this->createAdminUser();
 
-        $response = $this->actingAs($admin)->get(route('admin.settings.couriers.index'));
+        $response = $this->actingAsSuperAdmin($admin)->get(route('admin.settings.couriers.index'));
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
@@ -91,7 +91,7 @@ class CourierAdminTest extends TestCase
             ],
         ]);
 
-        $response = $this->actingAs($admin)->post(route('admin.settings.couriers.update', $setting), [
+        $response = $this->actingAsSuperAdmin($admin)->post(route('admin.settings.couriers.update', $setting), [
             'name' => 'Steadfast Express BD',
             'is_active' => true,
             'is_sandbox' => false,
@@ -131,7 +131,7 @@ class CourierAdminTest extends TestCase
             ],
         ]);
 
-        $response = $this->actingAs($admin)->post(route('admin.settings.couriers.update', $setting), [
+        $response = $this->actingAsSuperAdmin($admin)->post(route('admin.settings.couriers.update', $setting), [
             'name' => 'Steadfast Courier',
             'is_active' => true,
             'is_sandbox' => true,
@@ -169,7 +169,7 @@ class CourierAdminTest extends TestCase
             ], 200),
         ]);
 
-        $response = $this->actingAs($admin)->postJson(route('admin.settings.couriers.test'), [
+        $response = $this->actingAsSuperAdmin($admin)->postJson(route('admin.settings.couriers.test'), [
             'code' => 'steadfast',
             'is_sandbox' => true,
         ]);
@@ -186,7 +186,7 @@ class CourierAdminTest extends TestCase
         $this->seed(ShippingZoneSeeder::class);
         $admin = $this->createAdminUser();
 
-        $response = $this->actingAs($admin)->get(route('admin.logistics.zones'));
+        $response = $this->actingAsSuperAdmin($admin)->get(route('admin.logistics.zones'));
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
@@ -202,7 +202,7 @@ class CourierAdminTest extends TestCase
         $admin = $this->createAdminUser();
         $zone = ShippingZone::where('code', 'inside_dhaka')->firstOrFail();
 
-        $response = $this->actingAs($admin)->post(route('admin.logistics.zones.rate', $zone), [
+        $response = $this->actingAsSuperAdmin($admin)->post(route('admin.logistics.zones.rate', $zone), [
             'name' => 'Inside Dhaka Metro (24h Express)',
             'estimated_days_min' => 1,
             'estimated_days_max' => 2,
@@ -230,7 +230,7 @@ class CourierAdminTest extends TestCase
     {
         $admin = $this->createAdminUser();
 
-        $response = $this->actingAs($admin)->get(route('admin.logistics.reconciliation'));
+        $response = $this->actingAsSuperAdmin($admin)->get(route('admin.logistics.reconciliation'));
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
@@ -259,7 +259,7 @@ class CourierAdminTest extends TestCase
             'recipient_address' => $order->delivery_address,
         ]);
 
-        $response = $this->actingAs($admin)->post(route('admin.logistics.reconciliation.store'), [
+        $response = $this->actingAsSuperAdmin($admin)->post(route('admin.logistics.reconciliation.store'), [
             'courier_code' => 'steadfast',
             'disbursement_date' => '2026-10-29',
             'reference_invoice' => 'STDF-INV-88771',
@@ -311,7 +311,7 @@ class CourierAdminTest extends TestCase
             'recipient_address' => $order->delivery_address,
         ]);
 
-        $response = $this->actingAs($admin)->post(route('admin.logistics.reconciliation.store'), [
+        $response = $this->actingAsSuperAdmin($admin)->post(route('admin.logistics.reconciliation.store'), [
             'courier_code' => 'steadfast',
             'disbursement_date' => '2026-10-29',
             'reference_invoice' => 'STDF-INV-SHORTAGE',

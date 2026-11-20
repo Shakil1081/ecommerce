@@ -55,6 +55,7 @@ const props = defineProps<{
   optionGroups: Record<string, string[]>;
   gallery: GalleryImage[];
   relatedProducts: RelatedProductItem[];
+  timingToken?: string;
 }>();
 
 const cartStore = useCartStore();
@@ -222,6 +223,7 @@ const handleFunnelOrderSubmit = () => {
     delivery_zone: funnelForm.value.delivery_zone,
     customer_notes: funnelForm.value.customer_notes.trim(),
     user_company_fax: funnelForm.value.user_company_fax,
+    _form_timing_token: props.timingToken ?? '',
   };
 
   router.post('/checkout/fast-order', payload, {
@@ -730,9 +732,9 @@ onUnmounted(() => {
                   </div>
                   <div class="preview-details">
                     <h4 class="preview-title">{{ product.name }}</h4>
-                    <div class="preview-attributes" v-if="selectedVariant && selectedVariant.attribute_values">
+                    <div class="preview-attributes" v-if="selectedVariant && selectedVariant.attributes">
                       <span
-                        v-for="(val, attr) in selectedVariant.attribute_values"
+                        v-for="(val, attr) in selectedVariant.attributes"
                         :key="attr"
                         class="preview-attr-pill"
                       >

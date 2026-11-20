@@ -44,7 +44,7 @@ final class AdminAiAndAnalyticsTest extends TestCase
             'status' => 'success',
         ]);
 
-        $response = $this->actingAs($this->admin)->get('/admin/ai-settings');
+        $response = $this->actingAsSuperAdmin($this->admin)->get('/admin/ai-settings');
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
@@ -71,7 +71,7 @@ final class AdminAiAndAnalyticsTest extends TestCase
             'sort_order' => 1,
         ]);
 
-        $response = $this->actingAs($this->admin)->post("/admin/ai-settings/{$setting->id}", [
+        $response = $this->actingAsSuperAdmin($this->admin)->post("/admin/ai-settings/{$setting->id}", [
             'is_active' => true,
             'default_model' => 'gemini-2.0-flash',
             'temperature' => 0.35,
@@ -126,7 +126,7 @@ final class AdminAiAndAnalyticsTest extends TestCase
             'sort_order' => 1,
         ]);
 
-        $response = $this->actingAs($this->admin)->postJson('/admin/ai-settings/test', [
+        $response = $this->actingAsSuperAdmin($this->admin)->postJson('/admin/ai-settings/test', [
             'setting_id' => $setting->id,
         ]);
 
@@ -140,7 +140,7 @@ final class AdminAiAndAnalyticsTest extends TestCase
 
     public function test_admin_can_view_trading_pnl_dashboard(): void
     {
-        $response = $this->actingAs($this->admin)->get('/admin/analytics/trading-pnl');
+        $response = $this->actingAsSuperAdmin($this->admin)->get('/admin/analytics/trading-pnl');
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
@@ -157,7 +157,7 @@ final class AdminAiAndAnalyticsTest extends TestCase
 
     public function test_admin_can_filter_trading_pnl_by_custom_range(): void
     {
-        $response = $this->actingAs($this->admin)->get('/admin/analytics/trading-pnl?period=custom&start_date=2026-01-01&end_date=2026-01-31');
+        $response = $this->actingAsSuperAdmin($this->admin)->get('/admin/analytics/trading-pnl?period=custom&start_date=2026-01-01&end_date=2026-01-31');
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
@@ -182,7 +182,7 @@ final class AdminAiAndAnalyticsTest extends TestCase
             'ip_address' => '127.0.0.1',
         ]);
 
-        $response = $this->actingAs($this->admin)->get('/admin/audit-logs');
+        $response = $this->actingAsSuperAdmin($this->admin)->get('/admin/audit-logs');
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
@@ -217,7 +217,7 @@ final class AdminAiAndAnalyticsTest extends TestCase
             'ip_address' => '103.20.10.8',
         ]);
 
-        $response = $this->actingAs($this->admin)->get('/admin/audit-logs?event=price_updated&search=Wireless');
+        $response = $this->actingAsSuperAdmin($this->admin)->get('/admin/audit-logs?event=price_updated&search=Wireless');
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page

@@ -1,10 +1,15 @@
 <?php
 
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Modules\Admin\Http\Middleware\EnsureUserIsStaff;
 use App\Modules\Common\Http\Middleware\EnsureHumanSubmission;
+use App\Modules\Common\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Spatie\Permission\Middleware\PermissionMiddleware;
+use Spatie\Permission\Middleware\RoleMiddleware;
+use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,10 +20,15 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
             HandleInertiaRequests::class,
+            SecurityHeaders::class,
         ]);
 
         $middleware->alias([
             'ensure.human' => EnsureHumanSubmission::class,
+            'staff' => EnsureUserIsStaff::class,
+            'permission' => PermissionMiddleware::class,
+            'role' => RoleMiddleware::class,
+            'role_or_permission' => RoleOrPermissionMiddleware::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [

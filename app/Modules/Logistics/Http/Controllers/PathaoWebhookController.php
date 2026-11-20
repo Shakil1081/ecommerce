@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Logistics\Adapters\PathaoCourierAdapter;
 use App\Modules\Logistics\Models\CourierConsignment;
 use App\Modules\Logistics\Models\CourierGatewaySetting;
+use App\Modules\Logistics\Services\CourierWebhookAuthenticator;
 use App\Modules\Order\Models\Order;
 use App\Modules\Order\Models\OrderStatusHistory;
 use Illuminate\Http\JsonResponse;
@@ -16,21 +17,12 @@ use Illuminate\Support\Facades\Log;
 
 class PathaoWebhookController extends Controller
 {
-    public function __invoke(Request $request, PathaoCourierAdapter $adapter): JsonResponse
+    public function __invoke(Request $request, PathaoCourierAdapter $adapter, CourierWebhookAuthenticator $authenticator): JsonResponse
     {
         $setting = CourierGatewaySetting::where('code', CourierGatewaySetting::CODE_PATHAO)->first();
 
-        // Optional webhook signature/secret verification
-        if ($setting && ! empty($setting->webhook_secret)) {
-            $incomingSecret = $request->header('X-Webhook-Secret')
-                ?? $request->header('X-Pathao-Signature')
-                ?? $request->query('secret');
-
-            if ($incomingSecret !== $setting->webhook_secret) {
-                Log::warning('Pathao webhook rejected: invalid secret');
-
-                return response()->json(['status' => 'error', 'message' => 'Unauthorized webhook secret'], 401);
-            }
+        if (! $authenticator->isAuthentic($request, $setting, ['X-Webhook-Secret', 'X-Pathao-Signature'])) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized webhook secret'], 401);
         }
 
         $payload = $request->all();

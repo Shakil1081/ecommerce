@@ -47,7 +47,7 @@ final class AdminAuthTest extends TestCase
     {
         $response = $this->actingAs($this->admin)->get('/login');
 
-        $response->assertRedirect('/admin/dashboard');
+        $response->assertRedirect('/admin');
     }
 
     public function test_users_can_authenticate_using_the_login_screen(): void
@@ -58,7 +58,7 @@ final class AdminAuthTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect('/admin/dashboard');
+        $response->assertRedirect('/admin');
 
         // Verify audit log entry
         $this->assertDatabaseHas('audit_logs', [

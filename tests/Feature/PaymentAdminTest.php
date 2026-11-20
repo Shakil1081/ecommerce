@@ -60,7 +60,7 @@ class PaymentAdminTest extends TestCase
     {
         $admin = $this->createAdminUser();
 
-        $response = $this->actingAs($admin)->get(route('admin.settings.payment-gateways.index'));
+        $response = $this->actingAsSuperAdmin($admin)->get(route('admin.settings.payment-gateways.index'));
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
@@ -74,7 +74,7 @@ class PaymentAdminTest extends TestCase
     {
         $admin = $this->createAdminUser();
 
-        $response = $this->actingAs($admin)->post(route('admin.settings.payment-gateways.save'), [
+        $response = $this->actingAsSuperAdmin($admin)->post(route('admin.settings.payment-gateways.save'), [
             'code' => PaymentGatewaySetting::CODE_BKASH,
             'name' => 'bKash Instant Checkout',
             'is_active' => true,
@@ -120,7 +120,7 @@ class PaymentAdminTest extends TestCase
         ]);
 
         // 2. Second save where form sends masked placeholders
-        $response = $this->actingAs($admin)->post(route('admin.settings.payment-gateways.save'), [
+        $response = $this->actingAsSuperAdmin($admin)->post(route('admin.settings.payment-gateways.save'), [
             'code' => PaymentGatewaySetting::CODE_BKASH,
             'name' => 'bKash Updated Name',
             'is_active' => true,
@@ -145,7 +145,7 @@ class PaymentAdminTest extends TestCase
     {
         $admin = $this->createAdminUser();
 
-        $response = $this->actingAs($admin)->postJson(route('admin.settings.payment-gateways.test'), [
+        $response = $this->actingAsSuperAdmin($admin)->postJson(route('admin.settings.payment-gateways.test'), [
             'code' => PaymentGatewaySetting::CODE_COD,
             'is_sandbox' => true,
         ]);

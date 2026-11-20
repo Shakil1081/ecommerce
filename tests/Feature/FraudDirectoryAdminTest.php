@@ -43,7 +43,7 @@ final class FraudDirectoryAdminTest extends TestCase
             'blocked_by_user_id' => $this->admin->id,
         ]);
 
-        $response = $this->actingAs($this->admin)->get('/admin/fraud-directory');
+        $response = $this->actingAsSuperAdmin($this->admin)->get('/admin/fraud-directory');
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
@@ -57,7 +57,7 @@ final class FraudDirectoryAdminTest extends TestCase
 
     public function test_admin_can_add_blacklist_entry(): void
     {
-        $response = $this->actingAs($this->admin)->post('/admin/fraud-directory', [
+        $response = $this->actingAsSuperAdmin($this->admin)->post('/admin/fraud-directory', [
             'type' => 'blacklist',
             'phone_number' => '+8801799887766',
             'ip_address' => '103.145.12.99',
@@ -77,7 +77,7 @@ final class FraudDirectoryAdminTest extends TestCase
 
     public function test_admin_can_add_whitelist_entry(): void
     {
-        $response = $this->actingAs($this->admin)->post('/admin/fraud-directory', [
+        $response = $this->actingAsSuperAdmin($this->admin)->post('/admin/fraud-directory', [
             'type' => 'whitelist',
             'phone_number' => '01811223344',
             'customer_name' => 'VIP Regular Customer',
@@ -94,7 +94,7 @@ final class FraudDirectoryAdminTest extends TestCase
 
     public function test_adding_entry_requires_at_least_one_identifier(): void
     {
-        $response = $this->actingAs($this->admin)->post('/admin/fraud-directory', [
+        $response = $this->actingAsSuperAdmin($this->admin)->post('/admin/fraud-directory', [
             'type' => 'blacklist',
             'customer_name' => 'Nameless Without Identifier',
             'reason' => 'Missing ID info',
@@ -111,7 +111,7 @@ final class FraudDirectoryAdminTest extends TestCase
             'reason' => 'Temporary block',
         ]);
 
-        $response = $this->actingAs($this->admin)->delete("/admin/fraud-directory/{$entry->id}");
+        $response = $this->actingAsSuperAdmin($this->admin)->delete("/admin/fraud-directory/{$entry->id}");
 
         $response->assertRedirect();
         $this->assertDatabaseMissing('customer_fraud_lists', [

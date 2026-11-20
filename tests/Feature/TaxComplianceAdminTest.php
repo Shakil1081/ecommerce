@@ -131,7 +131,7 @@ final class TaxComplianceAdminTest extends TestCase
 
     public function test_admin_can_view_tax_compliance_dashboard_with_stats(): void
     {
-        $response = $this->actingAs($this->admin)->get('/admin/tax-compliance');
+        $response = $this->actingAsSuperAdmin($this->admin)->get('/admin/tax-compliance');
 
         $response->assertStatus(200);
         $response->assertInertia(
@@ -150,7 +150,7 @@ final class TaxComplianceAdminTest extends TestCase
         $result = $generateAction($this->order);
         $invoice = $result->invoice;
 
-        $response = $this->actingAs($this->admin)->get('/admin/tax-compliance/mushak-6-3');
+        $response = $this->actingAsSuperAdmin($this->admin)->get('/admin/tax-compliance/mushak-6-3');
 
         $response->assertStatus(200);
         $response->assertInertia(
@@ -161,7 +161,7 @@ final class TaxComplianceAdminTest extends TestCase
         );
 
         // Filter by search query
-        $filterResponse = $this->actingAs($this->admin)->get('/admin/tax-compliance/mushak-6-3?search='.urlencode($this->order->customer_name));
+        $filterResponse = $this->actingAsSuperAdmin($this->admin)->get('/admin/tax-compliance/mushak-6-3?search='.urlencode($this->order->customer_name));
 
         $filterResponse->assertStatus(200);
         $filterResponse->assertInertia(
@@ -177,7 +177,7 @@ final class TaxComplianceAdminTest extends TestCase
         $result = $generateAction($this->order);
         $invoice = $result->invoice;
 
-        $response = $this->actingAs($this->admin)->get("/admin/tax-compliance/mushak-6-3/{$invoice->id}");
+        $response = $this->actingAsSuperAdmin($this->admin)->get("/admin/tax-compliance/mushak-6-3/{$invoice->id}");
 
         $response->assertStatus(200);
         $response->assertInertia(
@@ -191,7 +191,7 @@ final class TaxComplianceAdminTest extends TestCase
 
     public function test_admin_can_view_mushak_9_1_returns_and_compile_period(): void
     {
-        $response = $this->actingAs($this->admin)->get('/admin/tax-compliance/mushak-9-1');
+        $response = $this->actingAsSuperAdmin($this->admin)->get('/admin/tax-compliance/mushak-9-1');
 
         $response->assertStatus(200);
         $response->assertInertia(
@@ -203,7 +203,7 @@ final class TaxComplianceAdminTest extends TestCase
 
         // Trigger compile for current period
         $taxPeriod = CarbonImmutable::now()->format('Y-m');
-        $compileResponse = $this->actingAs($this->admin)
+        $compileResponse = $this->actingAsSuperAdmin($this->admin)
             ->from('/admin/tax-compliance/mushak-9-1')
             ->post('/admin/tax-compliance/mushak-9-1/compile', [
                 'tax_period' => $taxPeriod,
@@ -225,7 +225,7 @@ final class TaxComplianceAdminTest extends TestCase
         $compileAction = app(GenerateMushak91ReturnAction::class);
         $vatReturn = $compileAction($taxPeriod, ['force' => true]);
 
-        $submitResponse = $this->actingAs($this->admin)
+        $submitResponse = $this->actingAsSuperAdmin($this->admin)
             ->from('/admin/tax-compliance/mushak-9-1')
             ->post("/admin/tax-compliance/mushak-9-1/{$vatReturn->id}/submit", [
                 'treasury_challan_number' => 'TR-NBR-202610-0991',
@@ -277,7 +277,7 @@ final class TaxComplianceAdminTest extends TestCase
         $vdsAction = app(GenerateMushak66CertificateAction::class);
         $vdsResult = $vdsAction($po);
 
-        $response = $this->actingAs($this->admin)->get('/admin/tax-compliance/mushak-6-6');
+        $response = $this->actingAsSuperAdmin($this->admin)->get('/admin/tax-compliance/mushak-6-6');
 
         $response->assertStatus(200);
         $response->assertInertia(
@@ -299,7 +299,7 @@ final class TaxComplianceAdminTest extends TestCase
             'created_at' => now(),
         ]);
 
-        $response = $this->actingAs($this->admin)->get('/admin/tax-compliance/rma?status=requested');
+        $response = $this->actingAsSuperAdmin($this->admin)->get('/admin/tax-compliance/rma?status=requested');
 
         $response->assertStatus(200);
         $response->assertInertia(
@@ -314,7 +314,7 @@ final class TaxComplianceAdminTest extends TestCase
     {
         $taxPeriod = CarbonImmutable::now()->format('Y-m');
 
-        $response = $this->actingAs($this->admin)->get("/admin/tax-compliance/registers?tax_period={$taxPeriod}");
+        $response = $this->actingAsSuperAdmin($this->admin)->get("/admin/tax-compliance/registers?tax_period={$taxPeriod}");
 
         $response->assertStatus(200);
         $response->assertInertia(
@@ -339,7 +339,7 @@ final class TaxComplianceAdminTest extends TestCase
             reasonForReturn: 'Defective compressor on inspection'
         );
 
-        $response = $this->actingAs($this->admin)->get("/admin/tax-compliance/mushak-6-7/{$creditNote->id}");
+        $response = $this->actingAsSuperAdmin($this->admin)->get("/admin/tax-compliance/mushak-6-7/{$creditNote->id}");
 
         $response->assertStatus(200);
         $response->assertInertia(
@@ -384,7 +384,7 @@ final class TaxComplianceAdminTest extends TestCase
             'condition_note' => 'Minor scratch',
         ]);
 
-        $response = $this->actingAs($this->admin)->post("/admin/tax-compliance/rma/{$rma->id}/inspect", [
+        $response = $this->actingAsSuperAdmin($this->admin)->post("/admin/tax-compliance/rma/{$rma->id}/inspect", [
             'inspection_outcome' => 'restock_available',
             'warehouse_id' => $warehouse->id,
             'admin_notes' => 'Inspected and verified good for restock',

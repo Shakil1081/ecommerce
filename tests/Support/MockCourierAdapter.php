@@ -11,8 +11,16 @@ use App\Modules\Logistics\DTOs\CourierTrackingResultDto;
 use App\Modules\Logistics\Models\CourierGatewaySetting;
 use App\Modules\Order\Models\Order;
 
+/**
+ * Kept out of the test classes on purpose: Pint's `php_unit_method_casing` fixer snake_cases any
+ * `test*` method declared inside a test file (including anonymous classes), which would silently
+ * rename the contract's `testConnection()` and break the interface implementation.
+ */
 class MockCourierAdapter implements CourierAdapterContract
 {
+    /** The courier setting passed to the last testConnection() call (for override assertions). */
+    public ?CourierGatewaySetting $receivedSetting = null;
+
     public function __construct(
         protected string $code = 'mock_courier',
         protected string $name = 'Mock Courier Service',
@@ -65,6 +73,8 @@ class MockCourierAdapter implements CourierAdapterContract
 
     public function testConnection(?CourierGatewaySetting $setting = null): CourierConnectionTestResultDto
     {
+        $this->receivedSetting = $setting;
+
         if ($this->shouldFail) {
             return CourierConnectionTestResultDto::failed(
                 message: 'Mock connection failed: Invalid API credentials',

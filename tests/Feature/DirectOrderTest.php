@@ -10,6 +10,7 @@ use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Common\Models\BangladeshDistrict;
 use App\Modules\Common\Models\BangladeshDivision;
+use App\Modules\Logistics\Models\ShippingZone;
 use App\Modules\Order\Models\Order;
 use App\Modules\Order\Models\OrderItem;
 use App\Modules\Order\Models\OrderStatusHistory;
@@ -95,7 +96,7 @@ final class DirectOrderTest extends TestCase
 
     public function test_it_validates_required_fields_for_direct_fast_order(): void
     {
-        $response = $this->postJson(route('storefront.fast-order'), []);
+        $response = $this->postJson(route('storefront.fast-order'), ['_form_timing_token' => $this->humanTimingToken()]);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors([
@@ -111,6 +112,7 @@ final class DirectOrderTest extends TestCase
     public function test_it_rejects_invalid_bangladesh_phone_number(): void
     {
         $response = $this->postJson(route('storefront.fast-order'), [
+            '_form_timing_token' => $this->humanTimingToken(),
             'product_variant_id' => (string) $this->activeVariant->id,
             'quantity' => 1,
             'customer_name' => 'Habibur Rahman',
@@ -126,6 +128,7 @@ final class DirectOrderTest extends TestCase
     public function test_it_rejects_bot_order_when_honeypot_is_filled(): void
     {
         $response = $this->postJson(route('storefront.fast-order'), [
+            '_form_timing_token' => $this->humanTimingToken(),
             'product_variant_id' => (string) $this->activeVariant->id,
             'quantity' => 1,
             'customer_name' => 'Bot Spammer',
@@ -136,12 +139,13 @@ final class DirectOrderTest extends TestCase
         ]);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['fraud']);
+        $response->assertJsonValidationErrors(['bot_protection']);
     }
 
     public function test_it_successfully_creates_direct_order_and_redirects_to_confirmation(): void
     {
         $response = $this->post(route('storefront.fast-order'), [
+            '_form_timing_token' => $this->humanTimingToken(),
             'product_variant_id' => (string) $this->activeVariant->id,
             'quantity' => 1,
             'customer_name' => 'Tanvir Ahmed',
@@ -156,10 +160,10 @@ final class DirectOrderTest extends TestCase
 
         $response->assertRedirect(route('storefront.order-confirmed', ['order' => $order->order_number]));
 
-        // Total check: 1 * 1150 + 60 (inside dhaka) = 1210
+        // Total check: 1 * 1150 + 70 (inside dhaka default zone rate) = 1220
         $this->assertEquals('1150.0000', $order->subtotal_bdt);
-        $this->assertEquals('60.0000', $order->shipping_fee_bdt);
-        $this->assertEquals('1210.0000', $order->total_bdt);
+        $this->assertEquals('70.0000', $order->shipping_fee_bdt);
+        $this->assertEquals('1220.0000', $order->total_bdt);
         $this->assertEquals('01712345678', $order->customer_phone);
         $this->assertEquals('cash_on_delivery', $order->payment_method);
         $this->assertEquals(Order::STATUS_PENDING, $order->status);
@@ -182,6 +186,7 @@ final class DirectOrderTest extends TestCase
     public function test_it_applies_free_shipping_for_orders_at_or_above_2000_bdt(): void
     {
         $response = $this->post(route('storefront.fast-order'), [
+            '_form_timing_token' => $this->humanTimingToken(),
             'product_variant_id' => (string) $this->activeVariant->id,
             'quantity' => 2, // 2 * 1150 = 2300 >= 2000 free shipping threshold
             'customer_name' => 'Farhana Kabir',
@@ -236,5 +241,69 @@ final class DirectOrderTest extends TestCase
 
         $response = $this->get(route('storefront.order-confirmed', ['order' => $order->order_number]));
         $response->assertStatus(200);
+    }
+
+    public function test_it_rejects_scripted_order_submitted_faster_than_a_human(): void
+    {
+        $response = $this->postJson(route('storefront.fast-order'), [
+            '_form_timing_token' => $this->humanTimingToken(0.2), // submitted 0.2s after page render
+            'product_variant_id' => (string) $this->activeVariant->id,
+            'quantity' => 1,
+            'customer_name' => 'Script Runner',
+            'customer_phone' => '01711223344',
+            'delivery_address' => 'House 1, Road 1, Gulshan, Dhaka',
+            'delivery_zone' => 'inside_dhaka',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['bot_protection']);
+        $this->assertSame(0, Order::count());
+    }
+
+    public function test_it_rejects_order_without_signed_timing_token(): void
+    {
+        $response = $this->postJson(route('storefront.fast-order'), [
+            'product_variant_id' => (string) $this->activeVariant->id,
+            'quantity' => 1,
+            'customer_name' => 'Direct Api Bot',
+            'customer_phone' => '01711223344',
+            'delivery_address' => 'House 1, Road 1, Gulshan, Dhaka',
+            'delivery_zone' => 'inside_dhaka',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['bot_protection']);
+        $this->assertSame(0, Order::count());
+    }
+
+    public function test_fast_order_uses_admin_configured_zone_rate(): void
+    {
+        $zone = ShippingZone::create([
+            'code' => ShippingZone::CODE_INSIDE_DHAKA,
+            'name' => 'Inside Dhaka',
+            'estimated_days_min' => 1,
+            'estimated_days_max' => 2,
+            'is_active' => true,
+        ]);
+        $zone->rates()->create([
+            'base_rate_bdt' => '55.0000',
+            'base_weight_kg' => 1,
+            'extra_rate_per_kg_bdt' => '20.0000',
+            'is_active' => true,
+        ]);
+
+        $this->post(route('storefront.fast-order'), [
+            '_form_timing_token' => $this->humanTimingToken(),
+            'product_variant_id' => (string) $this->activeVariant->id,
+            'quantity' => 1,
+            'customer_name' => 'Nusrat Jahan',
+            'customer_phone' => '01755443322',
+            'delivery_address' => 'House 7, Road 3, Uttara, Dhaka',
+            'delivery_zone' => 'inside_dhaka',
+        ]);
+
+        $order = Order::latest('id')->firstOrFail();
+        $this->assertEquals('55.0000', $order->shipping_fee_bdt);
+        $this->assertEquals('1205.0000', $order->total_bdt);
     }
 }

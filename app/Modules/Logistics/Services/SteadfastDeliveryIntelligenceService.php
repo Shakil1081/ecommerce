@@ -43,7 +43,8 @@ final class SteadfastDeliveryIntelligenceService implements CourierDeliveryIntel
         }
 
         try {
-            $response = Http::timeout(5)
+            $response = Http::connectTimeout(3)
+                ->timeout(5)
                 ->withHeaders([
                     'Api-Key' => $this->apiKey,
                     'Secret-Key' => $this->secretKey,
