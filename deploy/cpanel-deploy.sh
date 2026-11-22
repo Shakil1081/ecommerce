@@ -27,10 +27,14 @@ if command -v composer >/dev/null 2>&1; then
     COMPOSER="composer"
 else
     if [ ! -f composer.phar ]; then
-        "$PHP_BIN" -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-        "$PHP_BIN" composer-setup.php --quiet
-        rm -f composer-setup.php
+        echo "Downloading composer.phar..."
+        # curl works on hosts where PHP's allow_url_fopen is disabled
+        curl -fsSL https://getcomposer.org/download/latest-stable/composer.phar -o composer.phar \
+            || wget -q https://getcomposer.org/download/latest-stable/composer.phar -O composer.phar \
+            || { rm -f composer.phar; echo "Could not download Composer. Upload composer.phar to this folder manually."; exit 1; }
     fi
+    "$PHP_BIN" composer.phar --version >/dev/null 2>&1 \
+        || { echo "composer.phar is broken: delete it and run this script again."; exit 1; }
     COMPOSER="$PHP_BIN composer.phar"
 fi
 
