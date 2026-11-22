@@ -146,9 +146,6 @@ const formatPrice = (amount: number): string => {
       <section class="home-hero">
         <div class="container hero-inner">
           <div class="hero-text-col">
-            <div class="hero-pill-badge">
-              <span>💎</span> Pick & Pearl • Luxury Jewelry & Designer Fashion
-            </div>
             <h1 class="hero-title">
               Elegance Redefined with <span class="highlight-pink">Pick & Pearl</span>
             </h1>
@@ -163,26 +160,6 @@ const formatPrice = (amount: number): string => {
               <a href="#bestsellers" class="btn btn-hero-secondary">
                 <span>🔥</span> View Best Sellers
               </a>
-            </div>
-
-            <!-- Trust Pills -->
-            <div class="hero-trust-bar">
-              <div class="trust-pill">
-                <span class="trust-icon">🚚</span>
-                <span>24-48h Fast Dispatch</span>
-              </div>
-              <div class="trust-pill">
-                <span class="trust-icon">🛡️</span>
-                <span>100% Genuine Import</span>
-              </div>
-              <div class="trust-pill">
-                <span class="trust-icon">💵</span>
-                <span>Cash on Delivery (COD)</span>
-              </div>
-              <div class="trust-pill">
-                <span class="trust-icon">🧾</span>
-                <span>NBR Mushak 6.3 Invoices</span>
-              </div>
             </div>
           </div>
 
@@ -733,21 +710,6 @@ const formatPrice = (amount: number): string => {
     }
   }
 
-  .hero-pill-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: $space-2;
-    padding: $space-1 $space-4;
-    border-radius: $radius-full;
-    background: $color-neutral-0;
-    border: 1px solid $color-primary-300;
-    color: $color-primary-700;
-    font-size: $fs-xs;
-    font-weight: $fw-bold;
-    margin-bottom: $space-4;
-    box-shadow: $shadow-xs;
-  }
-
   .hero-title {
     font-size: $fs-4xl;
     font-weight: $fw-extrabold;
@@ -777,7 +739,6 @@ const formatPrice = (amount: number): string => {
     display: flex;
     gap: $space-3;
     flex-wrap: wrap;
-    margin-bottom: $space-8;
 
     .btn {
       padding: $space-3 $space-6;
@@ -813,25 +774,6 @@ const formatPrice = (amount: number): string => {
         background: $color-primary-50;
         border-color: $color-primary-400;
       }
-    }
-  }
-
-  .hero-trust-bar {
-    display: flex;
-    gap: $space-4;
-    flex-wrap: wrap;
-
-    .trust-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: $space-1;
-      font-size: $fs-xs;
-      font-weight: $fw-semibold;
-      color: #4a1928;
-      background: rgba($color-neutral-0, 0.7);
-      padding: 4px $space-3;
-      border-radius: $radius-full;
-      border: 1px solid rgba($color-primary-300, 0.4);
     }
   }
 
