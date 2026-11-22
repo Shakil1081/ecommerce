@@ -42,6 +42,16 @@ fi
 
 $COMPOSER install --no-dev --optimize-autoloader --no-interaction
 
+# Fail early with a clear message if the .env database details are wrong
+"$PHP_BIN" artisan config:clear >/dev/null 2>&1 || true
+if ! "$PHP_BIN" artisan db:show >/dev/null 2>&1; then
+    echo "Cannot connect to the database. Check DB_DATABASE, DB_USERNAME and DB_PASSWORD in .env"
+    echo "(cPanel > MySQL Databases: the user must be added to the database with All Privileges)."
+    "$PHP_BIN" artisan db:show || true
+    "$PHP_BIN" artisan up || true
+    exit 1
+fi
+
 # Front-end assets built on your PC
 if [ -f deploy/build-assets.tar.gz ]; then
     rm -rf public/build
