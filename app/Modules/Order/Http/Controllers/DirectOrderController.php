@@ -236,7 +236,7 @@ final class DirectOrderController extends Controller
                 ->with('info', 'আপনার মোবাইলে একটি কোড পাঠানো হয়েছে। অর্ডার নিশ্চিত করতে কোডটি লিখুন।');
         }
 
-        return redirect()->to($redirectUrl)
-            ->with('success', 'ধন্যবাদ! আপনার অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে।');
+        // No flash message: the confirmation page itself shows the thank-you heading
+        return redirect()->to($redirectUrl);
     }
 }

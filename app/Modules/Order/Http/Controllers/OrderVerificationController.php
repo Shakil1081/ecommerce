@@ -78,8 +78,7 @@ final class OrderVerificationController extends Controller
             ]);
         });
 
-        return redirect()->route('storefront.order-confirmed', ['order' => $orderModel->order_number])
-            ->with('success', 'Your phone number is verified. Thank you, your order is confirmed!');
+        return redirect()->route('storefront.order-confirmed', ['order' => $orderModel->order_number]);
     }
 
     public function resend(Request $request, string $order, SendOrderVerificationOtpAction $sendOtp): RedirectResponse
