@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Admin\Http\Controllers\AdminProfileController;
 use App\Modules\Admin\Http\Controllers\AiAdminController;
 use App\Modules\Admin\Http\Controllers\AuditLogAdminController;
 use App\Modules\Admin\Http\Controllers\AuthController;
@@ -206,6 +207,11 @@ Route::prefix('webhooks/voice')->name('webhooks.voice.')->group(function () {
 | Super Admin bypasses permission checks via Gate::before (AppServiceProvider).
 */
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(function () {
+    // My Profile: every staff member edits only their own account, so no module permission applies
+    Route::get('/profile', [AdminProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [AdminProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [AdminProfileController::class, 'updatePassword'])->name('profile.password');
+
     // Land each staff member on the first back-office area their role can access
     Route::get('/', function (Request $request) {
         $user = $request->user();

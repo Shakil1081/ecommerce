@@ -333,13 +333,20 @@ const handleLogout = () => {
         </Link>
 
         <!-- Sidebar User Profile -->
-        <div v-if="!sidebarCollapsed" class="sidebar-user-card">
+        <Link
+          v-if="!sidebarCollapsed"
+          href="/admin/profile"
+          class="sidebar-user-card"
+          :class="{ 'is-active': isPathActive('/admin/profile') }"
+          title="My Profile: edit name, email and password"
+        >
           <span class="user-avatar-badge">👤</span>
           <div class="sidebar-user-details">
             <span class="sidebar-user-name">{{ page.props.auth?.user?.name || 'Administrator' }}</span>
-            <span class="sidebar-user-email">{{ page.props.auth?.user?.email || 'admin@ecommerce.test' }}</span>
+            <span class="sidebar-user-email">{{ page.props.auth?.user?.email }}</span>
+            <span class="sidebar-user-edit">Edit profile & password →</span>
           </div>
-        </div>
+        </Link>
         <button
           type="button"
           class="sidebar-logout-btn"
@@ -364,10 +371,10 @@ const handleLogout = () => {
           <Link href="/shop" class="topbar-storefront-link" title="Open Storefront">
             <span>🛍️</span> Storefront
           </Link>
-          <div class="user-profile">
+          <Link href="/admin/profile" class="user-profile" title="My Profile: edit name, email and password">
             <span class="user-avatar">👤</span>
             <span class="user-name">{{ page.props.auth?.user?.name || 'Administrator' }}</span>
-          </div>
+          </Link>
           <button
             type="button"
             class="topbar-logout-btn"
@@ -847,7 +854,22 @@ const handleLogout = () => {
       display: flex;
       align-items: center;
       gap: $space-3;
-      padding: 0 $space-2;
+      padding: $space-2;
+      border-radius: $radius-lg;
+      text-decoration: none;
+      transition: background $transition-fast;
+
+      &:hover,
+      &.is-active {
+        background: hsl(342, 85%, 96%);
+      }
+
+      .sidebar-user-edit {
+        font-size: $fs-2xs;
+        font-weight: $fw-semibold;
+        color: $color-primary-600;
+        margin-top: 2px;
+      }
 
       .user-avatar-badge {
         font-size: $fs-base;
@@ -991,6 +1013,14 @@ const handleLogout = () => {
       font-size: $fs-sm;
       font-weight: $fw-medium;
       color: hsl(342, 35%, 25%);
+      text-decoration: none;
+      padding: 4px $space-2;
+      border-radius: $radius-full;
+      transition: background $transition-fast;
+
+      &:hover {
+        background: hsl(342, 85%, 96%);
+      }
 
       .user-avatar {
         display: inline-flex;
