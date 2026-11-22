@@ -47,7 +47,7 @@ final class AdminAccessControlTest extends TestCase
     {
         $response = $this->call($method, $uri);
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/wp-admin');
     }
 
     /**

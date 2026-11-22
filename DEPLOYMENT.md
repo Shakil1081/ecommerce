@@ -156,7 +156,7 @@ user=www-data
 
 After each deploy, run `php artisan inertia:stop-ssr`. Supervisor then restarts it with the new build.
 
-## 5. Set up in the admin panel (`/login`)
+## 5. Set up in the admin panel (`/wp-admin`)
 
 - [ ] **Change the default admin password.**
 - [ ] **Settings › Store Pages**: replace every `[placeholder]`: phone, email, address, trade licence and VAT BIN. bKash, Nagad and SSLCommerz check these pages during merchant approval.

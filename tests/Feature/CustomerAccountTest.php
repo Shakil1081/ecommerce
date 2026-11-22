@@ -91,7 +91,7 @@ final class CustomerAccountTest extends TestCase
     public function test_guests_are_sent_to_customer_login_not_staff_login(): void
     {
         $this->get('/account/orders')->assertRedirect('/account/login');
-        $this->get('/admin/products')->assertRedirect('/login');
+        $this->get('/admin/products')->assertRedirect('/wp-admin');
     }
 
     public function test_password_reset_flow(): void
@@ -216,7 +216,7 @@ final class CustomerAccountTest extends TestCase
     {
         User::factory()->create(['email' => 'shopper@example.com', 'password' => Hash::make('secret-pass-1')]);
 
-        $this->post('/login', ['email' => 'shopper@example.com', 'password' => 'secret-pass-1'])
+        $this->post('/wp-admin', ['email' => 'shopper@example.com', 'password' => 'secret-pass-1'])
             ->assertRedirect('/account');
     }
 }

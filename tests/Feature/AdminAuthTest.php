@@ -36,7 +36,7 @@ final class AdminAuthTest extends TestCase
 
     public function test_login_screen_can_be_rendered(): void
     {
-        $response = $this->get('/login');
+        $response = $this->get('/wp-admin');
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
@@ -49,14 +49,14 @@ final class AdminAuthTest extends TestCase
 
     public function test_authenticated_user_visiting_login_redirects_to_admin_dashboard(): void
     {
-        $response = $this->actingAs($this->admin)->get('/login');
+        $response = $this->actingAs($this->admin)->get('/wp-admin');
 
         $response->assertRedirect('/admin');
     }
 
     public function test_users_can_authenticate_using_the_login_screen(): void
     {
-        $response = $this->post('/login', [
+        $response = $this->post('/wp-admin', [
             'email' => 'admin@ecommerce.test',
             'password' => 'password',
         ]);
@@ -73,7 +73,7 @@ final class AdminAuthTest extends TestCase
 
     public function test_users_cannot_authenticate_with_invalid_password(): void
     {
-        $response = $this->post('/login', [
+        $response = $this->post('/wp-admin', [
             'email' => 'admin@ecommerce.test',
             'password' => 'wrong-password',
         ]);
@@ -89,7 +89,7 @@ final class AdminAuthTest extends TestCase
 
     public function test_login_rejects_automated_honeypot_bot_submission(): void
     {
-        $response = $this->post('/login', [
+        $response = $this->post('/wp-admin', [
             'email' => 'admin@ecommerce.test',
             'password' => 'password',
             'user_company_fax' => 'AutomatedSpamBotValue', // Honeypot trap triggered
@@ -107,14 +107,14 @@ final class AdminAuthTest extends TestCase
     public function test_brute_force_throttling_locks_out_after_five_failed_attempts(): void
     {
         for ($i = 0; $i < 5; $i++) {
-            $this->post('/login', [
+            $this->post('/wp-admin', [
                 'email' => 'admin@ecommerce.test',
                 'password' => 'wrong-pass',
             ]);
         }
 
         // 6th attempt should be blocked with rate limiting
-        $response = $this->post('/login', [
+        $response = $this->post('/wp-admin', [
             'email' => 'admin@ecommerce.test',
             'password' => 'wrong-pass',
         ]);
@@ -132,7 +132,7 @@ final class AdminAuthTest extends TestCase
         $response = $this->actingAs($this->admin)->post('/logout');
 
         $this->assertGuest();
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/wp-admin');
         $response->assertSessionHas('info');
 
         // Verify audit log entry
@@ -147,6 +147,6 @@ final class AdminAuthTest extends TestCase
         $response = $this->actingAs($this->admin)->post('/admin/logout');
 
         $this->assertGuest();
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/wp-admin');
     }
 }

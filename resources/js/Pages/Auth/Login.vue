@@ -168,7 +168,7 @@ const submit = async () => {
     }
   }
 
-  form.post('/login', {
+  form.post('/wp-admin', {
     onFinish: () => {
       form.reset('password');
       // Reset v2 widget if exists

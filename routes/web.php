@@ -52,8 +52,9 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // Authentication (Login & Logout)
-Route::get('/login', [AuthController::class, 'create'])->name('login');
-Route::post('/login', [AuthController::class, 'store'])->name('login.store');
+// Staff (back-office) login. Customers use /account/login.
+Route::get('/wp-admin', [AuthController::class, 'create'])->name('login');
+Route::post('/wp-admin', [AuthController::class, 'store'])->name('login.store');
 Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
 Route::post('/admin/logout', [AuthController::class, 'destroy'])->name('admin.logout');
 Route::get('/logout', [AuthController::class, 'destroy']);
