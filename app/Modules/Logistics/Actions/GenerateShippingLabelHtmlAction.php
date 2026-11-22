@@ -259,6 +259,7 @@ HTML;
             $itemsRows .= "<tr><td>{$name}<br><span style='color:#64748b;'>{$sku}</span></td><td style='text-align:right;'>x{$qty}</td></tr>";
         }
 
+        $storeName = htmlspecialchars((string) config('app.name', 'Pick & Pearl'));
         $customerName = htmlspecialchars($order->customer_name);
         $customerPhone = htmlspecialchars($order->customer_phone);
         $deliveryAddress = htmlspecialchars($order->delivery_address);
@@ -284,7 +285,7 @@ HTML;
             <!-- Header -->
             <div class="header">
                 <div>
-                    <div class="merchant-title">E-Commerce BD</div>
+                    <div class="merchant-title">{$storeName}</div>
                     <div class="merchant-sub">Direct Nationwide Dispatch</div>
                 </div>
                 <div class="courier-badge">{$courierName}</div>

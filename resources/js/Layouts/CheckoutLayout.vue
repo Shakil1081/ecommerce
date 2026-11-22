@@ -13,8 +13,12 @@ defineProps<{
     <!-- Minimal Distraction-Free Header -->
     <header class="checkout-header">
       <div class="container checkout-header-container">
-        <Link href="/" class="checkout-logo">
-          <span class="logo-accent">E</span>COMMERCE
+        <Link href="/" class="checkout-logo" aria-label="Pick & Pearl home">
+          <img src="/images/logo.jpg" alt="Pick & Pearl" class="logo-img">
+          <span class="logo-text">
+            <span class="logo-name">PICK &amp; PEARL</span>
+            <span class="logo-tagline">JEWELRY • FASHION • ACCESSORIES</span>
+          </span>
         </Link>
 
         <div class="checkout-security-badge">
@@ -39,7 +43,7 @@ defineProps<{
     <!-- Minimal Checkout Footer -->
     <footer class="checkout-footer">
       <div class="container footer-content">
-        <p>&copy; 2026 Enterprise E-Commerce Platform. All transactions are secure and encrypted.</p>
+        <p>&copy; {{ new Date().getFullYear() }} Pick &amp; Pearl. All transactions are secure and encrypted.</p>
         <div class="checkout-footer-links">
           <Link href="/privacy">Privacy Policy</Link>
           <Link href="/terms">Terms of Service</Link>
@@ -67,15 +71,52 @@ defineProps<{
     @include flex-between;
   }
 
+  // Same brand mark as the storefront header (StorefrontLayout .brand-logo)
   .checkout-logo {
-    font-family: $font-heading;
-    font-size: $fs-2xl;
-    font-weight: $fw-extrabold;
-    color: $color-neutral-900;
-    letter-spacing: -0.03em;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    text-decoration: none;
 
-    .logo-accent {
-      color: $color-primary-600;
+    .logo-img {
+      width: 42px;
+      height: 42px;
+      border-radius: $radius-full;
+      object-fit: cover;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      border: 1.5px solid #d4af37;
+    }
+
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+
+    .logo-name {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      color: $color-neutral-900;
+
+      @media (max-width: 640px) {
+        font-size: 1.05rem;
+      }
+    }
+
+    .logo-tagline {
+      font-size: 8.5px;
+      letter-spacing: 0.12em;
+      color: $color-neutral-500;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-top: 1px;
+
+      @media (max-width: 640px) {
+        display: none;
+      }
     }
   }
 
