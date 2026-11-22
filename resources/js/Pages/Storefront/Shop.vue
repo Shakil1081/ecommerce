@@ -787,8 +787,6 @@ const formatPrice = (amount: number): string => {
                 <div class="card-body">
                   <div class="card-category-brand">
                     <span class="brand-text">{{ product.brand_name }}</span>
-                    <span class="cat-sep">•</span>
-                    <span class="cat-text">{{ product.category_name }}</span>
                   </div>
 
                   <h2 class="product-title">
@@ -796,20 +794,6 @@ const formatPrice = (amount: number): string => {
                       {{ product.name }}
                     </Link>
                   </h2>
-
-                  <!-- Color / Size Attribute Indicators -->
-                  <div class="variant-tags-wrap" v-if="product.available_colors.length > 0 || product.available_sizes.length > 0">
-                    <span v-for="color in product.available_colors.slice(0, 3)" :key="color" class="color-dot-tag">
-                      <span class="micro-color-dot" :style="{ backgroundColor: getColorHex(color) }"></span>
-                      {{ color }}
-                    </span>
-                    <span v-for="size in product.available_sizes.slice(0, 2)" :key="size" class="size-pill-tag">
-                      {{ size }}
-                    </span>
-                    <span v-if="product.available_colors.length > 3" class="more-attrs">
-                      +{{ product.available_colors.length - 3 }} more
-                    </span>
-                  </div>
 
                   <!-- Price Block -->
                   <div class="price-row">

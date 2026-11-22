@@ -238,22 +238,11 @@ const formatPrice = (amount: number): string => {
               <div class="card-body">
                 <div class="card-category-brand">
                   <span class="brand-text">{{ product.brand_name }}</span>
-                  <span class="cat-sep">•</span>
-                  <span>{{ product.category_name }}</span>
                 </div>
 
                 <h3 class="product-title">
                   <Link :href="`/products/${product.slug}`">{{ product.name }}</Link>
                 </h3>
-
-                <div v-if="product.available_colors.length > 0 || product.available_sizes.length > 0" class="variant-tags-wrap">
-                  <span v-for="c in product.available_colors.slice(0, 3)" :key="c" class="color-dot-tag">
-                    {{ c }}
-                  </span>
-                  <span v-for="s in product.available_sizes.slice(0, 2)" :key="s" class="size-pill-tag">
-                    {{ s }}
-                  </span>
-                </div>
 
                 <div class="price-row">
                   <div>
@@ -348,22 +337,11 @@ const formatPrice = (amount: number): string => {
               <div class="card-body">
                 <div class="card-category-brand">
                   <span class="brand-text">{{ product.brand_name }}</span>
-                  <span class="cat-sep">•</span>
-                  <span>{{ product.category_name }}</span>
                 </div>
 
                 <h3 class="product-title">
                   <Link :href="`/products/${product.slug}`">{{ product.name }}</Link>
                 </h3>
-
-                <div v-if="product.available_colors.length > 0 || product.available_sizes.length > 0" class="variant-tags-wrap">
-                  <span v-for="c in product.available_colors.slice(0, 3)" :key="c" class="color-dot-tag">
-                    {{ c }}
-                  </span>
-                  <span v-for="s in product.available_sizes.slice(0, 2)" :key="s" class="size-pill-tag">
-                    {{ s }}
-                  </span>
-                </div>
 
                 <div class="price-row">
                   <div>
@@ -461,22 +439,11 @@ const formatPrice = (amount: number): string => {
               <div class="card-body">
                 <div class="card-category-brand">
                   <span class="brand-text">{{ product.brand_name }}</span>
-                  <span class="cat-sep">•</span>
-                  <span>{{ product.category_name }}</span>
                 </div>
 
                 <h3 class="product-title">
                   <Link :href="`/products/${product.slug}`">{{ product.name }}</Link>
                 </h3>
-
-                <div v-if="product.available_colors.length > 0 || product.available_sizes.length > 0" class="variant-tags-wrap">
-                  <span v-for="c in product.available_colors.slice(0, 3)" :key="c" class="color-dot-tag">
-                    {{ c }}
-                  </span>
-                  <span v-for="s in product.available_sizes.slice(0, 2)" :key="s" class="size-pill-tag">
-                    {{ s }}
-                  </span>
-                </div>
 
                 <div class="price-row">
                   <div>
