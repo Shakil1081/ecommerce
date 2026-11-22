@@ -27,96 +27,103 @@ interface MenuGroup {
 
 const menuGroups: MenuGroup[] = [
   {
-    id: 'procurement',
-    title: 'Procurement & Sourcing',
-    icon: '🏢',
+    id: 'catalog',
+    title: 'Products',
+    icon: '🏷️',
     items: [
-      { title: 'Suppliers Directory', href: '/admin/procurement/suppliers', icon: '📋' },
-      { title: 'Global Import Orders', href: '/admin/procurement/import-orders', icon: '🚢' },
-      { title: 'Local Purchase Orders', href: '/admin/procurement/local-pos', icon: '🧾' },
-      { title: 'Inward GRN Receiving', href: '/admin/procurement/grn', icon: '📥' },
+      { title: 'Product List', href: '/admin/products', icon: '🏷️' },
+      { title: 'Add Product', href: '/admin/products/create', icon: '➕', highlight: true },
+      { title: 'Categories', href: '/admin/categories', icon: '📁' },
+      { title: 'Add Category', href: '/admin/categories?action=create', icon: '➕' },
+      { title: 'Reviews', href: '/admin/reviews', icon: '⭐' },
     ],
   },
   {
-    id: 'catalog',
-    title: 'Operations & Catalog',
-    icon: '📦',
+    id: 'orders',
+    title: 'Orders',
+    icon: '🛍️',
     items: [
-      { title: 'Categories', href: '/admin/categories', icon: '📁' },
-      { title: 'Add Category', href: '/admin/categories?action=create', icon: '➕' },
-      { title: 'Product Catalog', href: '/admin/products', icon: '🏷️' },
-      { title: 'Add New Product', href: '/admin/products/create', icon: '➕', highlight: true },
-      { title: 'Product Reviews', href: '/admin/reviews', icon: '⭐' },
-      { title: 'Orders & Anti-Fraud', href: '/admin/orders', icon: '🛍️' },
-      { title: 'Fraud Directory', href: '/admin/fraud-directory', icon: '🛡️' },
+      { title: 'Order List', href: '/admin/orders', icon: '🛍️' },
+      { title: 'Returns & Refunds', href: '/admin/tax-compliance/rma', icon: '🔄' },
+      { title: 'Blocked Customers', href: '/admin/fraud-directory', icon: '🚫' },
     ],
   },
   {
     id: 'logistics',
-    title: 'Couriers & Logistics',
+    title: 'Delivery',
     icon: '🚚',
     items: [
-      { title: 'Delivery & COD Overview', href: '/admin/logistics/delivery-overview', icon: '📊', highlight: true },
-      { title: 'Courier Gateways', href: '/admin/settings/couriers', icon: '⚙️' },
-      { title: 'Scan & Handover Parcels', href: '/admin/orders/scan-handover', icon: '📦' },
-      { title: 'Scan Returned Parcels', href: '/admin/orders/scan-returns', icon: '📷' },
-      { title: 'Delivery Zones & Rates', href: '/admin/logistics/zones', icon: '🗺️' },
-      { title: 'COD Reconciliation', href: '/admin/logistics/cod-reconciliation', icon: '💰' },
+      { title: 'Delivery Overview', href: '/admin/logistics/delivery-overview', icon: '📊', highlight: true },
+      { title: 'Send Parcels', href: '/admin/orders/scan-handover', icon: '📦' },
+      { title: 'Returned Parcels', href: '/admin/orders/scan-returns', icon: '📷' },
+      { title: 'Cash on Delivery', href: '/admin/logistics/cod-reconciliation', icon: '💰' },
+      { title: 'Delivery Charges', href: '/admin/logistics/zones', icon: '🗺️' },
+      { title: 'Courier Settings', href: '/admin/settings/couriers', icon: '⚙️' },
     ],
   },
   {
-    id: 'payments',
-    title: 'Payments & Security',
-    icon: '💳',
+    id: 'procurement',
+    title: 'Purchases',
+    icon: '🏢',
     items: [
-      { title: 'Payment Gateways', href: '/admin/settings/payment-gateways', icon: '💳' },
-      { title: 'Bot Security & Captcha', href: '/admin/settings/bot-security', icon: '🛡️' },
-      { title: 'Roles & Permissions', href: '/admin/roles', icon: '👥' },
-      { title: 'Staff Management', href: '/admin/staff', icon: '👤' },
+      { title: 'Suppliers', href: '/admin/procurement/suppliers', icon: '📋' },
+      { title: 'Import Orders', href: '/admin/procurement/import-orders', icon: '🚢' },
+      { title: 'Local Purchases', href: '/admin/procurement/local-pos', icon: '🧾' },
+      { title: 'Receive Stock', href: '/admin/procurement/grn', icon: '📥' },
     ],
   },
   {
     id: 'communication',
-    title: 'Communication & Marketing',
+    title: 'Marketing & Messages',
     icon: '💬',
     items: [
-      { title: 'SMTP Mail Settings', href: '/admin/communication/mail-settings', icon: '📧' },
-      { title: 'SMS Gateways & OTP', href: '/admin/communication/sms-settings', icon: '📱' },
-      { title: 'AI Voice Verification', href: '/admin/communication/voice-settings', icon: '📞' },
-      { title: 'Cart Recovery Sequencer', href: '/admin/marketing/cart-recovery', icon: '🛒' },
+      { title: 'Abandoned Carts', href: '/admin/marketing/cart-recovery', icon: '🛒' },
+      { title: 'SMS Settings', href: '/admin/communication/sms-settings', icon: '📱' },
+      { title: 'Email Settings', href: '/admin/communication/mail-settings', icon: '📧' },
+      { title: 'Phone Call Settings', href: '/admin/communication/voice-settings', icon: '📞' },
     ],
   },
   {
     id: 'tax',
-    title: 'Tax & NBR Compliance',
+    title: 'VAT & Tax',
     icon: '🏛️',
     items: [
       { title: 'Tax Overview', href: '/admin/tax-compliance', icon: '📊' },
-      { title: 'Mushak 6.3 (Invoices)', href: '/admin/tax-compliance/mushak-6-3', icon: '🧾' },
-      { title: 'Mushak 9.1 (Returns)', href: '/admin/tax-compliance/mushak-9-1', icon: '📈' },
-      { title: 'Mushak 6.6 (VDS)', href: '/admin/tax-compliance/mushak-6-6', icon: '📑' },
-      { title: 'RMA & Credit Notes', href: '/admin/tax-compliance/rma', icon: '🔄' },
-      { title: 'Mushak 6.1 / 6.2', href: '/admin/tax-compliance/registers', icon: '📖' },
+      { title: 'VAT Invoices (6.3)', href: '/admin/tax-compliance/mushak-6-3', icon: '🧾' },
+      { title: 'Monthly VAT Return (9.1)', href: '/admin/tax-compliance/mushak-9-1', icon: '📈' },
+      { title: 'VDS Certificates (6.6)', href: '/admin/tax-compliance/mushak-6-6', icon: '📑' },
+      { title: 'Purchase & Sales Registers', href: '/admin/tax-compliance/registers', icon: '📖' },
     ],
   },
   {
     id: 'analytics',
-    title: 'Analytics & Audit',
+    title: 'Reports',
     icon: '📈',
     items: [
-      { title: 'Trading P&L', href: '/admin/analytics/trading-pnl', icon: '💹' },
-      { title: 'Audit Trail', href: '/admin/audit-logs', icon: '📋' },
+      { title: 'Profit & Loss', href: '/admin/analytics/trading-pnl', icon: '💹' },
+      { title: 'Activity Log', href: '/admin/audit-logs', icon: '📋' },
+    ],
+  },
+  {
+    id: 'payments',
+    title: 'Staff & Security',
+    icon: '👥',
+    items: [
+      { title: 'Staff', href: '/admin/staff', icon: '👤' },
+      { title: 'Roles & Permissions', href: '/admin/roles', icon: '👥' },
+      { title: 'Spam Protection', href: '/admin/settings/bot-security', icon: '🛡️' },
     ],
   },
   {
     id: 'system',
-    title: 'System & AI Settings',
+    title: 'Settings',
     icon: '⚙️',
     items: [
-      { title: 'Store Pages & Policies', href: '/admin/pages', icon: '📄' },
-      { title: 'AI Engine Settings', href: '/admin/ai-settings', icon: '🤖' },
-      { title: 'Multi-Cloud Storage', href: '/admin/settings/media-storage', icon: '☁️' },
-      { title: 'System Info & Updates', href: '/admin/settings/system', icon: 'ℹ️' },
+      { title: 'Payment Methods', href: '/admin/settings/payment-gateways', icon: '💳' },
+      { title: 'Store Pages', href: '/admin/pages', icon: '📄' },
+      { title: 'Image Storage', href: '/admin/settings/media-storage', icon: '☁️' },
+      { title: 'AI Settings', href: '/admin/ai-settings', icon: '🤖' },
+      { title: 'System Info', href: '/admin/settings/system', icon: 'ℹ️' },
     ],
   },
 ];
@@ -126,13 +133,23 @@ const normalizeUrl = (url: string) => {
   return url.split('?')[0].replace(/\/+$/, '');
 };
 
+const matchesPath = (current: string, target: string) => current === target || current.startsWith(target + '/');
+
 const isPathActive = (href: string) => {
   const current = normalizeUrl(page.url);
   const target = normalizeUrl(href);
   if (target === '/admin' || target === '/admin/dashboard') {
     return current === '/admin' || current === '/admin/dashboard';
   }
-  return current === target || current.startsWith(target + '/');
+  if (!matchesPath(current, target)) {
+    return false;
+  }
+  // Only the most specific menu link is active (e.g. /admin/orders/scan-handover
+  // highlights "Send Parcels", not also "Order List")
+  return !menuGroups.some((group) => group.items.some((item) => {
+    const other = normalizeUrl(item.href);
+    return other.length > target.length && matchesPath(current, other);
+  }));
 };
 
 const isGroupActive = (group: MenuGroup) => {
