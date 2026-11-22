@@ -33,6 +33,7 @@ class DatabaseSeeder extends Seeder
         }
 
         // 3. Seed Master Geo & Logistics & AI Configurations & Catalog
+        // Demo catalog (CatalogSeeder, LadiesBagsSeeder) is seeded in every environment, including production
         $this->call([
             CatalogSeeder::class,
             LadiesBagsSeeder::class,
@@ -41,8 +42,12 @@ class DatabaseSeeder extends Seeder
             CourierGatewaySeeder::class,
             SmsGatewaySeeder::class,
             AiModelSettingSeeder::class,
-            AuditLogSeeder::class,
             BotSecuritySettingSeeder::class,
         ]);
+
+        // Sample audit-trail history is for demos only: never invent audit records on a live store
+        if (! app()->environment('production')) {
+            $this->call(AuditLogSeeder::class);
+        }
     }
 }

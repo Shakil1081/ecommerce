@@ -18,3 +18,7 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+
+# cPanel deploy artefacts
+/deploy/build-assets.tar.gz
+/composer.phar

@@ -71,6 +71,39 @@ class BotSecuritySetting extends Model
         ];
     }
 
+    /** Google's public reCAPTCHA v2 test keys: every challenge passes. Development only. */
+    private const GOOGLE_TEST_SITE_KEY = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
+
+    private const GOOGLE_TEST_SECRET_KEY = '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe';
+
+    /**
+     * Keys for the first bot-security record. Outside production, missing keys fall back to Google's
+     * test keys. In production they never do: test keys always pass, so they would look like
+     * protection without providing any. Returns null when nothing real is configured.
+     *
+     * @return array{provider: string, site_key: string, secret_key: string}|null
+     */
+    public static function initialKeys(): ?array
+    {
+        $siteKey = (string) config('security.captcha.site_key');
+        $secretKey = (string) config('security.captcha.secret_key');
+
+        if ($siteKey === '' || $secretKey === '') {
+            if (app()->environment('production')) {
+                return null;
+            }
+
+            $siteKey = self::GOOGLE_TEST_SITE_KEY;
+            $secretKey = self::GOOGLE_TEST_SECRET_KEY;
+        }
+
+        return [
+            'provider' => (string) config('security.captcha.provider', self::PROVIDER_RECAPTCHA_V2),
+            'site_key' => $siteKey,
+            'secret_key' => $secretKey,
+        ];
+    }
+
     /**
      * Get the currently active bot security configuration if enabled.
      */
@@ -83,17 +116,14 @@ class BotSecuritySetting extends Model
             return $active;
         }
 
-        // If the table is completely empty (first run), initialize with default Google reCAPTCHA v2 configuration
-        if (self::query()->count() === 0) {
-            $siteKey = (string) env('RECAPTCHA_SITE_KEY', env('GOOGLE_RECAPTCHA_SITE_KEY', '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'));
-            $secretKey = (string) env('RECAPTCHA_SECRET_KEY', env('GOOGLE_RECAPTCHA_SECRET_KEY', '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'));
-            $provider = (string) env('RECAPTCHA_PROVIDER', self::PROVIDER_RECAPTCHA_V2);
-
+        // If the table is completely empty (first run), initialize from config/security.php
+        $initialKeys = self::initialKeys();
+        if ($initialKeys !== null && self::query()->count() === 0) {
             try {
                 return self::create([
-                    'provider' => $provider,
-                    'site_key' => $siteKey,
-                    'secret_key' => $secretKey,
+                    'provider' => $initialKeys['provider'],
+                    'site_key' => $initialKeys['site_key'],
+                    'secret_key' => $initialKeys['secret_key'],
                     'is_active' => true,
                     'score_threshold' => 0.50,
                     'pages_enabled' => [self::PAGE_LOGIN, self::PAGE_CHECKOUT, self::PAGE_REGISTER],

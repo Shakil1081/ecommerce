@@ -10,20 +10,27 @@ use Illuminate\Database\Seeder;
 class BotSecuritySettingSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Seed the first CAPTCHA configuration from config/security.php.
+     *
+     * In production without real RECAPTCHA_* keys nothing is seeded (Google's test keys always pass);
+     * configure the keys in Admin > Staff & Security > Spam Protection instead.
      */
     public function run(): void
     {
-        $siteKey = (string) env('RECAPTCHA_SITE_KEY', env('GOOGLE_RECAPTCHA_SITE_KEY', '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'));
-        $secretKey = (string) env('RECAPTCHA_SECRET_KEY', env('GOOGLE_RECAPTCHA_SECRET_KEY', '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'));
-        $provider = (string) env('RECAPTCHA_PROVIDER', BotSecuritySetting::PROVIDER_RECAPTCHA_V2);
+        $keys = BotSecuritySetting::initialKeys();
+
+        if ($keys === null) {
+            $this->command?->warn('No RECAPTCHA_SITE_KEY / RECAPTCHA_SECRET_KEY set: CAPTCHA not seeded. Configure it in Admin > Spam Protection.');
+
+            return;
+        }
 
         BotSecuritySetting::firstOrCreate(
             ['id' => 1],
             [
-                'provider' => $provider,
-                'site_key' => $siteKey,
-                'secret_key' => $secretKey,
+                'provider' => $keys['provider'],
+                'site_key' => $keys['site_key'],
+                'secret_key' => $keys['secret_key'],
                 'is_active' => true,
                 'score_threshold' => 0.50,
                 'pages_enabled' => [

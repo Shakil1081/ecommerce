@@ -37,4 +37,18 @@ return [
     */
     'trusted_proxies' => env('TRUSTED_PROXIES'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Initial CAPTCHA keys
+    |--------------------------------------------------------------------------
+    | Only used to create the first bot-security record when the table is empty; afterwards the
+    | keys are managed in Admin > Staff & Security > Spam Protection. Read here (not via env()
+    | in app code) so they survive `php artisan config:cache`.
+    */
+    'captcha' => [
+        'provider' => env('RECAPTCHA_PROVIDER', 'recaptcha_v2'),
+        'site_key' => env('RECAPTCHA_SITE_KEY', env('GOOGLE_RECAPTCHA_SITE_KEY')),
+        'secret_key' => env('RECAPTCHA_SECRET_KEY', env('GOOGLE_RECAPTCHA_SECRET_KEY')),
+    ],
+
 ];
