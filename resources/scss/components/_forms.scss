@@ -1,0 +1,95 @@
+@use '../abstracts/variables' as *;
+
+// ==============================================================================
+// Storefront form fields (account, auth, reviews, returns)
+// ==============================================================================
+
+.sf-field {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  margin-bottom: $space-4;
+
+  &-label {
+    font-size: $fs-sm;
+    font-weight: $fw-semibold;
+    color: $color-neutral-800;
+  }
+
+  &-hint {
+    font-size: $fs-xs;
+    color: $color-neutral-500;
+  }
+
+  &-error {
+    font-size: $fs-xs;
+    color: $color-danger;
+  }
+}
+
+.sf-input {
+  width: 100%;
+  padding: 11px 14px;
+  font-size: 16px; // 16px prevents iOS zoom on focus
+  font-family: inherit;
+  color: $color-neutral-900;
+  background: $color-neutral-0;
+  border: 1px solid $color-neutral-300;
+  border-radius: $radius-md;
+  transition: border-color $transition-fast, box-shadow $transition-fast;
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary-500;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06), 0 0 0 1px $color-primary-500;
+  }
+
+  &.has-error {
+    border-color: $color-danger;
+  }
+}
+
+textarea.sf-input {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.sf-check {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  font-size: $fs-sm;
+  color: $color-neutral-700;
+  cursor: pointer;
+}
+
+.sf-alert {
+  padding: $space-3 $space-4;
+  border-radius: $radius-md;
+  font-size: $fs-sm;
+  margin-bottom: $space-4;
+
+  &.is-error {
+    background: rgba(220, 38, 38, 0.08);
+    color: #b91c1c;
+  }
+
+  &.is-success {
+    background: rgba(22, 163, 74, 0.1);
+    color: #15803d;
+  }
+
+  &.is-info {
+    background: rgba(37, 99, 235, 0.08);
+    color: #1d4ed8;
+  }
+}
+
+// Visually hidden honeypot field (bots fill it, people never see it)
+.sf-honeypot {
+  position: absolute !important;
+  left: -10000px !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}

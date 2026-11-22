@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Modules\Cart\Http\Resources\CartResource;
 use App\Modules\Cart\Models\Cart;
 use App\Modules\Common\Models\BangladeshDistrict;
+use App\Modules\Logistics\Actions\CalculateShippingRateAction;
 use App\Modules\Marketing\Actions\MarkCartAsRecoveredAction;
 use App\Modules\Marketing\Actions\RecordCouponUsageAction;
 use App\Modules\Marketing\Models\Coupon;
@@ -24,7 +25,8 @@ final class CreateOrderFromCartAction
 {
     public function __construct(
         private readonly RecordCouponUsageAction $recordCouponUsage,
-        private readonly CalculateOrderFraudRiskScoreAction $calculateFraudScore
+        private readonly CalculateOrderFraudRiskScoreAction $calculateFraudScore,
+        private readonly CalculateShippingRateAction $calculateShippingRate
     ) {}
 
     /**
@@ -57,7 +59,43 @@ final class CreateOrderFromCartAction
             ]);
         }
 
-        return DB::transaction(function () use ($cart, $customerData, $user): Order {
+        // Fraud scoring runs BEFORE the DB transaction: it may call external courier APIs,
+        // and must not hold row locks / an open transaction while waiting on the network.
+        $paymentMethod = $customerData['payment_method'] ?? 'cash_on_delivery';
+        $now = Carbon::now();
+        $orderNumber = 'ORD-'.$now->format('Ymd').'-'.strtoupper(Str::random(6));
+
+        $ipAddress = $customerData['ip_address'] ?? request()->ip();
+        $deviceFingerprint = $customerData['device_fingerprint'] ?? (request()->header('X-Device-Fingerprint') ?: null);
+        $userAgent = $customerData['user_agent'] ?? request()->userAgent();
+
+        // Perform multi-signal anti-fraud risk assessment
+        $fraudAssessment = ($this->calculateFraudScore)([
+            'customer_name' => $customerData['customer_name'],
+            'customer_phone' => $customerData['customer_phone'],
+            'customer_email' => $customerData['customer_email'] ?? null,
+            'delivery_address' => $customerData['delivery_address'],
+            'payment_method' => $paymentMethod,
+            'ip_address' => $ipAddress,
+            'device_fingerprint' => $deviceFingerprint,
+            'honeypot_value' => $customerData['honeypot_value'] ?? $customerData['user_company_fax'] ?? null,
+            'timing_token' => $customerData['timing_token'] ?? $customerData['_form_timing_token'] ?? null,
+            'skip_courier_lookup' => $customerData['skip_courier_lookup'] ?? false,
+        ]);
+
+        if ($fraudAssessment->riskLevel === OrderFraudRiskAssessmentDto::LEVEL_BLACKLISTED) {
+            throw ValidationException::withMessages([
+                'fraud' => ['Your order submission could not be processed. Please contact customer support.'],
+            ]);
+        }
+
+        if ($paymentMethod === 'cash_on_delivery' && ! $fraudAssessment->isCodAllowed) {
+            throw ValidationException::withMessages([
+                'payment_method' => ['Cash on Delivery is unavailable for this order due to elevated delivery risk. Please choose an online payment method or prepay the advance delivery fee.'],
+            ]);
+        }
+
+        return DB::transaction(function () use ($cart, $customerData, $user, $paymentMethod, $now, $orderNumber, $ipAddress, $deviceFingerprint, $userAgent, $fraudAssessment): Order {
             // Resolve district and delivery zone
             $district = BangladeshDistrict::findOrFail($customerData['district_id']);
             $deliveryZone = $district->zone_type;
@@ -72,54 +110,14 @@ final class CreateOrderFromCartAction
                 }
             }
 
-            $shippingFee = '0.0000';
-            if (! $isFreeShipping) {
-                $shippingFee = match ($deliveryZone) {
-                    'dhaka_suburbs' => '100.0000',
-                    'outside_dhaka' => '130.0000',
-                    default => '60.0000', // inside_dhaka
-                };
-            }
+            // Admin-configured zone rate (shipping_zones / shipping_rates), same source as the checkout UI
+            $shippingFee = $this->calculateShippingRate->feeForZone((string) $deliveryZone, $isFreeShipping);
 
             $subtotal = (string) $cart->subtotal_bdt;
             $discount = (string) $cart->discount_amount_bdt;
             $total = bcadd(bcsub($subtotal, $discount, 4), $shippingFee, 4);
             if (bccomp($total, '0.0000', 4) < 0) {
                 $total = '0.0000';
-            }
-
-            $paymentMethod = $customerData['payment_method'] ?? 'cash_on_delivery';
-            $now = Carbon::now();
-            $orderNumber = 'ORD-'.$now->format('Ymd').'-'.strtoupper(Str::random(6));
-
-            $ipAddress = $customerData['ip_address'] ?? (request()->hasHeader('X-Forwarded-For') ? request()->header('X-Forwarded-For') : request()->ip());
-            $deviceFingerprint = $customerData['device_fingerprint'] ?? (request()->header('X-Device-Fingerprint') ?: null);
-            $userAgent = $customerData['user_agent'] ?? request()->userAgent();
-
-            // Perform multi-signal anti-fraud risk assessment
-            $fraudAssessment = ($this->calculateFraudScore)([
-                'customer_name' => $customerData['customer_name'],
-                'customer_phone' => $customerData['customer_phone'],
-                'customer_email' => $customerData['customer_email'] ?? null,
-                'delivery_address' => $customerData['delivery_address'],
-                'payment_method' => $paymentMethod,
-                'ip_address' => $ipAddress,
-                'device_fingerprint' => $deviceFingerprint,
-                'honeypot_value' => $customerData['honeypot_value'] ?? $customerData['user_company_fax'] ?? null,
-                'timing_token' => $customerData['timing_token'] ?? $customerData['_form_timing_token'] ?? null,
-                'skip_courier_lookup' => $customerData['skip_courier_lookup'] ?? false,
-            ]);
-
-            if ($fraudAssessment->riskLevel === OrderFraudRiskAssessmentDto::LEVEL_BLACKLISTED) {
-                throw ValidationException::withMessages([
-                    'fraud' => ['Your order submission could not be processed. Please contact customer support.'],
-                ]);
-            }
-
-            if ($paymentMethod === 'cash_on_delivery' && ! $fraudAssessment->isCodAllowed) {
-                throw ValidationException::withMessages([
-                    'payment_method' => ['Cash on Delivery is unavailable for this order due to elevated delivery risk. Please choose an online payment method or prepay the advance delivery fee.'],
-                ]);
             }
 
             /** @var Order $order */

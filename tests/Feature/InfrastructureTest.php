@@ -34,17 +34,18 @@ class InfrastructureTest extends TestCase
     }
 
     /**
-     * Test welcome route returns successful Inertia response with required props.
+     * Test the storefront homepage returns a successful Inertia response with catalog props.
      */
-    public function test_welcome_route_renders_via_inertia(): void
+    public function test_home_route_renders_storefront_via_inertia(): void
     {
         $response = $this->get('/');
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
-            ->component('Welcome')
-            ->has('laravelVersion')
-            ->has('phpVersion')
+            ->component('Storefront/Home')
+            ->has('allProducts')
+            ->has('pagination')
+            ->has('categories')
         );
     }
 }

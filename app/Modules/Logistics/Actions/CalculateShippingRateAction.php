@@ -11,6 +11,49 @@ use App\Modules\Logistics\Models\ShippingZone;
 class CalculateShippingRateAction
 {
     /**
+     * Admin-configured flat base delivery rate (BDT) for each storefront zone.
+     *
+     * Falls back to ShippingZone::DEFAULT_ZONES when a zone or its default rate is not configured,
+     * so the checkout UI and server-side order totals always agree.
+     *
+     * @return array<string, string>
+     */
+    public function baseRatesByZone(): array
+    {
+        $rates = [];
+
+        foreach (ShippingZone::DEFAULT_ZONES as $code => $defaults) {
+            $zone = ShippingZone::query()
+                ->where('code', $code)
+                ->where('is_active', true)
+                ->first();
+
+            $rate = $zone?->rates()
+                ->where('is_active', true)
+                ->whereNull('courier_code')
+                ->first();
+
+            $rates[$code] = $rate ? (string) $rate->base_rate_bdt : $defaults['default_rate'];
+        }
+
+        return $rates;
+    }
+
+    /**
+     * Flat delivery fee (BDT, 4dp string) for a zone code, or '0.0000' when free shipping applies.
+     */
+    public function feeForZone(string $zoneCode, bool $isFreeShipping): string
+    {
+        if ($isFreeShipping) {
+            return '0.0000';
+        }
+
+        $rates = $this->baseRatesByZone();
+
+        return $rates[$zoneCode] ?? $rates[ShippingZone::CODE_OUTSIDE_DHAKA];
+    }
+
+    /**
      * Compute dynamic zone-based delivery fee for Bangladesh destination.
      */
     public function __invoke(

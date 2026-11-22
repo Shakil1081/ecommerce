@@ -100,6 +100,7 @@ final class StorefrontCheckoutTest extends TestCase
     public function test_checkout_submission_fails_when_cart_is_empty(): void
     {
         $response = $this->post('/checkout', [
+            '_form_timing_token' => $this->humanTimingToken(),
             'customer_name' => 'Sultana Razia',
             'customer_phone' => '01712349876',
             'division_id' => $this->division->id,
@@ -120,6 +121,7 @@ final class StorefrontCheckoutTest extends TestCase
         $addToCart($cart, $this->variant, 1);
 
         $response = $this->actingAs($this->user)->post('/checkout', [
+            '_form_timing_token' => $this->humanTimingToken(),
             'customer_name' => 'Sultana Razia',
             'customer_phone' => '01712349876',
             'division_id' => $this->division->id,
@@ -145,6 +147,7 @@ final class StorefrontCheckoutTest extends TestCase
         $addToCart($cart, $this->variant, 1);
 
         $response = $this->actingAs($this->user)->post('/checkout', [
+            '_form_timing_token' => $this->humanTimingToken(),
             'customer_name' => 'Fahim Ahmed',
             'customer_phone' => '01811223344',
             'delivery_zone' => 'outside_dhaka',

@@ -55,6 +55,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'settings.view' => 'View back-office system settings and storage info',
             'settings.edit' => 'Update SMTP, multi-cloud storage and store preferences',
             'rbac.manage' => 'Create and assign roles, permissions and staff accounts',
+            'analytics.view' => 'View executive trading P&L, margins and revenue analytics',
+            'audit.view' => 'Inspect the immutable enterprise audit trail',
         ],
     ];
 
@@ -87,6 +89,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'orders.view', 'orders.edit', 'orders.cancel', 'orders.fraud_review',
             'logistics.view', 'logistics.book',
             'settings.view',
+            'analytics.view',
         ]);
 
         $procurementOfficer = Role::firstOrCreate(['name' => 'Procurement Officer', 'guard_name' => 'web']);
@@ -99,6 +102,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $taxOfficer = Role::firstOrCreate(['name' => 'Accounts & VAT Officer', 'guard_name' => 'web']);
         $taxOfficer->syncPermissions([
             'tax.view', 'tax.mushak_6_3', 'tax.mushak_6_6', 'tax.mushak_9_1',
+            'analytics.view', 'audit.view',
             'procurement.view',
             'orders.view',
             'inventory.view',

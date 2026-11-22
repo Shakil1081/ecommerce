@@ -56,7 +56,8 @@ class CreateRmaRequestAction
                 'refund_status' => 'pending',
             ]);
 
-            $totalEstimatedRefund = 0.00;
+            // Money stays in DECIMAL(14,4) strings with bcmath (no float rounding drift)
+            $totalEstimatedRefund = '0.0000';
 
             foreach ($items as $itemData) {
                 /** @var OrderItem $orderItem */
@@ -69,9 +70,9 @@ class CreateRmaRequestAction
                     throw new InvalidArgumentException("Invalid return quantity {$requestedQty} for SKU: {$orderItem->sku}");
                 }
 
-                $unitPrice = (float) $orderItem->unit_price_bdt;
-                $lineRefund = round($unitPrice * $requestedQty, 4);
-                $totalEstimatedRefund += $lineRefund;
+                $unitPrice = bcadd((string) $orderItem->unit_price_bdt, '0', 4);
+                $lineRefund = bcmul($unitPrice, (string) $requestedQty, 4);
+                $totalEstimatedRefund = bcadd($totalEstimatedRefund, $lineRefund, 4);
 
                 RmaItem::create([
                     'rma_id' => $rma->id,
@@ -82,14 +83,14 @@ class CreateRmaRequestAction
                     'sku' => $orderItem->sku,
                     'quantity_requested' => $requestedQty,
                     'quantity_approved' => $requestedQty, // preliminary approval
-                    'unit_price_bdt' => number_format($unitPrice, 4, '.', ''),
-                    'line_refund_bdt' => number_format($lineRefund, 4, '.', ''),
+                    'unit_price_bdt' => $unitPrice,
+                    'line_refund_bdt' => $lineRefund,
                     'condition_note' => $itemData['condition_note'] ?? null,
                 ]);
             }
 
             $rma->updateQuietly([
-                'refund_amount_bdt' => number_format($totalEstimatedRefund, 4, '.', ''),
+                'refund_amount_bdt' => $totalEstimatedRefund,
             ]);
 
             $rma->load('items');

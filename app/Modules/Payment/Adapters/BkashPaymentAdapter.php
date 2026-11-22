@@ -19,6 +19,11 @@ use Throwable;
 
 class BkashPaymentAdapter implements PaymentGatewayContract
 {
+    /** Gateway API timeouts: never let a stalled gateway hang a worker or hold a payment row lock. */
+    private const CONNECT_TIMEOUT_SECONDS = 5;
+
+    private const TIMEOUT_SECONDS = 20;
+
     public const SANDBOX_BASE_URL = 'https://tokenized.sandbox.bka.sh/v1.2.0-beta';
 
     public const LIVE_BASE_URL = 'https://tokenized.pay.bka.sh/v1.2.0-beta';
@@ -74,7 +79,7 @@ class BkashPaymentAdapter implements PaymentGatewayContract
         }
 
         $baseUrl = $this->getBaseUrl($sandbox);
-        $response = Http::withHeaders([
+        $response = Http::connectTimeout(self::CONNECT_TIMEOUT_SECONDS)->timeout(self::TIMEOUT_SECONDS)->withHeaders([
             'username' => $username,
             'password' => $password,
             'Content-Type' => 'application/json',
@@ -133,7 +138,7 @@ class BkashPaymentAdapter implements PaymentGatewayContract
                 'merchantInvoiceNumber' => $order->order_number,
             ];
 
-            $response = Http::withHeaders([
+            $response = Http::connectTimeout(self::CONNECT_TIMEOUT_SECONDS)->timeout(self::TIMEOUT_SECONDS)->withHeaders([
                 'Authorization' => $idToken,
                 'X-APP-Key' => $creds['app_key'],
                 'Content-Type' => 'application/json',
@@ -223,7 +228,7 @@ class BkashPaymentAdapter implements PaymentGatewayContract
             $idToken = $this->getGrantToken($creds, $sandbox);
             $baseUrl = $this->getBaseUrl($sandbox);
 
-            $executeResponse = Http::withHeaders([
+            $executeResponse = Http::connectTimeout(self::CONNECT_TIMEOUT_SECONDS)->timeout(self::TIMEOUT_SECONDS)->withHeaders([
                 'Authorization' => $idToken,
                 'X-APP-Key' => $creds['app_key'],
                 'Content-Type' => 'application/json',

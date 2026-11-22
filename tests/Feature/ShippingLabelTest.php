@@ -230,7 +230,7 @@ class ShippingLabelTest extends TestCase
         $order = $this->createOrderWithItem();
 
         // 1. Single Label HTML View
-        $response = $this->actingAs($admin)->get(route('admin.orders.shipping-label', $order));
+        $response = $this->actingAsSuperAdmin($admin)->get(route('admin.orders.shipping-label', $order));
         $response->assertOk();
         $this->assertStringContainsString('100mm 150mm', $response->getContent());
 
@@ -245,7 +245,7 @@ class ShippingLabelTest extends TestCase
             ], 200),
         ]);
 
-        $bookResponse = $this->actingAs($admin)->postJson(route('admin.orders.book-courier', $order), [
+        $bookResponse = $this->actingAsSuperAdmin($admin)->postJson(route('admin.orders.book-courier', $order), [
             'courier_code' => 'steadfast',
         ]);
 
@@ -254,7 +254,7 @@ class ShippingLabelTest extends TestCase
             ->assertJsonPath('consignment_id', '777111');
 
         // 3. Bulk Label HTML View
-        $bulkLabelResponse = $this->actingAs($admin)->post(route('admin.orders.bulk-shipping-labels'), [
+        $bulkLabelResponse = $this->actingAsSuperAdmin($admin)->post(route('admin.orders.bulk-shipping-labels'), [
             'order_ids' => [$order->id],
         ]);
         $bulkLabelResponse->assertOk();

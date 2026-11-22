@@ -7,10 +7,6 @@ namespace Tests\Feature;
 use App\Modules\Common\Models\BangladeshDistrict;
 use App\Modules\Common\Models\BangladeshDivision;
 use App\Modules\Logistics\Actions\TestCourierConnectionAction;
-use App\Modules\Logistics\Contracts\CourierAdapterContract;
-use App\Modules\Logistics\DTOs\CourierBookingResultDto;
-use App\Modules\Logistics\DTOs\CourierConnectionTestResultDto;
-use App\Modules\Logistics\DTOs\CourierTrackingResultDto;
 use App\Modules\Logistics\Models\CourierConsignment;
 use App\Modules\Logistics\Models\CourierGatewaySetting;
 use App\Modules\Logistics\Services\CourierGatewayManager;
@@ -261,37 +257,7 @@ class CourierGatewaySettingsTest extends TestCase
     {
         $manager = app(CourierGatewayManager::class);
 
-        $adapter = new class implements CourierAdapterContract
-        {
-            public ?CourierGatewaySetting $receivedSetting = null;
-
-            public function code(): string
-            {
-                return 'mock_override';
-            }
-
-            public function name(): string
-            {
-                return 'Mock Override';
-            }
-
-            public function bookConsignment(Order $order, array $options = []): CourierBookingResultDto
-            {
-                return CourierBookingResultDto::failed('not implemented');
-            }
-
-            public function trackConsignment(string $trackingCodeOrId): CourierTrackingResultDto
-            {
-                return CourierTrackingResultDto::failed('not implemented');
-            }
-
-            public function test_connection(?CourierGatewaySetting $setting = null): CourierConnectionTestResultDto
-            {
-                $this->receivedSetting = $setting;
-
-                return CourierConnectionTestResultDto::success('OK');
-            }
-        };
+        $adapter = new MockCourierAdapter('mock_override', 'Mock Override');
 
         $manager->registerDriver('mock_override', $adapter);
 

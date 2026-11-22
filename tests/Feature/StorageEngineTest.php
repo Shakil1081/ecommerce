@@ -113,7 +113,7 @@ class StorageEngineTest extends TestCase
      */
     public function test_admin_can_access_media_storage_settings_page(): void
     {
-        $response = $this->get('/admin/settings/media-storage');
+        $response = $this->actingAsSuperAdmin()->get('/admin/settings/media-storage');
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page

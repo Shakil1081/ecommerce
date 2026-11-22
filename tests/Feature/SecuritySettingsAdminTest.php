@@ -28,7 +28,7 @@ final class SecuritySettingsAdminTest extends TestCase
 
     public function test_admin_can_view_bot_security_settings_page(): void
     {
-        $response = $this->actingAs($this->admin)->get('/admin/settings/bot-security');
+        $response = $this->actingAsSuperAdmin($this->admin)->get('/admin/settings/bot-security');
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
@@ -41,7 +41,7 @@ final class SecuritySettingsAdminTest extends TestCase
 
     public function test_admin_can_save_bot_security_settings(): void
     {
-        $response = $this->actingAs($this->admin)->post('/admin/settings/bot-security', [
+        $response = $this->actingAsSuperAdmin($this->admin)->post('/admin/settings/bot-security', [
             'provider' => 'recaptcha_v3',
             'site_key' => '6LeTestSiteKey123',
             'secret_key' => 'super_secret_google_key',
@@ -76,7 +76,7 @@ final class SecuritySettingsAdminTest extends TestCase
             ], 200),
         ]);
 
-        $response = $this->actingAs($this->admin)->postJson('/admin/settings/bot-security/test', [
+        $response = $this->actingAsSuperAdmin($this->admin)->postJson('/admin/settings/bot-security/test', [
             'provider' => 'recaptcha_v3',
             'site_key' => 'test_site_key',
             'secret_key' => 'test_secret_key',
@@ -97,7 +97,7 @@ final class SecuritySettingsAdminTest extends TestCase
             ], 200),
         ]);
 
-        $response = $this->actingAs($this->admin)->postJson('/admin/settings/bot-security/test', [
+        $response = $this->actingAsSuperAdmin($this->admin)->postJson('/admin/settings/bot-security/test', [
             'provider' => 'turnstile',
             'site_key' => 'turnstile_site_key',
             'secret_key' => 'turnstile_secret_key',

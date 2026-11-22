@@ -484,7 +484,7 @@ const bookCourierSingle = async (order: OrderRecord) => {
         }
       });
 
-      router.reload({ preserveScroll: true });
+      router.reload(); // Inertia v2 reloads preserve scroll & state by default
     } else {
       const errorMsg = data.message || `Failed to book order #${order.order_number} with courier.`;
       courierNotification.value = {
@@ -586,7 +586,7 @@ const handleBulkBookCourier = async () => {
       });
 
       selectedOrderIds.value = [];
-      router.reload({ preserveScroll: true });
+      router.reload(); // Inertia v2 reloads preserve scroll & state by default
     } else {
       const errorMsg = data.message || 'Failed to bulk book courier consignments.';
       courierNotification.value = {

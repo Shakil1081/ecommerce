@@ -1,0 +1,18 @@
+PICK & PEARL - ADMIN LOGIN
+=========================
+
+Admin login page:   /login        (for example http://localhost:8000/login)
+Customer login:     /account/login (storefront customers, different page)
+
+Default Super Admin (created by `php artisan db:seed`, see database/seeders/DatabaseSeeder.php)
+  Email:     admin@ecommerce.test
+  Password:  password
+
+BEFORE GOING LIVE
+-----------------
+1. Log in and change this password straight away (or create your own Super Admin
+   in Admin > Staff Management and delete this account).
+2. Never use these default details on the live site: anyone who reads the
+   seeder code knows them.
+3. Add other staff in Admin > Staff Management and give each person only the
+   role they need (Admin > Roles & Permissions).

@@ -19,6 +19,11 @@ use Throwable;
 
 class SslcommerzPaymentAdapter implements PaymentGatewayContract
 {
+    /** Gateway API timeouts: never let a stalled gateway hang a worker or hold a payment row lock. */
+    private const CONNECT_TIMEOUT_SECONDS = 5;
+
+    private const TIMEOUT_SECONDS = 20;
+
     public const SANDBOX_BASE_URL = 'https://sandbox.sslcommerz.com';
 
     public const LIVE_BASE_URL = 'https://securepay.sslcommerz.com';
@@ -107,7 +112,7 @@ class SslcommerzPaymentAdapter implements PaymentGatewayContract
                 'product_profile' => 'general',
             ];
 
-            $response = Http::asForm()->post("{$baseUrl}/gwprocess/v4/api.php", $postData);
+            $response = Http::connectTimeout(self::CONNECT_TIMEOUT_SECONDS)->timeout(self::TIMEOUT_SECONDS)->asForm()->post("{$baseUrl}/gwprocess/v4/api.php", $postData);
             $data = $response->json();
 
             if (! $response->successful() || ($data['status'] ?? '') !== 'SUCCESS' || empty($data['GatewayPageURL'])) {
@@ -191,7 +196,7 @@ class SslcommerzPaymentAdapter implements PaymentGatewayContract
             $baseUrl = $this->getBaseUrl($sandbox);
 
             // Call SSLCommerz validation API to ensure the payload was not tampered
-            $validateResponse = Http::get("{$baseUrl}/validator/api/validationserverAPI.php", [
+            $validateResponse = Http::connectTimeout(self::CONNECT_TIMEOUT_SECONDS)->timeout(self::TIMEOUT_SECONDS)->get("{$baseUrl}/validator/api/validationserverAPI.php", [
                 'val_id' => $valId,
                 'store_id' => $creds['store_id'] ?? '',
                 'store_passwd' => $creds['store_passwd'] ?? '',
@@ -200,7 +205,11 @@ class SslcommerzPaymentAdapter implements PaymentGatewayContract
 
             $valData = $validateResponse->json();
 
-            if ($validateResponse->successful() && in_array($valData['status'] ?? '', ['VALID', 'VALIDATED'], true)) {
+            // The validated val_id must belong to THIS transaction: otherwise a val_id from a different
+            // (cheaper) successful payment could be replayed against this tran_id.
+            $belongsToTransaction = $tranId !== '' && hash_equals($tranId, (string) ($valData['tran_id'] ?? ''));
+
+            if ($validateResponse->successful() && $belongsToTransaction && in_array($valData['status'] ?? '', ['VALID', 'VALIDATED'], true)) {
                 $amountPaid = (float) ($valData['amount'] ?? 0.00);
                 $cardType = (string) ($valData['card_type'] ?? 'ONLINE');
                 $bankTranId = (string) ($valData['bank_tran_id'] ?? $valId);
@@ -285,7 +294,7 @@ class SslcommerzPaymentAdapter implements PaymentGatewayContract
             $baseUrl = $this->getBaseUrl($sandbox);
 
             // Validation server query test
-            $response = Http::get("{$baseUrl}/validator/api/validationserverAPI.php", [
+            $response = Http::connectTimeout(self::CONNECT_TIMEOUT_SECONDS)->timeout(self::TIMEOUT_SECONDS)->get("{$baseUrl}/validator/api/validationserverAPI.php", [
                 'val_id' => 'PREFLIGHT_TEST_ID',
                 'store_id' => $storeId,
                 'store_passwd' => $storePasswd,

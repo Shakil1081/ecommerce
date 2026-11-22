@@ -70,6 +70,8 @@ class RoleAndStaffTest extends TestCase
 
     public function test_admin_can_access_roles_index_and_create_custom_role(): void
     {
+        $this->actingAsSuperAdmin();
+
         $response = $this->get(route('admin.roles.index'));
         $response->assertOk();
 
@@ -89,6 +91,8 @@ class RoleAndStaffTest extends TestCase
 
     public function test_cannot_delete_super_admin_role(): void
     {
+        $this->actingAsSuperAdmin();
+
         $superAdminRole = Role::findByName('Super Admin');
 
         $response = $this->delete(route('admin.roles.destroy', $superAdminRole));
@@ -100,6 +104,8 @@ class RoleAndStaffTest extends TestCase
 
     public function test_can_manage_staff_users(): void
     {
+        $this->actingAsSuperAdmin();
+
         $response = $this->get(route('admin.staff.index'));
         $response->assertOk();
 

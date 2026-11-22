@@ -27,7 +27,12 @@ final class AuthController extends Controller
     public function create(HoneypotTimingGuardService $timingService): Response|RedirectResponse
     {
         if (Auth::check()) {
-            return redirect()->route('admin.dashboard');
+            /** @var User $current */
+            $current = Auth::user();
+
+            return $current->isStaff()
+                ? redirect()->route('admin.dashboard')
+                : redirect()->route('account.dashboard');
         }
 
         $botSetting = BotSecuritySetting::getActive();
@@ -171,6 +176,11 @@ final class AuthController extends Controller
             auditable: $user,
             options: ['user' => $user, 'ip_address' => $clientIp, 'user_agent' => $request->userAgent()]
         );
+
+        // Storefront customers have no role and cannot use the back office
+        if (! $user->isStaff()) {
+            return redirect()->route('account.dashboard');
+        }
 
         return redirect()->intended(route('admin.dashboard'))
             ->with('success', "Welcome back, {$user->name}! Secure session established.");

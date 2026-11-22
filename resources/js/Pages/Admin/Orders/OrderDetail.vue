@@ -181,7 +181,7 @@ const handleBookCourier = async () => {
         }
       });
 
-      router.reload({ preserveScroll: true });
+      router.reload(); // Inertia v2 reloads preserve scroll & state by default
     } else {
       const errorMsg = data.message || 'Failed to book consignment with courier.';
       courierBookingNotification.value = {

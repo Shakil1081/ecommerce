@@ -116,7 +116,7 @@ final class OrderAdminTest extends TestCase
 
     public function test_admin_can_view_orders_index_with_filters_and_counts(): void
     {
-        $response = $this->actingAs($this->admin)->get('/admin/orders');
+        $response = $this->actingAsSuperAdmin($this->admin)->get('/admin/orders');
 
         $response->assertOk()
             ->assertInertia(fn ($page) => $page
@@ -131,7 +131,7 @@ final class OrderAdminTest extends TestCase
 
     public function test_admin_can_filter_orders_by_status(): void
     {
-        $response = $this->actingAs($this->admin)->get('/admin/orders?status=confirmed');
+        $response = $this->actingAsSuperAdmin($this->admin)->get('/admin/orders?status=confirmed');
 
         $response->assertOk()
             ->assertInertia(fn ($page) => $page
@@ -143,7 +143,7 @@ final class OrderAdminTest extends TestCase
 
     public function test_admin_can_view_order_detail_page(): void
     {
-        $response = $this->actingAs($this->admin)->get("/admin/orders/{$this->order->id}");
+        $response = $this->actingAsSuperAdmin($this->admin)->get("/admin/orders/{$this->order->id}");
 
         $response->assertOk()
             ->assertInertia(fn ($page) => $page
@@ -157,7 +157,7 @@ final class OrderAdminTest extends TestCase
 
     public function test_admin_can_transition_order_status_via_endpoint(): void
     {
-        $response = $this->actingAs($this->admin)->post("/admin/orders/{$this->order->id}/transition", [
+        $response = $this->actingAsSuperAdmin($this->admin)->post("/admin/orders/{$this->order->id}/transition", [
             'target_status' => Order::STATUS_CONFIRMED,
             'reason' => 'Customer confirmed delivery address over phone',
         ]);
@@ -195,7 +195,7 @@ final class OrderAdminTest extends TestCase
             'delivery_address' => 'Gulshan 2, Dhaka',
         ], $this->admin);
 
-        $response = $this->actingAs($this->admin)->post('/admin/orders/bulk-confirm', [
+        $response = $this->actingAsSuperAdmin($this->admin)->post('/admin/orders/bulk-confirm', [
             'order_ids' => [$this->order->id, $order2->id],
         ]);
 
@@ -214,7 +214,7 @@ final class OrderAdminTest extends TestCase
         $this->assertEquals(0, $this->order->ticket_print_count);
         $this->assertNull($this->order->ticket_printed_at);
 
-        $response = $this->actingAs($this->admin)->get("/admin/orders/bag-tickets?order_ids={$this->order->id}");
+        $response = $this->actingAsSuperAdmin($this->admin)->get("/admin/orders/bag-tickets?order_ids={$this->order->id}");
 
         $response->assertOk();
         $this->assertStringContainsString('BAG TICKET', $response->getContent());
@@ -230,7 +230,7 @@ final class OrderAdminTest extends TestCase
         $this->assertNotNull($this->order->ticket_printed_at);
 
         // Printing a second time should increment count to 2 and show REPRINT badge
-        $secondResponse = $this->actingAs($this->admin)->get("/admin/orders/bag-tickets?order_ids={$this->order->id}");
+        $secondResponse = $this->actingAsSuperAdmin($this->admin)->get("/admin/orders/bag-tickets?order_ids={$this->order->id}");
         $secondResponse->assertOk();
         $this->assertStringContainsString('REPRINT #2', $secondResponse->getContent());
 
@@ -242,7 +242,7 @@ final class OrderAdminTest extends TestCase
     {
         $this->order->update(['status' => Order::STATUS_CONFIRMED]);
 
-        $response = $this->actingAs($this->admin)->post('/admin/orders/bulk-transition', [
+        $response = $this->actingAsSuperAdmin($this->admin)->post('/admin/orders/bulk-transition', [
             'order_ids' => [$this->order->id],
             'target_status' => Order::STATUS_PROCESSING,
         ]);
@@ -258,7 +258,7 @@ final class OrderAdminTest extends TestCase
     {
         $this->order->update(['status' => Order::STATUS_PROCESSING]);
 
-        $response = $this->actingAs($this->admin)->post('/admin/orders/bulk-transition', [
+        $response = $this->actingAsSuperAdmin($this->admin)->post('/admin/orders/bulk-transition', [
             'order_ids' => [$this->order->id],
             'target_status' => Order::STATUS_HANDED_TO_COURIER,
         ]);

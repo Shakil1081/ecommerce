@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Modules\Order\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Cart\Http\Resources\CartResource;
 use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Common\Models\BangladeshDistrict;
 use App\Modules\Common\Models\BangladeshDivision;
 use App\Modules\Inventory\Actions\ReserveStockForOrderAction;
+use App\Modules\Logistics\Actions\CalculateShippingRateAction;
 use App\Modules\Order\Actions\CalculateOrderFraudRiskScoreAction;
+use App\Modules\Order\Actions\ResolvePostOrderRedirectAction;
 use App\Modules\Order\DTOs\OrderFraudRiskAssessmentDto;
 use App\Modules\Order\Models\Order;
 use App\Modules\Order\Models\OrderItem;
@@ -30,7 +33,9 @@ final class DirectOrderController extends Controller
     public function store(
         Request $request,
         CalculateOrderFraudRiskScoreAction $calculateFraudScore,
-        ReserveStockForOrderAction $reserveStock
+        ReserveStockForOrderAction $reserveStock,
+        CalculateShippingRateAction $shippingRateCalculator,
+        ResolvePostOrderRedirectAction $resolveRedirect
     ): JsonResponse|RedirectResponse {
         $validated = $request->validate([
             'product_variant_id' => ['required', 'string', 'exists:product_variants,id'],
@@ -72,19 +77,16 @@ final class DirectOrderController extends Controller
         }
 
         $quantity = (int) $validated['quantity'];
-        $unitPrice = (float) $variant->selling_price_bdt;
-        $subtotal = $unitPrice * $quantity;
+        // Fixed-precision money math (never floats for currency)
+        $unitPrice = number_format((float) $variant->selling_price_bdt, 4, '.', '');
+        $subtotal = bcmul($unitPrice, (string) $quantity, 4);
 
-        // Shipping Zone Delivery Fee calculation
+        // Admin-configured zone delivery fee (same source as cart checkout)
         $zone = $validated['delivery_zone'];
-        $isFreeShipping = $subtotal >= 2000.0;
-        $shippingFee = $isFreeShipping ? 0.0 : match ($zone) {
-            'dhaka_suburbs' => 100.0,
-            'outside_dhaka' => 130.0,
-            default => 60.0, // inside_dhaka
-        };
+        $isFreeShipping = bccomp($subtotal, CartResource::FREE_SHIPPING_THRESHOLD, 4) >= 0;
+        $shippingFee = $shippingRateCalculator->feeForZone($zone, $isFreeShipping);
 
-        $total = $subtotal + $shippingFee;
+        $total = bcadd($subtotal, $shippingFee, 4);
 
         // Multi-signal anti-fraud evaluation
         $fraudAssessment = $calculateFraudScore([
@@ -163,12 +165,12 @@ final class DirectOrderController extends Controller
                 'delivery_zone' => $zone,
                 'delivery_address' => $validated['delivery_address'],
                 'customer_notes' => $validated['customer_notes'] ?? null,
-                'subtotal_bdt' => number_format($subtotal, 4, '.', ''),
+                'subtotal_bdt' => $subtotal,
                 'discount_amount_bdt' => '0.0000',
-                'shipping_fee_bdt' => number_format($shippingFee, 4, '.', ''),
-                'total_bdt' => number_format($total, 4, '.', ''),
+                'shipping_fee_bdt' => $shippingFee,
+                'total_bdt' => $total,
                 'advance_paid_bdt' => '0.0000',
-                'payable_cod_amount_bdt' => number_format($total, 4, '.', ''),
+                'payable_cod_amount_bdt' => $total,
                 'coupon_code' => null,
                 'fraud_risk_score' => $fraudAssessment->score,
                 'fraud_risk_level' => $fraudAssessment->riskLevel,
@@ -183,9 +185,9 @@ final class DirectOrderController extends Controller
                 'sku' => $variant->sku,
                 'attributes' => $variant->getAttribute('attributes') ?? [],
                 'quantity' => $quantity,
-                'unit_price_bdt' => number_format($unitPrice, 4, '.', ''),
+                'unit_price_bdt' => $unitPrice,
                 'tier_savings_bdt' => '0.0000',
-                'subtotal_bdt' => number_format($subtotal, 4, '.', ''),
+                'subtotal_bdt' => $subtotal,
                 'unit_cogs_bdt' => (string) ($variant->purchase_cost_bdt ?? '0.0000'),
             ]);
 
@@ -216,16 +218,25 @@ final class DirectOrderController extends Controller
             return $order;
         });
 
+        $redirectUrl = $resolveRedirect($order, $request->ip());
+        $requiresOtp = $order->requiresOtpVerification();
+
         if ($request->wantsJson() && ! $request->header('X-Inertia')) {
             return response()->json([
                 'success' => true,
                 'order_number' => $order->order_number,
-                'redirect_url' => route('storefront.order-confirmed', ['order' => $order->order_number]),
+                'requires_otp' => $requiresOtp,
+                'redirect_url' => $redirectUrl,
                 'message' => 'ধন্যবাদ! আপনার অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে।',
             ], 201);
         }
 
-        return redirect()->route('storefront.order-confirmed', ['order' => $order->order_number])
+        if ($requiresOtp) {
+            return redirect()->to($redirectUrl)
+                ->with('info', 'আপনার মোবাইলে একটি কোড পাঠানো হয়েছে। অর্ডার নিশ্চিত করতে কোডটি লিখুন।');
+        }
+
+        return redirect()->to($redirectUrl)
             ->with('success', 'ধন্যবাদ! আপনার অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে।');
     }
 }

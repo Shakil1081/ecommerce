@@ -5,12 +5,18 @@ declare(strict_types=1);
 namespace App\Modules\Catalog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Cart\Http\Resources\CartResource;
 use App\Modules\Catalog\Models\Brand;
 use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Models\Product;
+use App\Modules\Catalog\Models\ProductReview;
 use App\Modules\Catalog\Models\ProductVariant;
+use App\Modules\Common\Security\HoneypotTimingGuardService;
+use App\Modules\Logistics\Actions\CalculateShippingRateAction;
+use App\Modules\Seo\Services\SchemaGeneratorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -277,8 +283,13 @@ class StorefrontController extends Controller
     /**
      * Display the Product Detail Page (PDP) with matrix variants, swatches, and specifications.
      */
-    public function show(string $slug): Response
-    {
+    public function show(
+        Request $request,
+        string $slug,
+        HoneypotTimingGuardService $timingGuard,
+        CalculateShippingRateAction $shippingRates,
+        SchemaGeneratorService $schema,
+    ): Response {
         $product = Product::where('slug', $slug)
             ->where('is_published', true)
             ->with(['category', 'brand', 'variants.stocks', 'media', 'approvedReviews.user'])
@@ -346,7 +357,22 @@ class StorefrontController extends Controller
             ->get()
             ->map(fn (Product $p) => $this->formatProductCard($p));
 
+        // Real approved-review aggregates (never placeholder numbers: they feed Google rich results)
+        $approvedReviews = $product->approvedReviews->sortByDesc('created_at')->values();
+        $reviewCount = $approvedReviews->count();
+        $averageRating = $reviewCount > 0 ? round((float) $approvedReviews->avg('rating'), 1) : 0.0;
+
+        $user = $request->user();
+        $isWishlisted = $user !== null && $user->wishlistItems()->where('product_id', $product->id)->exists();
+
+        $canonical = route('storefront.product.show', ['slug' => $product->slug]);
+        $firstVariant = $activeVariants->first();
+        $inStock = $activeVariants->contains(fn ($v) => $v->available_quantity > 0);
+        $metaDescription = Str::limit(trim(strip_tags((string) $product->description)) ?: "Buy genuine {$product->name} online in Bangladesh with fast delivery and Cash on Delivery.", 155);
+
         return Inertia::render('Storefront/ProductDetail', [
+            // Signed render timestamp for the 1-click fast-order bot timing guard (ensure.human)
+            'timingToken' => $timingGuard->generateTimingToken(),
             'product' => [
                 'id' => $product->id,
                 'name' => $product->name,
@@ -361,8 +387,48 @@ class StorefrontController extends Controller
                 'hs_code' => $product->hs_code,
                 'min_price_bdt' => $product->min_price_bdt,
                 'max_price_bdt' => $product->max_price_bdt,
-                'average_rating' => 4.9,
-                'review_count' => 18,
+                'average_rating' => $averageRating,
+                'review_count' => $reviewCount,
+            ],
+            'reviews' => $approvedReviews->take(20)->map(fn (ProductReview $review): array => [
+                'id' => $review->id,
+                'customer_name' => $review->customer_name,
+                'rating' => $review->rating,
+                'title' => $review->title,
+                'review_text' => $review->review_text,
+                'is_verified_purchase' => $review->is_verified_purchase,
+                'created_at' => $review->created_at?->format('d M Y'),
+            ])->values(),
+            'ratingBreakdown' => collect([5, 4, 3, 2, 1])
+                ->mapWithKeys(fn (int $stars): array => [$stars => $approvedReviews->where('rating', $stars)->count()]),
+            'isWishlisted' => $isWishlisted,
+            // Admin-configured zone rates (CalculateShippingRateAction), never hard-coded fees
+            'shippingRates' => $shippingRates->baseRatesByZone(),
+            'freeShippingThreshold' => CartResource::FREE_SHIPPING_THRESHOLD,
+            'seo' => [
+                'canonical' => $canonical,
+                'description' => $metaDescription,
+                'image' => $gallery[0]['full'] ?? null,
+                'json_ld' => [
+                    $schema->forProduct(
+                        name: $product->name,
+                        description: $metaDescription,
+                        sku: (string) ($firstVariant?->sku ?? $product->id),
+                        images: array_values(array_map(fn (array $g): string => $g['full'], $gallery)),
+                        price: (float) ($firstVariant?->selling_price_bdt ?? $product->min_price_bdt ?? 0),
+                        availability: $inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+                        brand: $product->brand?->name,
+                        ratingValue: $reviewCount > 0 ? $averageRating : null,
+                        reviewCount: $reviewCount > 0 ? $reviewCount : null,
+                        url: $canonical,
+                    ),
+                    $schema->forBreadcrumbList(array_values(array_filter([
+                        ['name' => 'Home', 'url' => url('/')],
+                        ['name' => 'Shop', 'url' => route('storefront.shop')],
+                        $product->category ? ['name' => $product->category->name, 'url' => route('storefront.shop', ['category' => $product->category->slug])] : null,
+                        ['name' => $product->name, 'url' => $canonical],
+                    ]))),
+                ],
             ],
             'variants' => $activeVariants->map(fn ($v) => [
                 'id' => $v->id,

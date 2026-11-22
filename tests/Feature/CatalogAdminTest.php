@@ -25,6 +25,8 @@ class CatalogAdminTest extends TestCase
     {
         parent::setUp();
 
+        $this->actingAsSuperAdmin();
+
         $this->category = Category::create(['name' => 'Tablets', 'is_active' => true]);
         $brand = Brand::create(['name' => 'Apple', 'origin_country' => 'USA', 'is_active' => true]);
     }

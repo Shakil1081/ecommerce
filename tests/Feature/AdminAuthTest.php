@@ -9,6 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Testing\AssertableInertia as Assert;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 final class AdminAuthTest extends TestCase
@@ -28,6 +29,9 @@ final class AdminAuthTest extends TestCase
             'email' => 'admin@ecommerce.test',
             'password' => Hash::make('password'),
         ]);
+
+        // Staff are users with a role; role-less users are storefront customers
+        $this->admin->assignRole(Role::findOrCreate('Super Admin', 'web'));
     }
 
     public function test_login_screen_can_be_rendered(): void
@@ -47,7 +51,7 @@ final class AdminAuthTest extends TestCase
     {
         $response = $this->actingAs($this->admin)->get('/login');
 
-        $response->assertRedirect('/admin/dashboard');
+        $response->assertRedirect('/admin');
     }
 
     public function test_users_can_authenticate_using_the_login_screen(): void
@@ -58,7 +62,7 @@ final class AdminAuthTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect('/admin/dashboard');
+        $response->assertRedirect('/admin');
 
         // Verify audit log entry
         $this->assertDatabaseHas('audit_logs', [

@@ -340,7 +340,6 @@ const renderWaterfallChart = () => {
       labels,
       datasets: [
         {
-          axis: 'y',
           label: 'Amount (BDT ৳)',
           data: values,
           backgroundColor: colors,

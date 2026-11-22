@@ -103,7 +103,7 @@ class ProcurementAdminTest extends TestCase
 
     public function test_can_view_suppliers_directory_page(): void
     {
-        $response = $this->actingAs($this->user)->get('/admin/procurement/suppliers');
+        $response = $this->actingAsSuperAdmin($this->user)->get('/admin/procurement/suppliers');
 
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
@@ -114,7 +114,7 @@ class ProcurementAdminTest extends TestCase
 
     public function test_can_store_new_supplier_via_admin(): void
     {
-        $response = $this->actingAs($this->user)->post('/admin/procurement/suppliers', [
+        $response = $this->actingAsSuperAdmin($this->user)->post('/admin/procurement/suppliers', [
             'name' => 'Singer Bangladesh Ltd',
             'code' => 'SUP-SINGER-01',
             'type' => 'local',
@@ -137,7 +137,7 @@ class ProcurementAdminTest extends TestCase
 
     public function test_can_view_and_create_import_purchase_order(): void
     {
-        $getRes = $this->actingAs($this->user)->get('/admin/procurement/import-orders');
+        $getRes = $this->actingAsSuperAdmin($this->user)->get('/admin/procurement/import-orders');
         $getRes->assertStatus(200);
         $getRes->assertInertia(fn (Assert $page) => $page
             ->component('Admin/Procurement/ImportOrderIndex')
@@ -145,7 +145,7 @@ class ProcurementAdminTest extends TestCase
             ->has('suppliers')
         );
 
-        $postRes = $this->actingAs($this->user)->post('/admin/procurement/import-orders', [
+        $postRes = $this->actingAsSuperAdmin($this->user)->post('/admin/procurement/import-orders', [
             'supplier_id' => $this->intSupplier->id,
             'po_number' => 'IPO-2026-TEST-001',
             'currency' => 'USD',
@@ -173,14 +173,14 @@ class ProcurementAdminTest extends TestCase
 
     public function test_can_view_create_local_po_and_issue_mushak_6_6(): void
     {
-        $getRes = $this->actingAs($this->user)->get('/admin/procurement/local-pos');
+        $getRes = $this->actingAsSuperAdmin($this->user)->get('/admin/procurement/local-pos');
         $getRes->assertStatus(200);
         $getRes->assertInertia(fn (Assert $page) => $page
             ->component('Admin/Procurement/LocalPoIndex')
             ->has('orders.data')
         );
 
-        $postRes = $this->actingAs($this->user)->post('/admin/procurement/local-pos', [
+        $postRes = $this->actingAsSuperAdmin($this->user)->post('/admin/procurement/local-pos', [
             'supplier_id' => $this->localSupplier->id,
             'po_number' => 'LPO-2026-TEST-001',
             'order_date' => '2026-10-25',
@@ -205,7 +205,7 @@ class ProcurementAdminTest extends TestCase
         $this->assertEquals('4000.0000', (string) $po->vds_amount_bdt);
 
         // Issue Mushak 6.6
-        $issueRes = $this->actingAs($this->user)->post("/admin/procurement/local-pos/{$po->id}/issue-mushak66");
+        $issueRes = $this->actingAsSuperAdmin($this->user)->post("/admin/procurement/local-pos/{$po->id}/issue-mushak66");
         $issueRes->assertRedirect('/admin/procurement/local-pos');
         $this->assertNotNull($po->fresh()->mushak_6_6_certificate_number);
     }
@@ -228,14 +228,14 @@ class ProcurementAdminTest extends TestCase
             'bin_location' => 'AISLE-1-SHELF-A',
         ]);
 
-        $getRes = $this->actingAs($this->user)->get('/admin/procurement/grn');
+        $getRes = $this->actingAsSuperAdmin($this->user)->get('/admin/procurement/grn');
         $getRes->assertStatus(200);
         $getRes->assertInertia(fn (Assert $page) => $page
             ->component('Admin/Procurement/GrnReceiving')
             ->has('grns.data', 1)
         );
 
-        $receiveRes = $this->actingAs($this->user)->post("/admin/procurement/grn/{$grn->id}/receive");
+        $receiveRes = $this->actingAsSuperAdmin($this->user)->post("/admin/procurement/grn/{$grn->id}/receive");
         $receiveRes->assertRedirect('/admin/procurement/grn');
         $this->assertEquals('completed', $grn->fresh()->status);
     }
