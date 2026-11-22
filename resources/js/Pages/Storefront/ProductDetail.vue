@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 import StorefrontLayout from '@/Layouts/StorefrontLayout.vue';
+import SeoHead from '@/Components/Seo/SeoHead.vue';
+import type { SharedProps } from '@/types';
 import { useCartStore } from '@/Stores/cartStore';
 import { isColorAttribute, getColorHex, isLightColor } from '@/Utils/colorHelper';
 
@@ -49,6 +51,16 @@ interface ProductDetailData {
   review_count: number;
 }
 
+interface ReviewItem {
+  id: string;
+  customer_name: string;
+  rating: number;
+  title: string | null;
+  review_text: string;
+  is_verified_purchase: boolean;
+  created_at: string | null;
+}
+
 const props = defineProps<{
   product: ProductDetailData;
   variants: VariantItem[];
@@ -56,7 +68,69 @@ const props = defineProps<{
   gallery: GalleryImage[];
   relatedProducts: RelatedProductItem[];
   timingToken?: string;
+  reviews: ReviewItem[];
+  ratingBreakdown: Record<string, number>;
+  isWishlisted: boolean;
+  shippingRates: Record<'inside_dhaka' | 'dhaka_suburbs' | 'outside_dhaka', string>;
+  freeShippingThreshold: string;
+  seo: {
+    canonical: string;
+    description: string;
+    image: string | null;
+    json_ld: Record<string, unknown>[];
+  };
 }>();
+
+const page = usePage<SharedProps>();
+
+// --- Wishlist (logged-in customers) ---
+const isTogglingWishlist = ref(false);
+const toggleWishlist = () => {
+  if (!page.props.auth?.user) {
+    router.visit('/account/login');
+    return;
+  }
+  isTogglingWishlist.value = true;
+  router.post(`/account/wishlist/${props.product.id}`, {}, {
+    preserveScroll: true,
+    onFinish: () => {
+      isTogglingWishlist.value = false;
+    },
+  });
+};
+
+// --- Reviews ---
+const starText = (rating: number): string => '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating));
+const reviewSubmitted = ref(false);
+const reviewForm = useForm({
+  customer_name: page.props.auth?.user?.name ?? '',
+  customer_email: '',
+  rating: 5,
+  title: '',
+  review_text: '',
+  user_company_fax: '', // honeypot (ensure.human)
+  _form_timing_token: props.timingToken ?? '',
+});
+
+// ensure.human reports bot-guard failures under a key that is not a form field
+const reviewBotError = computed(() => (reviewForm.errors as Record<string, string | undefined>).bot_protection);
+
+const submitReview = () => {
+  reviewForm.post(`/products/${props.product.slug}/reviews`, {
+    preserveScroll: true,
+    onSuccess: () => {
+      reviewSubmitted.value = true;
+      reviewForm.reset('title', 'review_text');
+    },
+  });
+};
+
+const openReviewsTab = () => {
+  activeTab.value = 'reviews';
+  document.querySelector('.product-tabs-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+const formatRate = (amount: string): string => `৳${Number(amount).toLocaleString('en-BD')}`;
 
 const cartStore = useCartStore();
 
@@ -81,7 +155,7 @@ const activeImageIndex = ref(0);
 // Quantity selector
 const quantity = ref(1);
 const isAddingToCart = ref(false);
-const activeTab = ref<'specs' | 'desc' | 'shipping'>('specs');
+const activeTab = ref<'specs' | 'desc' | 'reviews' | 'shipping'>('specs');
 
 // Find current matched variant based on selected attributes
 const selectedVariant = computed<VariantItem | undefined>(() => {
@@ -277,9 +351,14 @@ onUnmounted(() => {
 
 <template>
   <StorefrontLayout :title="`${product.name} — Buy in Bangladesh`">
-    <Head :title="`${product.name} | Official E-Commerce Store`">
-      <meta name="description" :content="`Buy genuine ${product.name} from ${product.brand_name || 'store'}. Origin: ${product.origin_country}. Warranty: ${product.warranty_policy || 'Standard'}. Fast delivery across Bangladesh.`" />
-    </Head>
+    <SeoHead
+      :title="product.name"
+      :description="seo.description"
+      :canonical="seo.canonical"
+      :image="seo.image"
+      type="product"
+      :json-ld="seo.json_ld"
+    />
 
     <div class="pdp-wrapper">
       <div class="container">
@@ -335,16 +414,33 @@ onUnmounted(() => {
               <span class="cat-name">{{ product.category_name }}</span>
             </div>
 
-            <!-- Title -->
-            <h1 class="pdp-title">{{ product.name }}</h1>
+            <!-- Title + Wishlist -->
+            <div class="pdp-title-row">
+              <h1 class="pdp-title">{{ product.name }}</h1>
+              <button
+                type="button"
+                class="wishlist-btn"
+                :class="{ active: isWishlisted }"
+                :disabled="isTogglingWishlist"
+                :aria-pressed="isWishlisted"
+                :aria-label="isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'"
+                :title="isWishlisted ? 'Saved to wishlist' : 'Save to wishlist'"
+                @click="toggleWishlist"
+              >
+                {{ isWishlisted ? '♥' : '♡' }}
+              </button>
+            </div>
 
             <!-- Ratings & Inline Stock Indicator -->
             <div class="pdp-meta-row">
-              <div class="rating-stars">
-                <span class="stars">★★★★★</span>
-                <span class="rating-num">5.0</span>
-                <span class="reviews-count">({{ product.review_count || 18 }} reviews)</span>
-              </div>
+              <button v-if="product.review_count > 0" type="button" class="rating-stars rating-link" @click="openReviewsTab">
+                <span class="stars" :aria-label="`${product.average_rating} out of 5`">{{ starText(product.average_rating) }}</span>
+                <span class="rating-num">{{ product.average_rating.toFixed(1) }}</span>
+                <span class="reviews-count">({{ product.review_count }} {{ product.review_count === 1 ? 'review' : 'reviews' }})</span>
+              </button>
+              <button v-else type="button" class="rating-stars rating-link" @click="openReviewsTab">
+                <span class="reviews-count">No reviews yet · Write the first one</span>
+              </button>
               <span class="meta-sep">•</span>
               <div class="inline-stock-pill" :class="{ 'in-stock': isCurrentVariantInStock, 'out-of-stock': !isCurrentVariantInStock }">
                 <span class="stock-dot"></span>
@@ -818,6 +914,13 @@ onUnmounted(() => {
             </button>
             <button
               class="tab-btn"
+              :class="{ active: activeTab === 'reviews' }"
+              @click="activeTab = 'reviews'"
+            >
+              ⭐ Reviews ({{ product.review_count }})
+            </button>
+            <button
+              class="tab-btn"
               :class="{ active: activeTab === 'shipping' }"
               @click="activeTab = 'shipping'"
             >
@@ -869,22 +972,123 @@ onUnmounted(() => {
               </p>
             </div>
 
-            <!-- Shipping Tab -->
+            <!-- Reviews Tab -->
+            <div v-else-if="activeTab === 'reviews'" class="reviews-content">
+              <div class="reviews-layout">
+                <div class="reviews-summary">
+                  <template v-if="product.review_count > 0">
+                    <div class="avg-score">{{ product.average_rating.toFixed(1) }}</div>
+                    <div class="avg-stars">{{ starText(product.average_rating) }}</div>
+                    <div class="avg-count">{{ product.review_count }} {{ product.review_count === 1 ? 'review' : 'reviews' }}</div>
+                    <ul class="breakdown">
+                      <li v-for="stars in [5, 4, 3, 2, 1]" :key="stars">
+                        <span class="bd-label">{{ stars }}★</span>
+                        <span class="bd-bar"><span class="bd-fill" :style="{ width: `${(ratingBreakdown[stars] ?? 0) / product.review_count * 100}%` }" /></span>
+                        <span class="bd-count">{{ ratingBreakdown[stars] ?? 0 }}</span>
+                      </li>
+                    </ul>
+                  </template>
+                  <p v-else class="no-reviews">No reviews yet. Be the first to share your experience.</p>
+                </div>
+
+                <div class="reviews-list">
+                  <article v-for="review in reviews" :key="review.id" class="review-item">
+                    <div class="review-head">
+                      <span class="review-stars" :aria-label="`${review.rating} out of 5`">{{ starText(review.rating) }}</span>
+                      <strong v-if="review.title" class="review-title">{{ review.title }}</strong>
+                    </div>
+                    <p class="review-text">{{ review.review_text }}</p>
+                    <div class="review-meta">
+                      <span>{{ review.customer_name }}</span>
+                      <span v-if="review.is_verified_purchase" class="verified">✓ Verified purchase</span>
+                      <span>{{ review.created_at }}</span>
+                    </div>
+                  </article>
+
+                  <!-- Write a review -->
+                  <div class="review-form-box">
+                    <h3>Write a review</h3>
+                    <div v-if="reviewSubmitted" class="sf-alert is-success">
+                      Thank you! Your review will appear after our team checks it.
+                    </div>
+                    <form v-else @submit.prevent="submitReview" novalidate>
+                      <div v-if="reviewBotError" class="sf-alert is-error">{{ reviewBotError }}</div>
+
+                      <div class="sf-field">
+                        <span id="rating-label" class="sf-field-label">Your rating</span>
+                        <div class="star-picker" role="radiogroup" aria-labelledby="rating-label">
+                          <button
+                            v-for="n in 5"
+                            :key="n"
+                            type="button"
+                            role="radio"
+                            class="star-pick"
+                            :class="{ on: n <= reviewForm.rating }"
+                            :aria-checked="reviewForm.rating === n"
+                            :aria-label="`${n} star${n > 1 ? 's' : ''}`"
+                            @click="reviewForm.rating = n"
+                          >★</button>
+                        </div>
+                        <span v-if="reviewForm.errors.rating" class="sf-field-error">{{ reviewForm.errors.rating }}</span>
+                      </div>
+
+                      <div v-if="!page.props.auth?.user" class="review-form-grid">
+                        <div class="sf-field">
+                          <label class="sf-field-label" for="review-name">Your name</label>
+                          <input id="review-name" v-model="reviewForm.customer_name" class="sf-input" :class="{ 'has-error': reviewForm.errors.customer_name }" type="text" maxlength="100" required>
+                          <span v-if="reviewForm.errors.customer_name" class="sf-field-error">{{ reviewForm.errors.customer_name }}</span>
+                        </div>
+                        <div class="sf-field">
+                          <label class="sf-field-label" for="review-email">Email (optional, not shown)</label>
+                          <input id="review-email" v-model="reviewForm.customer_email" class="sf-input" :class="{ 'has-error': reviewForm.errors.customer_email }" type="email" maxlength="150">
+                          <span v-if="reviewForm.errors.customer_email" class="sf-field-error">{{ reviewForm.errors.customer_email }}</span>
+                        </div>
+                      </div>
+
+                      <div class="sf-field">
+                        <label class="sf-field-label" for="review-title">Title (optional)</label>
+                        <input id="review-title" v-model="reviewForm.title" class="sf-input" type="text" maxlength="150" placeholder="Sum it up in a few words">
+                      </div>
+
+                      <div class="sf-field">
+                        <label class="sf-field-label" for="review-text">Your review</label>
+                        <textarea id="review-text" v-model="reviewForm.review_text" class="sf-input" :class="{ 'has-error': reviewForm.errors.review_text }" maxlength="2000" placeholder="What did you like or dislike? How was the quality?" required />
+                        <span v-if="reviewForm.errors.review_text" class="sf-field-error">{{ reviewForm.errors.review_text }}</span>
+                      </div>
+
+                      <div class="sf-honeypot" aria-hidden="true">
+                        <input v-model="reviewForm.user_company_fax" type="text" tabindex="-1" autocomplete="off">
+                      </div>
+
+                      <button type="submit" class="btn btn-primary" :disabled="reviewForm.processing">
+                        {{ reviewForm.processing ? 'Submitting…' : 'Submit review' }}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Shipping Tab (rates come from Admin > Delivery Zones & Rates) -->
             <div v-else class="shipping-content">
               <div class="shipping-info-grid">
                 <div class="shipping-card">
                   <h4>Inside Dhaka (ঢাকা সিটি)</h4>
-                  <p>Delivery in 24 to 48 hours. Flat delivery charge: ৳60. Free delivery for orders over ৳2,000.</p>
+                  <p>Delivery in 24 to 48 hours. Delivery charge: {{ formatRate(shippingRates.inside_dhaka) }}.</p>
                 </div>
                 <div class="shipping-card">
                   <h4>Dhaka Suburbs (ঢাকা উপশহর)</h4>
-                  <p>Savar, Gazipur, Keraniganj, Narayanganj. Delivery in 48 to 72 hours. Flat charge: ৳100.</p>
+                  <p>Savar, Gazipur, Keraniganj, Narayanganj. Delivery in 48 to 72 hours. Delivery charge: {{ formatRate(shippingRates.dhaka_suburbs) }}.</p>
                 </div>
                 <div class="shipping-card">
                   <h4>Outside Dhaka (সারা বাংলাদেশ)</h4>
-                  <p>All 64 districts via Steadfast, Pathao & RedX. Delivery in 3 to 5 business days. Flat charge: ৳130.</p>
+                  <p>All 64 districts. Delivery in 3 to 5 business days. Delivery charge: {{ formatRate(shippingRates.outside_dhaka) }}.</p>
                 </div>
               </div>
+              <p class="shipping-note">
+                Free delivery on orders over {{ formatRate(freeShippingThreshold) }}.
+                Read our <Link href="/shipping">Shipping</Link> and <Link href="/returns">Return &amp; Refund</Link> policies.
+              </p>
             </div>
           </div>
         </div>
@@ -2581,6 +2785,219 @@ onUnmounted(() => {
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+// --- Title row + wishlist heart ---
+.pdp-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $space-3;
+
+  .wishlist-btn {
+    flex-shrink: 0;
+    @include flex-center;
+    width: 44px;
+    height: 44px;
+    border-radius: $radius-full;
+    border: 1px solid $color-neutral-200;
+    background: $color-neutral-0;
+    font-size: 22px;
+    line-height: 1;
+    color: $color-neutral-500;
+    cursor: pointer;
+    transition: color $transition-fast, border-color $transition-fast, transform $transition-fast;
+
+    &:hover {
+      color: #e11d48;
+      border-color: #fecdd3;
+    }
+
+    &:active {
+      transform: scale(0.92);
+    }
+
+    &.active {
+      color: #e11d48;
+      border-color: #fecdd3;
+      background: #fff1f2;
+    }
+  }
+}
+
+.rating-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+// --- Reviews tab ---
+.reviews-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: $space-8;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: $space-5;
+  }
+}
+
+.reviews-summary {
+  .avg-score {
+    font-size: $fs-4xl;
+    font-weight: $fw-bold;
+    color: $color-neutral-900;
+    line-height: 1;
+  }
+
+  .avg-stars {
+    color: #d97706;
+    font-size: $fs-lg;
+    letter-spacing: 2px;
+    margin-top: $space-1;
+  }
+
+  .avg-count {
+    font-size: $fs-sm;
+    color: $color-neutral-500;
+    margin-bottom: $space-4;
+  }
+
+  .breakdown li {
+    display: grid;
+    grid-template-columns: 28px 1fr 24px;
+    align-items: center;
+    gap: $space-2;
+    font-size: $fs-xs;
+    color: $color-neutral-600;
+    margin-bottom: 6px;
+  }
+
+  .bd-bar {
+    height: 8px;
+    border-radius: $radius-full;
+    background: $color-neutral-100;
+    overflow: hidden;
+  }
+
+  .bd-fill {
+    display: block;
+    height: 100%;
+    background: #f59e0b;
+  }
+
+  .bd-count {
+    text-align: right;
+  }
+
+  .no-reviews {
+    font-size: $fs-sm;
+    color: $color-neutral-500;
+  }
+}
+
+.review-item {
+  padding: $space-4 0;
+  border-bottom: 1px solid $color-neutral-100;
+
+  &:first-child {
+    padding-top: 0;
+  }
+
+  .review-head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: $space-2;
+  }
+
+  .review-stars {
+    color: #d97706;
+    letter-spacing: 1px;
+  }
+
+  .review-title {
+    font-size: $fs-sm;
+    color: $color-neutral-900;
+  }
+
+  .review-text {
+    margin: $space-2 0;
+    font-size: $fs-sm;
+    line-height: $lh-relaxed;
+    color: $color-neutral-700;
+    white-space: pre-line;
+  }
+
+  .review-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-3;
+    font-size: $fs-xs;
+    color: $color-neutral-500;
+  }
+
+  .verified {
+    color: #15803d;
+    font-weight: $fw-semibold;
+  }
+}
+
+.review-form-box {
+  margin-top: $space-6;
+  padding: $space-5;
+  border-radius: $radius-lg;
+  background: $color-neutral-50;
+  border: 1px solid $color-neutral-200;
+
+  h3 {
+    font-size: $fs-base;
+    font-weight: $fw-semibold;
+    color: $color-neutral-900;
+    margin-bottom: $space-4;
+  }
+}
+
+.review-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 $space-4;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.star-picker {
+  display: flex;
+  gap: 4px;
+
+  .star-pick {
+    background: none;
+    border: none;
+    padding: 2px;
+    font-size: 28px;
+    line-height: 1;
+    color: $color-neutral-300;
+    cursor: pointer;
+
+    &.on {
+      color: #f59e0b;
+    }
+  }
+}
+
+.shipping-note {
+  margin-top: $space-4;
+  font-size: $fs-sm;
+  color: $color-neutral-600;
+
+  a {
+    color: $color-primary-600;
   }
 }
 </style>

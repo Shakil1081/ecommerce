@@ -9,6 +9,7 @@ use App\Modules\Common\Models\BangladeshDistrict;
 use App\Modules\Common\Models\BangladeshDivision;
 use App\Modules\Common\Models\BangladeshThana;
 use App\Modules\Logistics\Models\CourierConsignment;
+use App\Modules\Order\DTOs\OrderFraudRiskAssessmentDto;
 use App\Modules\Payment\Models\PaymentTransaction;
 use App\Modules\TaxCompliance\Models\Mushak63Invoice;
 use Carbon\CarbonInterface;
@@ -57,6 +58,7 @@ use Illuminate\Support\Str;
  * @property string|null $mushak_6_3_number
  * @property int $ticket_print_count
  * @property CarbonInterface|null $ticket_printed_at
+ * @property CarbonInterface|null $otp_verified_at
  * @property CarbonInterface|null $confirmed_at
  * @property CarbonInterface|null $shipped_at
  * @property CarbonInterface|null $delivered_at
@@ -141,6 +143,7 @@ class Order extends Model
         'coupon_code',
         'fraud_risk_score',
         'fraud_risk_level',
+        'otp_verified_at',
         'courier_code',
         'courier_consignment_id',
         'courier_tracking_code',
@@ -181,6 +184,7 @@ class Order extends Model
             'fraud_risk_score' => 'integer',
             'ticket_print_count' => 'integer',
             'ticket_printed_at' => 'datetime',
+            'otp_verified_at' => 'datetime',
             'confirmed_at' => 'datetime',
             'shipped_at' => 'datetime',
             'delivered_at' => 'datetime',
@@ -195,6 +199,20 @@ class Order extends Model
                 $order->ulid = (string) Str::ulid();
             }
         });
+    }
+
+    /**
+     * Medium/high fraud-risk orders must be confirmed by the customer with an SMS OTP (AGENTS.md §8)
+     * before the team processes them. Only applies while the order is still pending.
+     */
+    public function requiresOtpVerification(): bool
+    {
+        return $this->status === self::STATUS_PENDING
+            && $this->otp_verified_at === null
+            && in_array($this->fraud_risk_level, [
+                OrderFraudRiskAssessmentDto::LEVEL_MEDIUM,
+                OrderFraudRiskAssessmentDto::LEVEL_HIGH,
+            ], true);
     }
 
     public function canTransitionTo(string $targetStatus): bool

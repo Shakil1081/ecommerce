@@ -46,6 +46,7 @@ const menuGroups: MenuGroup[] = [
       { title: 'Add Category', href: '/admin/categories?action=create', icon: '➕' },
       { title: 'Product Catalog', href: '/admin/products', icon: '🏷️' },
       { title: 'Add New Product', href: '/admin/products/create', icon: '➕', highlight: true },
+      { title: 'Product Reviews', href: '/admin/reviews', icon: '⭐' },
       { title: 'Orders & Anti-Fraud', href: '/admin/orders', icon: '🛍️' },
       { title: 'Fraud Directory', href: '/admin/fraud-directory', icon: '🛡️' },
     ],
@@ -112,6 +113,7 @@ const menuGroups: MenuGroup[] = [
     title: 'System & AI Settings',
     icon: '⚙️',
     items: [
+      { title: 'Store Pages & Policies', href: '/admin/pages', icon: '📄' },
       { title: 'AI Engine Settings', href: '/admin/ai-settings', icon: '🤖' },
       { title: 'Multi-Cloud Storage', href: '/admin/settings/media-storage', icon: '☁️' },
       { title: 'System Info & Updates', href: '/admin/settings/system', icon: 'ℹ️' },

@@ -43,7 +43,8 @@ class GenerateAndSendOtpAction
             'ip_address' => $ipAddress,
         ]);
 
-        $message = "Your verification code for E-Commerce BD is: {$plainCode}. Valid for {$ttlMinutes} minutes. Do not share this code.";
+        $storeName = (string) config('app.name', 'our store');
+        $message = "Your verification code for {$storeName} is: {$plainCode}. Valid for {$ttlMinutes} minutes. Do not share this code.";
 
         $dispatchResult = ($this->sendSms)(
             phoneNumber: $phoneNumber,

@@ -149,7 +149,7 @@ final class DirectOrderTest extends TestCase
             'product_variant_id' => (string) $this->activeVariant->id,
             'quantity' => 1,
             'customer_name' => 'Tanvir Ahmed',
-            'customer_phone' => '+8801712345678', // Full E.164 format normalized to 01712345678
+            'customer_phone' => '+8801712849536', // Full E.164 format normalized to 01712849536 (non-sequential: sequential numbers are fraud-flagged)
             'delivery_address' => 'House 45, Road 11, Banani, Dhaka-1213',
             'delivery_zone' => 'inside_dhaka',
             'customer_notes' => 'Please call before delivery',
@@ -164,7 +164,7 @@ final class DirectOrderTest extends TestCase
         $this->assertEquals('1150.0000', $order->subtotal_bdt);
         $this->assertEquals('70.0000', $order->shipping_fee_bdt);
         $this->assertEquals('1220.0000', $order->total_bdt);
-        $this->assertEquals('01712345678', $order->customer_phone);
+        $this->assertEquals('01712849536', $order->customer_phone);
         $this->assertEquals('cash_on_delivery', $order->payment_method);
         $this->assertEquals(Order::STATUS_PENDING, $order->status);
 
@@ -190,7 +190,7 @@ final class DirectOrderTest extends TestCase
             'product_variant_id' => (string) $this->activeVariant->id,
             'quantity' => 2, // 2 * 1150 = 2300 >= 2000 free shipping threshold
             'customer_name' => 'Farhana Kabir',
-            'customer_phone' => '01898765432',
+            'customer_phone' => '01819274635',
             'delivery_address' => 'Agrabad C/A, Chittagong',
             'delivery_zone' => 'outside_dhaka',
         ]);

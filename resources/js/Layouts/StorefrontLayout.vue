@@ -63,6 +63,18 @@ const toggleLocale = () => {
   currentLocale.value = currentLocale.value === 'en' ? 'bn' : 'en';
 };
 
+// Customers go to My Account, staff to the back office, guests to customer login
+const accountLink = computed(() => {
+  const user = page.props.auth?.user;
+  if (!user) {
+    return { href: '/account/login', label: currentLocale.value === 'bn' ? 'লগইন' : 'Log in' };
+  }
+  if (user.is_staff) {
+    return { href: '/admin', label: currentLocale.value === 'bn' ? 'অ্যাডমিন' : 'Admin' };
+  }
+  return { href: '/account', label: currentLocale.value === 'bn' ? 'আমার একাউন্ট' : 'My Account' };
+});
+
 const handleHeaderSearch = () => {
   const q = headerSearchQuery.value.trim();
   if (!q) return;
@@ -309,8 +321,16 @@ const formatPrice = (amount: number): string => {
           </div>
         </nav>
 
-        <!-- Navigation Actions (Mobile Menu Trigger) -->
+        <!-- Navigation Actions (Account + Mobile Menu Trigger) -->
         <nav class="header-nav-actions">
+          <Link
+            :href="accountLink.href"
+            class="header-action-btn account-btn"
+            :title="accountLink.label"
+          >
+            <span class="action-icon" aria-hidden="true">👤</span>
+            <span class="action-label">{{ accountLink.label }}</span>
+          </Link>
           <!-- Mobile App Category Trigger Button (Visible on screens < 900px) -->
           <button
             type="button"
@@ -360,6 +380,12 @@ const formatPrice = (amount: number): string => {
               </Link>
               <Link href="/track-order" class="quick-chip" @click="mobileCatDrawerOpen = false">
                 <span>🚚</span> {{ currentLocale === 'bn' ? 'অর্ডার ট্র্যাকিং' : 'Track Order' }}
+              </Link>
+              <Link :href="accountLink.href" class="quick-chip" @click="mobileCatDrawerOpen = false">
+                <span>👤</span> {{ accountLink.label }}
+              </Link>
+              <Link v-if="page.props.auth?.user && !page.props.auth.user.is_staff" href="/account/wishlist" class="quick-chip" @click="mobileCatDrawerOpen = false">
+                <span>♡</span> {{ currentLocale === 'bn' ? 'উইশলিস্ট' : 'Wishlist' }}
               </Link>
             </div>
 
@@ -441,8 +467,10 @@ const formatPrice = (amount: number): string => {
             <li><Link href="/shop">Shop Catalog (শপ ক্যাটালগ)</Link></li>
             <li><Link href="/track-order">Track Order (অর্ডার ট্র্যাকিং)</Link></li>
             <li><Link href="/returns">Returns & Exchange (ফেরত নীতি)</Link></li>
-            <li><Link href="/b2b">Wholesale Trade (পাইকারি একাউন্ট)</Link></li>
-            <li><Link href="/admin">Admin Portal (অ্যাডমিন হাব)</Link></li>
+            <li><Link href="/shipping">Shipping & Delivery (ডেলিভারি)</Link></li>
+            <li><Link :href="accountLink.href">{{ page.props.auth?.user ? 'My Account (আমার একাউন্ট)' : 'Log in / Sign up (লগইন)' }}</Link></li>
+            <li><Link href="/about">About Us (আমাদের সম্পর্কে)</Link></li>
+            <li><Link href="/contact">Contact Us (যোগাযোগ)</Link></li>
           </ul>
         </div>
 
@@ -1124,6 +1152,19 @@ const formatPrice = (amount: number): string => {
         font-weight: 700;
         padding: 1px 6px;
         border-radius: $radius-full;
+      }
+    }
+
+    .account-btn {
+      text-decoration: none;
+      white-space: nowrap;
+
+      @media (max-width: 640px) {
+        padding: $space-2;
+
+        .action-label {
+          display: none;
+        }
       }
     }
 

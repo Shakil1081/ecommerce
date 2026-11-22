@@ -60,5 +60,18 @@ class AppServiceProvider extends ServiceProvider
 
         // Coupon brute-force and order-tracking enumeration (order ID + phone guessing)
         RateLimiter::for('storefront-lookup', fn (Request $request): Limit => Limit::perMinute(15)->by($request->ip()));
+
+        // Order OTP: code guessing is also capped at 3 attempts per code by VerifyOtpAction
+        RateLimiter::for('otp-verify', fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
+
+        // OTP resend costs an SMS: 3 per 10 minutes per order + IP (plus a 60s cooldown in the controller)
+        RateLimiter::for('otp-resend', fn (Request $request): Limit => Limit::perMinutes(10, 3)
+            ->by($request->ip().'|'.(string) $request->route('order')));
+
+        // Customer sign-up, login, password reset and return requests
+        RateLimiter::for('customer-auth', fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
+
+        // Product review spam
+        RateLimiter::for('reviews', fn (Request $request): Limit => Limit::perHour(5)->by($request->ip()));
     }
 }

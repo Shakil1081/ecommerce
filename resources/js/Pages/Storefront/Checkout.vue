@@ -52,6 +52,13 @@ const props = defineProps<{
   cart: { data: CartProp } | CartProp;
   divisions?: Division[];
   timingToken?: string;
+  customerDefaults?: {
+    customer_name: string;
+    customer_phone: string;
+    customer_email: string;
+    delivery_address: string;
+    delivery_zone: 'inside_dhaka' | 'dhaka_suburbs' | 'outside_dhaka' | null;
+  } | null;
   freeShippingThreshold?: number;
   shippingRates?: {
     inside_dhaka: number;
@@ -71,11 +78,11 @@ const cartData = computed<CartProp>(() => {
 });
 
 const form = ref({
-  customer_name: '',
-  customer_phone: '',
-  customer_email: '',
-  delivery_zone: 'inside_dhaka' as 'inside_dhaka' | 'dhaka_suburbs' | 'outside_dhaka',
-  delivery_address: '',
+  customer_name: props.customerDefaults?.customer_name ?? '',
+  customer_phone: props.customerDefaults?.customer_phone ?? '',
+  customer_email: props.customerDefaults?.customer_email ?? '',
+  delivery_zone: (props.customerDefaults?.delivery_zone ?? 'inside_dhaka') as 'inside_dhaka' | 'dhaka_suburbs' | 'outside_dhaka',
+  delivery_address: props.customerDefaults?.delivery_address ?? '',
   customer_notes: '',
   payment_method: 'cash_on_delivery',
   user_company_fax: '', // Invisible honeypot trap

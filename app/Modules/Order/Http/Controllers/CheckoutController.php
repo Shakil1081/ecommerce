@@ -14,6 +14,7 @@ use App\Modules\Customer\Rules\BangladeshPhoneNumberRule;
 use App\Modules\Inventory\Actions\ReserveStockForOrderAction;
 use App\Modules\Logistics\Actions\CalculateShippingRateAction;
 use App\Modules\Order\Actions\CreateOrderFromCartAction;
+use App\Modules\Order\Actions\ResolvePostOrderRedirectAction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -47,10 +48,25 @@ final class CheckoutController extends Controller
 
         $timingToken = $timingGuard->generateTimingToken();
 
+        // Logged-in customers get their profile + default saved address prefilled
+        $customerDefaults = null;
+        if ($user = $request->user()) {
+            $address = $user->addresses()->with('district:id,zone_type')->orderByDesc('is_default')->first();
+
+            $customerDefaults = [
+                'customer_name' => $address?->recipient_name ?? $user->name,
+                'customer_phone' => $address?->phone ?? ($user->phone ?? ''),
+                'customer_email' => $user->email,
+                'delivery_address' => $address?->address_line ?? '',
+                'delivery_zone' => $address?->district?->zone_type,
+            ];
+        }
+
         return Inertia::render('Storefront/Checkout', [
             'cart' => new CartResource($cart),
             'divisions' => $divisions,
             'timingToken' => $timingToken,
+            'customerDefaults' => $customerDefaults,
             'freeShippingThreshold' => (float) CartResource::FREE_SHIPPING_THRESHOLD,
             'shippingRates' => array_map(
                 static fn (string $rate): float => (float) $rate,
@@ -66,7 +82,8 @@ final class CheckoutController extends Controller
         Request $request,
         GetActiveCartAction $getCart,
         CreateOrderFromCartAction $createOrder,
-        ReserveStockForOrderAction $reserveStock
+        ReserveStockForOrderAction $reserveStock,
+        ResolvePostOrderRedirectAction $resolveRedirect
     ): JsonResponse|RedirectResponse {
         $validated = $request->validate([
             'customer_name' => ['required', 'string', 'min:2', 'max:150'],
@@ -182,16 +199,25 @@ final class CheckoutController extends Controller
             // Non-blocking for unseeded warehouses
         }
 
+        $redirectUrl = $resolveRedirect($order, $request->ip());
+        $requiresOtp = $order->requiresOtpVerification();
+
         if ($request->wantsJson() && ! $request->header('X-Inertia')) {
             return response()->json([
                 'success' => true,
                 'order_number' => $order->order_number,
-                'redirect_url' => route('storefront.order-confirmed', ['order' => $order->order_number]),
+                'requires_otp' => $requiresOtp,
+                'redirect_url' => $redirectUrl,
                 'message' => 'ধন্যবাদ! আপনার অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে।',
             ], 201);
         }
 
-        return redirect()->route('storefront.order-confirmed', ['order' => $order->order_number])
+        if ($requiresOtp) {
+            return redirect()->to($redirectUrl)
+                ->with('info', 'আপনার মোবাইলে একটি কোড পাঠানো হয়েছে। অর্ডার নিশ্চিত করতে কোডটি লিখুন।');
+        }
+
+        return redirect()->to($redirectUrl)
             ->with('success', 'ধন্যবাদ! আপনার অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে।');
     }
 }

@@ -12,6 +12,7 @@ use App\Modules\Common\Models\BangladeshDivision;
 use App\Modules\Inventory\Actions\ReserveStockForOrderAction;
 use App\Modules\Logistics\Actions\CalculateShippingRateAction;
 use App\Modules\Order\Actions\CalculateOrderFraudRiskScoreAction;
+use App\Modules\Order\Actions\ResolvePostOrderRedirectAction;
 use App\Modules\Order\DTOs\OrderFraudRiskAssessmentDto;
 use App\Modules\Order\Models\Order;
 use App\Modules\Order\Models\OrderItem;
@@ -33,7 +34,8 @@ final class DirectOrderController extends Controller
         Request $request,
         CalculateOrderFraudRiskScoreAction $calculateFraudScore,
         ReserveStockForOrderAction $reserveStock,
-        CalculateShippingRateAction $shippingRateCalculator
+        CalculateShippingRateAction $shippingRateCalculator,
+        ResolvePostOrderRedirectAction $resolveRedirect
     ): JsonResponse|RedirectResponse {
         $validated = $request->validate([
             'product_variant_id' => ['required', 'string', 'exists:product_variants,id'],
@@ -216,16 +218,25 @@ final class DirectOrderController extends Controller
             return $order;
         });
 
+        $redirectUrl = $resolveRedirect($order, $request->ip());
+        $requiresOtp = $order->requiresOtpVerification();
+
         if ($request->wantsJson() && ! $request->header('X-Inertia')) {
             return response()->json([
                 'success' => true,
                 'order_number' => $order->order_number,
-                'redirect_url' => route('storefront.order-confirmed', ['order' => $order->order_number]),
+                'requires_otp' => $requiresOtp,
+                'redirect_url' => $redirectUrl,
                 'message' => 'ধন্যবাদ! আপনার অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে।',
             ], 201);
         }
 
-        return redirect()->route('storefront.order-confirmed', ['order' => $order->order_number])
+        if ($requiresOtp) {
+            return redirect()->to($redirectUrl)
+                ->with('info', 'আপনার মোবাইলে একটি কোড পাঠানো হয়েছে। অর্ডার নিশ্চিত করতে কোডটি লিখুন।');
+        }
+
+        return redirect()->to($redirectUrl)
             ->with('success', 'ধন্যবাদ! আপনার অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে।');
     }
 }

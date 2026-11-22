@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Order OTP verification**: medium and high fraud-risk orders (AGENTS.md §8) now receive an SMS code after checkout or 1-click fast order and land on `/orders/{order}/verify`. The confirmation page stays locked until the code is entered (3 attempts per code, 60s resend cooldown, `otp-verify` / `otp-resend` rate limits). Verified orders record `orders.otp_verified_at` and a status-history note.
+- **Customer accounts** (`/account`): sign up with name, mobile and email; log in with email or mobile number; password reset by email; My Orders with order detail and timeline; saved addresses (the default one prefills checkout); profile and password change. Staff keep `/login`, and a customer who uses it is sent to their account instead of a 403.
+- **Customer return requests**: delivered orders can be returned from My Account within 7 days, never for more units than were bought (minus units already in an open return). The request creates an RMA for staff inspection (Admin > Tax Compliance > RMA).
+- **Product reviews**: customers can submit reviews on the product page (honeypot and timing guard, 5 per hour per IP, one per customer per product). A review is a verified purchase when the customer has a delivered order containing the product. New moderation screen at Admin > Product Reviews (`catalog.view` / `catalog.edit`).
+- **Wishlist**: heart button on the product page and a My Account > Wishlist page.
+- **Store and policy pages**: About, Contact, Privacy, Terms, Return & Refund, and Shipping pages at `/about`, `/contact`, `/privacy`, `/terms`, `/returns` and `/shipping`, editable at Admin > Store Pages & Policies (`settings.view` / `settings.edit`). The migration seeds starter text with `[placeholders]` (phone, address, BIN) that must be replaced before going live.
+- Reusable `SeoHead` component (title, description, canonical, Open Graph, Twitter and JSON-LD rendered through SSR), used on the product page and all new public pages. Account pages are `noindex`.
+
+### Fixed
+- The product page showed a hard-coded 4.9★ / 18 reviews on every product. It now shows real approved-review counts, and Product JSON-LD only includes `aggregateRating` when real reviews exist.
+- The product page Delivery tab hard-coded ৳60/৳100/৳130. It now reads the admin zone rates.
+- Footer links to `/privacy`, `/terms` and `/returns` returned 404, `/b2b` linked to a page that did not exist, and the public footer linked to the admin portal.
+- `sitemap.xml` listed pages that did not exist (`/about-us`, `/privacy-policy`, `/terms-and-conditions`). It now lists the real published pages and all published products.
+- With SSR enabled, every page sent two `<title>` tags, so crawlers saw only "Pick & Pearl". The fallback title in `app.blade.php` now renders only when SSR did not run.
+- RMA refund amounts are calculated with `bcmath` instead of floats.
+- The OTP SMS used the placeholder name "E-Commerce BD" instead of `APP_NAME`.
+
 ### Security
 - **Back-office access control**: every `/admin` route now requires an authenticated session, a staff role (`EnsureUserIsStaff`), and the matching Spatie module permission (`.view` for reads, specific write permissions for mutations). Previously the admin area was reachable without login.
 - New permissions `analytics.view` and `audit.view` (re-run `RolesAndPermissionsSeeder` on deploy).

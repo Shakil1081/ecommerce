@@ -5,8 +5,6 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title inertia>{{ config('app.name', 'Pick & Pearl') }}</title>
-
         <!-- Favicon -->
         <link rel="icon" type="image/png" href="/favicon.png">
         <link rel="apple-touch-icon" href="/favicon.png">
@@ -19,6 +17,10 @@
         <!-- Scripts & Styles -->
         @vite(['resources/scss/app.scss', 'resources/js/app.ts'])
         @inertiaHead
+        {{-- Fallback title only when SSR did not render one: a second <title> would make crawlers index the generic name --}}
+        @if (empty($__inertiaSsrResponse))
+            <title inertia>{{ config('app.name', 'Pick & Pearl') }}</title>
+        @endif
     </head>
     <body class="font-sans antialiased bg-subtle text-neutral-800">
         @inertia

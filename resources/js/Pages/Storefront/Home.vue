@@ -209,7 +209,7 @@ const formatPrice = (amount: number): string => {
 
       <!-- 2. Category Explorer Bar -->
       <section class="section-categories">
-        <div class="container">
+        <div class="categories-full-width">
           <div class="categories-scroller">
             <Link
               v-for="cat in categories"
@@ -912,6 +912,15 @@ const formatPrice = (amount: number): string => {
   padding: $space-6 0;
   background: $color-neutral-0;
   border-bottom: none;
+
+  .categories-full-width {
+    width: 100%;
+    padding: 0 $space-6;
+
+    @media (max-width: 768px) {
+      padding: 0 $space-4;
+    }
+  }
 
   .categories-scroller {
     display: flex;

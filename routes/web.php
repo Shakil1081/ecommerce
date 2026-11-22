@@ -15,22 +15,32 @@ use App\Modules\Admin\Http\Controllers\MediaStorageController;
 use App\Modules\Admin\Http\Controllers\OrderAdminController;
 use App\Modules\Admin\Http\Controllers\PaymentAdminController;
 use App\Modules\Admin\Http\Controllers\ProcurementController;
+use App\Modules\Admin\Http\Controllers\ProductReviewAdminController;
 use App\Modules\Admin\Http\Controllers\RoleController;
 use App\Modules\Admin\Http\Controllers\StaffUserController;
+use App\Modules\Admin\Http\Controllers\StorePageAdminController;
 use App\Modules\Admin\Http\Controllers\SystemInfoController;
 use App\Modules\Admin\Http\Controllers\TaxComplianceAdminController;
 use App\Modules\Admin\Http\Controllers\TradingPnLAdminController;
 use App\Modules\Cart\Http\Controllers\CartController;
+use App\Modules\Catalog\Http\Controllers\ProductReviewController;
 use App\Modules\Catalog\Http\Controllers\StorefrontController;
 use App\Modules\Communication\Http\Controllers\SocialCommerceFeedController;
 use App\Modules\Communication\Http\Controllers\VoiceCallWebhookController;
 use App\Modules\Communication\Http\Controllers\WhatsAppWebhookController;
+use App\Modules\Content\Http\Controllers\StorePageController;
+use App\Modules\Content\Models\StorePage;
+use App\Modules\Customer\Http\Controllers\AccountController;
+use App\Modules\Customer\Http\Controllers\CustomerAddressController;
+use App\Modules\Customer\Http\Controllers\CustomerAuthController;
 use App\Modules\Customer\Http\Controllers\OrderTrackingController;
+use App\Modules\Customer\Http\Controllers\WishlistController;
 use App\Modules\Logistics\Http\Controllers\PathaoWebhookController;
 use App\Modules\Logistics\Http\Controllers\ShippingLabelController;
 use App\Modules\Logistics\Http\Controllers\SteadfastWebhookController;
 use App\Modules\Order\Http\Controllers\CheckoutController;
 use App\Modules\Order\Http\Controllers\DirectOrderController;
+use App\Modules\Order\Http\Controllers\OrderVerificationController;
 use App\Modules\Order\Models\Order;
 use App\Modules\Payment\Http\Controllers\BkashCallbackController;
 use App\Modules\Payment\Http\Controllers\NagadCallbackController;
@@ -52,6 +62,43 @@ Route::get('/logout', [AuthController::class, 'destroy']);
 Route::get('/', [StorefrontController::class, 'home'])->name('storefront.home');
 Route::get('/shop', [StorefrontController::class, 'index'])->name('storefront.shop');
 Route::get('/products/{slug}', [StorefrontController::class, 'show'])->name('storefront.product.show');
+Route::post('/products/{slug}/reviews', [ProductReviewController::class, 'store'])->middleware(['ensure.human', 'throttle:reviews'])->name('storefront.product.reviews.store');
+
+// Store information & policy pages (admin-editable: Admin > Content > Store Pages)
+Route::get('/{slug}', [StorePageController::class, 'show'])->whereIn('slug', StorePage::SYSTEM_SLUGS)->name('storefront.page');
+
+// Customer accounts (storefront). Staff use /login.
+Route::prefix('account')->name('account.')->group(function () {
+    Route::middleware('guest')->group(function () {
+        Route::get('/login', [CustomerAuthController::class, 'showLogin'])->name('login');
+        Route::post('/login', [CustomerAuthController::class, 'login'])->middleware('throttle:customer-auth')->name('login.store');
+        Route::get('/register', [CustomerAuthController::class, 'showRegister'])->name('register');
+        Route::post('/register', [CustomerAuthController::class, 'register'])->middleware(['ensure.human', 'throttle:customer-auth'])->name('register.store');
+        Route::get('/forgot-password', [CustomerAuthController::class, 'showForgotPassword'])->name('password.request');
+        Route::post('/forgot-password', [CustomerAuthController::class, 'sendResetLink'])->middleware(['ensure.human', 'throttle:customer-auth'])->name('password.email');
+        Route::post('/reset-password', [CustomerAuthController::class, 'resetPassword'])->middleware('throttle:customer-auth')->name('password.update');
+    });
+
+    Route::middleware('auth')->group(function () {
+        Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');
+        Route::get('/', [AccountController::class, 'dashboard'])->name('dashboard');
+        Route::get('/orders', [AccountController::class, 'orders'])->name('orders.index');
+        Route::get('/orders/{order}', [AccountController::class, 'showOrder'])->name('orders.show');
+        Route::post('/orders/{order}/returns', [AccountController::class, 'requestReturn'])->middleware('throttle:customer-auth')->name('orders.returns.store');
+        Route::get('/profile', [AccountController::class, 'profile'])->name('profile');
+        Route::put('/profile', [AccountController::class, 'updateProfile'])->name('profile.update');
+        Route::put('/password', [AccountController::class, 'updatePassword'])->name('password.change');
+        Route::get('/addresses', [CustomerAddressController::class, 'index'])->name('addresses.index');
+        Route::post('/addresses', [CustomerAddressController::class, 'store'])->name('addresses.store');
+        Route::put('/addresses/{address}', [CustomerAddressController::class, 'update'])->name('addresses.update');
+        Route::delete('/addresses/{address}', [CustomerAddressController::class, 'destroy'])->name('addresses.destroy');
+        Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
+        Route::post('/wishlist/{product}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+    });
+});
+
+// Laravel's password reset email links to the route named `password.reset`
+Route::get('/account/reset-password/{token}', [CustomerAuthController::class, 'showResetPassword'])->middleware('guest')->name('password.reset');
 
 // Shopping Cart & Slide-Out Drawer Endpoints
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
@@ -82,8 +129,17 @@ Route::get('/checkout', [CheckoutController::class, 'index'])->name('storefront.
 Route::post('/checkout', [CheckoutController::class, 'store'])->middleware(['ensure.human', 'throttle:checkout'])->name('storefront.checkout.store');
 Route::post('/checkout/fast-order', [DirectOrderController::class, 'store'])->middleware(['ensure.human', 'throttle:checkout'])->name('storefront.fast-order');
 
+// SMS OTP confirmation for medium/high-risk orders (AGENTS.md §8)
+Route::get('/orders/{order}/verify', [OrderVerificationController::class, 'show'])->name('storefront.order-verify');
+Route::post('/orders/{order}/verify', [OrderVerificationController::class, 'verify'])->middleware('throttle:otp-verify')->name('storefront.order-verify.submit');
+Route::post('/orders/{order}/verify/resend', [OrderVerificationController::class, 'resend'])->middleware('throttle:otp-resend')->name('storefront.order-verify.resend');
+
 Route::get('/orders/confirmed/{order}', function (string $order) {
     $orderModel = Order::with(['items', 'district'])->where('order_number', $order)->first();
+
+    if ($orderModel?->requiresOtpVerification()) {
+        return redirect()->route('storefront.order-verify', ['order' => $orderModel->order_number]);
+    }
 
     return Inertia::render('Storefront/OrderConfirmed', [
         'orderNumber' => $order,
@@ -184,6 +240,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
         ->middlewareFor('store', 'permission:catalog.create')
         ->middlewareFor('update', 'permission:catalog.edit')
         ->middlewareFor('destroy', 'permission:catalog.delete');
+
+    // Customer product review moderation
+    Route::get('reviews', [ProductReviewAdminController::class, 'index'])->middleware('permission:catalog.view')->name('reviews.index');
+    Route::post('reviews/{review}/moderate', [ProductReviewAdminController::class, 'moderate'])->middleware('permission:catalog.edit')->name('reviews.moderate');
+
+    // Storefront content & policy pages (About, Contact, Privacy, Terms, Returns, Shipping)
+    Route::get('pages', [StorePageAdminController::class, 'index'])->middleware('permission:settings.view')->name('pages.index');
+    Route::get('pages/{page}/edit', [StorePageAdminController::class, 'edit'])->middleware('permission:settings.view')->name('pages.edit');
+    Route::put('pages/{page}', [StorePageAdminController::class, 'update'])->middleware('permission:settings.edit')->name('pages.update');
 
     // Catalog & Matrix Variant Management
     Route::resource('products', CatalogController::class)

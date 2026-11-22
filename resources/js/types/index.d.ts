@@ -2,6 +2,8 @@ export interface User {
     id: number | string;
     name: string;
     email: string;
+    phone?: string | null;
+    is_staff?: boolean;
     role?: string;
 }
 
