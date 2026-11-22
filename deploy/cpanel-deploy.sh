@@ -52,18 +52,21 @@ if ! "$PHP_BIN" artisan db:show >/dev/null 2>&1; then
     exit 1
 fi
 
-# Front-end assets built on your PC
+# Front-end assets: committed in public/build (built on your PC with deploy/build-assets.sh).
+# An uploaded deploy/build-assets.tar.gz, if present, still takes priority.
 if [ -f deploy/build-assets.tar.gz ]; then
     rm -rf public/build
     tar -xzf deploy/build-assets.tar.gz -C public
     rm -f deploy/build-assets.tar.gz
 fi
-[ -f public/build/manifest.json ] || { echo "public/build is missing: upload deploy/build-assets.tar.gz first."; "$PHP_BIN" artisan up; exit 1; }
 rm -f public/hot
 
-if [ "$FIRST_RUN" = true ] && ! grep -q '^APP_KEY=base64:' .env; then
+# Generate the encryption key before anything else can fail: without it every page is a 500
+if ! grep -q '^APP_KEY=base64:' .env; then
     "$PHP_BIN" artisan key:generate --force
 fi
+
+[ -f public/build/manifest.json ] || { echo "public/build is missing: run deploy/build-assets.sh on your PC, commit public/build, push, then git pull here."; "$PHP_BIN" artisan up; exit 1; }
 
 "$PHP_BIN" artisan migrate --force
 

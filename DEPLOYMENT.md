@@ -2,7 +2,7 @@
 
 ## cPanel: shop.webspreed.com
 
-The host has SSH but no Node.js. JS/CSS are built on your PC and uploaded, and SSR is off (`INERTIA_SSR_ENABLED=false`).
+The host has SSH but no Node.js. JS/CSS are built on your PC and **committed to git** in `public/build`, so the server gets them with `git pull`. SSR is off (`INERTIA_SSR_ENABLED=false`).
 
 ### One-time setup in cPanel
 
@@ -12,35 +12,31 @@ The host has SSH but no Node.js. JS/CSS are built on your PC and uploaded, and S
 4. **SSH / Terminal**: clone the code *outside* `public_html`:
    ```bash
    cd ~
-   git clone https://github.com/Shakil1081/ecommerce.git shop
+   git clone https://github.com/Shakil1081/ecommerce.git shop.webspreed.com
    ```
    If the repository is private, use a GitHub deploy key or a personal access token.
-5. **Domains** (or Subdomains): set the **Document Root** of `shop.webspreed.com` to `shop/public`. Only `public/` may be reachable from the web; `.env` and the code must not be.
+5. **Domains** (or Subdomains): set the **Document Root** of `shop.webspreed.com` to `shop.webspreed.com/public`. Only `public/` may be reachable from the web; `.env` and the code must not be.
 6. **Create the `.env` file** on the server:
    ```bash
-   cd ~/shop
+   cd ~/shop.webspreed.com
    cp deploy/.env.cpanel.example .env
    nano .env        # fill in DB_DATABASE, DB_USERNAME, DB_PASSWORD
    ```
 7. **Cron Jobs**: add one entry that runs every minute. Use the PHP path the deploy script prints:
    ```
-   * * * * * cd ~/shop && /opt/cpanel/ea-php82/root/usr/bin/php artisan schedule:run >> /dev/null 2>&1
+   * * * * * cd ~/shop.webspreed.com && /opt/cpanel/ea-php83/root/usr/bin/php artisan schedule:run >> /dev/null 2>&1
    ```
 
 ### Every deploy
 
-1. **On your PC (Git Bash)**, build the assets:
+1. **On your PC (Git Bash)**, build and push the assets. This is only needed when front-end code (`resources/js`, `resources/scss`) changed:
    ```bash
    bash deploy/build-assets.sh
+   git add public/build && git commit -m "build: production assets" && git push origin main
    ```
-   This creates `deploy/build-assets.tar.gz`.
-2. **Upload the file** to `~/shop/deploy/` on the server. Use cPanel File Manager, or:
+2. **On the server (SSH)**:
    ```bash
-   scp deploy/build-assets.tar.gz USER@webspreed.com:~/shop/deploy/
-   ```
-3. **On the server (SSH)**:
-   ```bash
-   cd ~/shop
+   cd ~/shop.webspreed.com
    git pull origin main
    bash deploy/cpanel-deploy.sh --first   # first deploy only: app key, seed data, storage link
    bash deploy/cpanel-deploy.sh           # later deploys

@@ -1,6 +1,6 @@
 /.phpunit.cache
 /node_modules
-/public/build
+# public/build is committed: the cPanel host has no Node.js to build it
 /bootstrap/ssr
 /public/hot
 /public/storage
