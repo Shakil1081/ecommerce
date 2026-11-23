@@ -1444,6 +1444,7 @@ const formatPrice = (amount: number): string => {
   top: 75px;
   max-height: calc(100vh - 90px);
   overflow-y: auto;
+  overflow-x: hidden;
   scrollbar-width: thin;
   padding-right: 4px;
 
@@ -1644,11 +1645,12 @@ const formatPrice = (amount: number): string => {
   // Color Swatches
   .color-swatches-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
 
     .color-swatch-item {
       display: flex;
+      min-width: 0;
       align-items: center;
       gap: 7px;
       padding: 5px 8px;
@@ -1699,9 +1701,9 @@ const formatPrice = (amount: number): string => {
       .color-label {
         font-size: 11px;
         color: $color-neutral-700;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        min-width: 0;
+        line-height: 1.25;
+        overflow-wrap: break-word;
       }
     }
   }
@@ -2632,11 +2634,12 @@ const formatPrice = (amount: number): string => {
 
     .color-swatches-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 6px;
 
       .color-swatch-item {
         display: flex;
+        min-width: 0;
         align-items: center;
         gap: 7px;
         padding: 6px 8px;
@@ -2679,9 +2682,9 @@ const formatPrice = (amount: number): string => {
         .color-label {
           font-size: 12px;
           color: $color-neutral-700;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+          min-width: 0;
+          line-height: 1.25;
+          overflow-wrap: break-word;
         }
       }
     }
